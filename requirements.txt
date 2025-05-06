@@ -1,0 +1,5 @@
+numpy>=1.19.2
+matplotlib>=3.3.2
+seaborn>=0.11.0
+filterpy>=1.4.5
+jupyter>=1.0.0 
