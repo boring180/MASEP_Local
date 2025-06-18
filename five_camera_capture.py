@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+# Open the cameras
 camera_1 = cv2.VideoCapture(0)
 camera_2 = cv2.VideoCapture(1)
 camera_3 = cv2.VideoCapture(2)
@@ -14,11 +15,20 @@ ret3, frame_3 = camera_3.read()
 ret4, frame_4 = camera_4.read()
 ret5, frame_5 = camera_5.read()
 
-# Concatenate to get the final frame size
-black_frame = np.zeros_like(frame_1)
+# Get the frame size
 height, width = frame_1.shape[:2]
-row1 = np.concatenate((frame_1, frame_2, frame_3), axis=1)
-row2 = np.concatenate((frame_4, frame_5, black_frame), axis=1)
+
+# Concatenate the frames
+def frame_concatenate(frame_1, frame_2, frame_3, frame_4, frame_5):
+    black_frame = np.zeros((height, width, 3), dtype=np.uint8)
+    row1 = np.concatenate((frame_1, frame_2, frame_3), axis=1)
+    row2 = np.concatenate((frame_4, frame_5, black_frame), axis=1)
+    frame = np.concatenate((row1, row2), axis=0)
+    return frame
+
+# Frame resize
+def frame_resize(frame, width, height):
+    return cv2.resize(frame, (width, height))
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -31,6 +41,7 @@ while True:
     ret4, frame_4 = camera_4.read()
     ret5, frame_5 = camera_5.read()
     
+    # If the frame is not read, use a black frame
     black_frame = np.zeros((height, width, 3), dtype=np.uint8)
     if not ret1:
         frame_1 = black_frame.copy()
@@ -43,17 +54,14 @@ while True:
     if not ret5:
         frame_5 = black_frame.copy()
     
-    # Resize all frames to the size of frame_1
-    frame_1 = cv2.resize(frame_1, (width, height))
-    frame_2 = cv2.resize(frame_2, (width, height))
-    frame_3 = cv2.resize(frame_3, (width, height))
-    frame_4 = cv2.resize(frame_4, (width, height))
-    frame_5 = cv2.resize(frame_5, (width, height))
-    black_frame = cv2.resize(black_frame, (width, height))
+    # Resize all frames to the size of frame_1 and concatenate them
+    frame_1 = frame_resize(frame_1, width, height)
+    frame_2 = frame_resize(frame_2, width, height)
+    frame_3 = frame_resize(frame_3, width, height)
+    frame_4 = frame_resize(frame_4, width, height)
+    frame_5 = frame_resize(frame_5, width, height)
     
-    row1 = np.concatenate((frame_1, frame_2, frame_3), axis=1)
-    row2 = np.concatenate((frame_4, frame_5, black_frame), axis=1)
-    frame = np.concatenate((row1, row2), axis=0)
+    frame = frame_concatenate(frame_1, frame_2, frame_3, frame_4, frame_5)
 
     cv2.imshow('Cameras', frame)
     out.write(frame)  # Write the frame to the video file
