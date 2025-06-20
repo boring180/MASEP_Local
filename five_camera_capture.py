@@ -10,10 +10,15 @@ FRAME_INTERVAL = 1.0 / TARGET_FPS
 
 # Open the cameras
 camera_1 = cv2.VideoCapture(1) # Camera 2
+print("Camera1 open")
 camera_2 = cv2.VideoCapture(2) # Camera 3
+print("Camera2 open")
 camera_3 = cv2.VideoCapture(3) # Camera middle
+print("Camera3 open")
 camera_4 = cv2.VideoCapture(4) # Camera 0
+print("Camera4 open")
 camera_5 = cv2.VideoCapture(5) # Camera 1
+print("Camera5 open")
 
 # Configure cameras for consistent frame rate
 cameras = [camera_1, camera_2, camera_3, camera_4, camera_5]
@@ -33,6 +38,7 @@ ret5, frame_5 = camera_5.read()
 
 # Get the frame size
 height, width = frame_1.shape[:2]
+print(f"Frame size: {width}x{height}")
 
 # Concatenate the frames
 def frame_concatenate(frame_1, frame_2, frame_3, frame_4, frame_5):    
@@ -106,6 +112,8 @@ while True:
     sleep_time = max(0, FRAME_INTERVAL - processing_time)
     if sleep_time > 0:
         time.sleep(sleep_time)
+        
+    print("Frame count: ", frame_count)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
