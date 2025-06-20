@@ -25,8 +25,6 @@ cameras = [camera_1, camera_2, camera_3, camera_4, camera_5]
 for camera in cameras:
     # Set camera properties for consistent frame rate
     camera.set(cv2.CAP_PROP_FPS, TARGET_FPS)
-    camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)  # Set a standard width
-    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)  # Set a standard height
     camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer to reduce latency
 
 # Read one frame from each camera to determine frame size
