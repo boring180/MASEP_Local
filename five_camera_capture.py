@@ -4,10 +4,6 @@ from datetime import datetime
 import os
 import time
 
-# Target frame rate
-TARGET_FPS = 20.0
-FRAME_INTERVAL = 1.0 / TARGET_FPS
-
 # Open the cameras
 camera_1 = cv2.VideoCapture(1) # Camera 2
 print("Camera1 open")
@@ -19,13 +15,6 @@ camera_4 = cv2.VideoCapture(4) # Camera 0
 print("Camera4 open")
 camera_5 = cv2.VideoCapture(5) # Camera 1
 print("Camera5 open")
-
-# Configure cameras for consistent frame rate
-cameras = [camera_1, camera_2, camera_3, camera_4, camera_5]
-for camera in cameras:
-    # Set camera properties for consistent frame rate
-    camera.set(cv2.CAP_PROP_FPS, TARGET_FPS)
-    camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer to reduce latency
 
 # Read one frame from each camera to determine frame size
 ret1, frame_1 = camera_1.read()
@@ -57,7 +46,7 @@ if not os.path.exists('captures'):
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 filename = f'captures/{timestamp}.mp4'
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter(filename, fourcc, TARGET_FPS, (width * 3, height * 2))
+out = cv2.VideoWriter(filename, fourcc, 24, (width * 3, height * 2))
 
 # Frame rate monitoring
 frame_count = 0
@@ -97,22 +86,14 @@ while True:
     cv2.imshow('Cameras', frame)
     out.write(frame)  # Write the frame to the video file
     
-    frame_count += 1
-    
     # Calculate and display current FPS
     elapsed_time = time.time() - start_time
     if elapsed_time > 0:
         current_fps = frame_count / elapsed_time
-        print(f"Current FPS: {current_fps:.2f}, Target FPS: {TARGET_FPS}")
+        print(f"Current FPS: {current_fps:.2f}")
     
-    # Frame rate control - wait to maintain target FPS
-    processing_time = time.time() - loop_start_time
-    sleep_time = max(0, FRAME_INTERVAL - processing_time)
-    if sleep_time > 0:
-        time.sleep(sleep_time)
-        
-    print("Frame count: ", frame_count)
-
+    frame_count += 1
+    
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -124,8 +105,3 @@ camera_3.release()
 camera_4.release()
 camera_5.release()  
 cv2.destroyAllWindows()
-
-# Print final statistics
-total_time = time.time() - start_time
-final_fps = frame_count / total_time if total_time > 0 else 0
-print(f"Recording completed. Total frames: {frame_count}, Total time: {total_time:.2f}s, Average FPS: {final_fps:.2f}")
