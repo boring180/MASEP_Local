@@ -7,6 +7,9 @@ print(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 while True:
     ret, frame = camera.read()
+    if not ret:
+        print("Failed to read frame")
+        break
     cv2.imshow('Camera', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
