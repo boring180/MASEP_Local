@@ -1,6 +1,9 @@
 import cv2
 
 camera = cv2.VideoCapture(0)
+print(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+print(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
 
 while True:
     ret, frame = camera.read()
