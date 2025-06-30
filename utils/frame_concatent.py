@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 
 def concatent_frame(frames):
     """
@@ -13,6 +14,12 @@ def concatent_frame(frames):
         a single frame
     """
     
+    for i in range(len(frames)):
+        if i == 0:
+            continue
+        else:
+            frames[i] = cv2.resize(frames[i], (frames[0].shape[1], frames[0].shape[0]))
+        
     while len(frames) < 6:
         frames.append(np.zeros_like(frames[0]))
     
