@@ -1,6 +1,32 @@
 import numpy as np
 import cv2
 
+def resize_with_padding(frame, width, height):
+    # Get original dimensions
+    h, w = frame.shape[:2]
+    
+    # Calculate scaling factor to maintain aspect ratio
+    scale = min(width/w, height/h)
+    
+    # Calculate new dimensions
+    new_w = int(w * scale)
+    new_h = int(h * scale)
+    
+    # Resize image while maintaining aspect ratio
+    resized = cv2.resize(frame, (new_w, new_h))
+    
+    # Create black canvas of target size
+    result = np.zeros((height, width, 3), dtype=np.uint8)
+    
+    # Calculate padding
+    x_offset = (width - new_w) // 2
+    y_offset = (height - new_h) // 2
+    
+    # Place the resized image in the center
+    result[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = resized
+    
+    return result
+
 def concatent_frame(frames):
     """
     Concatenate six frames into a single frame.
@@ -14,11 +40,14 @@ def concatent_frame(frames):
         a single frame
     """
     
+    width = 0
+    
     for i in range(len(frames)):
-        if i == 0:
-            continue
-        else:
-            frames[i] = cv2.resize(frames[i], (frames[0].shape[1], frames[0].shape[0]))
+        width = max(width, frames[i].shape[1])
+        width = max(width, frames[i].shape[0])
+    
+    for i in range(len(frames)):
+        frames[i] = resize_with_padding(frames[i], width, width)
         
     while len(frames) < 6:
         frames.append(np.zeros_like(frames[0]))
