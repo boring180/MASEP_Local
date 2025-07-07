@@ -12,4 +12,5 @@ def slicing_frame(frame):
     """
     width = frame.shape[1] // 3
     height = frame.shape[0] // 2
-    return frame[0:height, 0:width], frame[0:height, width:width*2], frame[0:height, width*2:width*3], frame[height:height*2, 0:width], frame[height:height*2, width:width*2], frame[height:height*2, width*2:width*3]
+    frames = [frame[0:height, 0:width], frame[0:height, width:width*2], frame[0:height, width*2:width*3], frame[height:height*2, 0:width], frame[height:height*2, width:width*2], frame[height:height*2, width*2:width*3]]
+    return frames
