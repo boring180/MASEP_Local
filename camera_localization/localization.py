@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import json
+import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
@@ -16,16 +17,23 @@ SQUARE_SIZE = 0.023 # in meters
 
 def raw_localization(frame):
     frames = frame_slicing.slicing_frame(frame)
-    mtxs = {}
-    dists = {}
+    frames[0] = cv2.rotate(frames[0], cv2.ROTATE_90_COUNTERCLOCKWISE)
+    frames[1] = cv2.rotate(frames[1], cv2.ROTATE_90_CLOCKWISE)
+    frames[3] = cv2.rotate(frames[3], cv2.ROTATE_180)
+    
     results = {}
+    ret = {}
     for camera_name in cameras:
+        ret[camera_name] = False
+        
         with open(f'{callibration_path}/intrinsic_{camera_name}.json', 'r') as f:
             data = json.load(f)
             mtx = np.array(data['mtx'])
             dist = np.array(data['dist'])
-            mtxs[cameras[cameras.index(camera_name)]] = mtx
-            dists[cameras[cameras.index(camera_name)]] = dist
+
+        with open(f'{callibration_path}/extrinsic_{camera_name}.json', 'r') as f:
+            data = json.load(f)
+            extrinsic = np.array(data)
             
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
         parameters = cv2.aruco.DetectorParameters()
@@ -35,19 +43,31 @@ def raw_localization(frame):
         frames[cameras.index(camera_name)] = cv2.aruco.drawDetectedMarkers(frames[cameras.index(camera_name)], corners, ids)
         
         if ids is not None:
+            ret[camera_name] = True
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, SQUARE_SIZE, mtx, dist)
 
             transformation_matrix = np.eye(4)
             transformation_matrix[:3, :3] = R.from_rotvec(rvecs[0]).as_matrix()
             transformation_matrix[:3, 3] = tvecs[0]
-            results[cameras[cameras.index(camera_name)]] = transformation_matrix
+            results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
             
     frame = frame_concatent.concatent_frame(frames)
             
-    return results, frame
+    return results, frame, ret
 
-time_stamp = 0
+def draw_detection_graph(ax, results, ret):
+    
+    colors = ['red', 'green', 'blue', 'yellow', 'purple']
+    
+    for camera_name in cameras:
+        if ret[camera_name]:
+            ax.scatter(results[camera_name][0, 0], results[camera_name][1, 0], results[camera_name][2, 0], color=colors[cameras.index(camera_name)])
+
 cap = cv2.VideoCapture(video_path)
+cap.set(cv2.CAP_PROP_FPS, 100)
+
+fig = plt.figure(figsize=(6, 4))
+ax = fig.add_subplot(2, 3, 1, projection='3d')
 
 count = 0
 while True:
@@ -55,14 +75,15 @@ while True:
     if not ret:
         break
     
-    results, frame = raw_localization(frame)
-    print(results)
+    results, frame, ret = raw_localization(frame)
+    draw_detection_graph(ax, results, ret)
     cv2.imshow('frame', frame)
     
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
-    time_stamp += 1
     count += 1
 
 cap.release()
+fig.savefig('detection_graph.png')
+plt.show()
