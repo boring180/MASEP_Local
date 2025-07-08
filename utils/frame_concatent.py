@@ -16,7 +16,10 @@ def resize_with_padding(frame, width, height):
     resized = cv2.resize(frame, (new_w, new_h))
     
     # Create black canvas of target size
-    result = np.zeros((height, width, 3), dtype=np.uint8)
+    if frame.ndim == 3:
+        result = np.zeros((height, width, frame.shape[2]), dtype=np.uint8)
+    else:
+        result = np.zeros((height, width), dtype=np.uint8)
     
     # Calculate padding
     x_offset = (width - new_w) // 2
