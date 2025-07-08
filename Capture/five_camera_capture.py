@@ -17,16 +17,16 @@ camera_5 = cv2.VideoCapture(5) # Camera 1
 print("Camera5 open")
 
 # Set the camera parameters
-camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-camera_2.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-camera_2.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-camera_3.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-camera_3.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-camera_4.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-camera_4.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
-camera_5.set(cv2.CAP_PROP_FRAME_WIDTH, 3840)
-camera_5.set(cv2.CAP_PROP_FRAME_HEIGHT, 2160)
+camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+camera_2.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+camera_2.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+camera_3.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+camera_3.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+camera_4.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+camera_4.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+camera_5.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+camera_5.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # Read one frame from each camera to determine frame size
 ret1, frame_1 = camera_1.read()
