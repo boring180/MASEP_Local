@@ -67,7 +67,7 @@ cap = cv2.VideoCapture(video_path)
 cap.set(cv2.CAP_PROP_FPS, 100)
 
 fig = plt.figure(figsize=(6, 4))
-ax = fig.add_subplot(2, 3, 1, projection='3d')
+ax = fig.add_subplot(1, 1, 1, projection='3d')
 
 count = 0
 while True:
