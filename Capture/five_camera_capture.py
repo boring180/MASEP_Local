@@ -16,6 +16,8 @@ print("Camera4 open")
 camera_5 = cv2.VideoCapture(5) # Camera 1
 print("Camera5 open")
 
+<<<<<<< HEAD
+=======
 # Set the camera parameters
 camera_1.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 camera_1.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -28,6 +30,7 @@ camera_4.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 camera_5.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 camera_5.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+>>>>>>> origin/main
 # Read one frame from each camera to determine frame size
 ret1, frame_1 = camera_1.read()
 ret2, frame_2 = camera_2.read()
