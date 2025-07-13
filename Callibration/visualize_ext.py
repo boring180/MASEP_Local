@@ -117,7 +117,7 @@ def chessboard_projection():
                 ret_wide,rvecs_wide, tvecs_wide = cv2.solvePnP(objp, img_points_wide, mtxs[camera_name], dists[camera_name])
                 ret_cam,rvecs_cam, tvecs_cam = cv2.solvePnP(objp, img_points_cam, mtxs[camera_name], dists[camera_name])
                 if ret_wide == True and ret_cam == True:
-                    ax = fig.add_subplot(3, 2, i, projection='3d')
+                    ax = fig.add_subplot(2, 2, i, projection='3d')
                     transformation_matrix_wide = np.eye(4)
                     R_cam, _ = cv2.Rodrigues(rvecs_cam)
                     R_wide, _ = cv2.Rodrigues(rvecs_wide)
