@@ -46,9 +46,12 @@ def intrinsic_calibration(camera_name):
         shape = gray.shape
         ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x,number_of_internal_corners_y), None)
         
-        # img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        # img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        # img = cv2.rotate(img, cv2.ROTATE_180)
+        if camera_name == 'cam2':
+            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        elif camera_name == 'cam3':
+            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+        elif camera_name == 'cam0':
+            img = cv2.rotate(img, cv2.ROTATE_180)
 
         if ret == True:
             corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria=criteria)
