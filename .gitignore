@@ -6,3 +6,4 @@ Callibration/reprojection/
 Callibration/chessboard_points/
 *.DS_Store
 photos/
+Callibration/__pycache__/
