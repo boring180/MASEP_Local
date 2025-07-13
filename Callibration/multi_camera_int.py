@@ -6,7 +6,7 @@ import time
 import random
 random.seed(time.time())
 
-from Callibration.get_points import get_points
+from get_points import get_points
 
 number_of_squares_x = 11
 number_of_internal_corners_x = number_of_squares_x - 1
@@ -27,9 +27,6 @@ objp = objp * SQUARE_SIZE
 
         
 def intrinsic_calibration(cameras):
-    if not os.path.exists('results/rets.json') or not os.path.exists('results/object_points.json') or not os.path.exists('results/image_points.json') or not os.path.exists('results/shape.json'):
-        get_image_points()
-    
     with open('results/rets.json', 'r') as f:
         rets = np.array(json.load(f))
     with open('results/object_points.json', 'r') as f:
@@ -80,12 +77,14 @@ def intrinsic_calibration(cameras):
     
 def main():
     if os.path.exists('results/rets.json') and os.path.exists('results/object_points.json') and os.path.exists('results/image_points.json') and os.path.exists('results/shape.json'):
+        print('Image points already exist')
         pass
     else:
-        get_image_points()
+        get_points()
             
     results = os.listdir('results')
     if 'intrinsic_cam0.json' in results and 'intrinsic_cam1.json' in results and 'intrinsic_cam2.json' in results and 'intrinsic_cam3.json' in results and 'intrinsic_wide.json' in results:
+        print('Intrinsic calibration already done')
         pass
     else:
         intrinsic_calibration(cameras)
