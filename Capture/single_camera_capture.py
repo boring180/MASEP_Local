@@ -56,13 +56,14 @@ while True:
     )
 
     if ret:
+        number_of_images += 1
         cv2.imwrite(filename, frame)
 
     cv2.imshow('Camera', frame)
     if cv2.waitKey(1) & 0xFF == ord('q') or number_of_images >= MAX_IMAGES:
         break
     
-    number_of_images += 1
+    print(f'{number_of_images} images captured')
 
 # Release resources
 camera.release()
