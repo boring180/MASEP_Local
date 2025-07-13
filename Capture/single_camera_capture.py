@@ -40,13 +40,14 @@ if not ret:
 height, width = frame.shape[:2]
 
 # Setup video writer
-os.makedirs('../photos', exist_ok=True)
+path = '../photos/single_camera'
+os.makedirs(path, exist_ok=True)
 # Parameters for image selection
 MAX_IMAGES = 300  # Target number of images for calibration
 
 while True:
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'../photos/{CAMERA_NAME}_{timestamp}.jpg'
+    filename = f'{path}/{CAMERA_NAME}_{timestamp}.jpg'
     
     ret, frame = camera.read()
     if not ret:
