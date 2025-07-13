@@ -26,7 +26,13 @@ objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corner
 objp = objp * SQUARE_SIZE
 
         
-def intrinsic_calibration(cameras):
+def intrinsic_calibration():
+    if os.path.exists('results/rets.json') and os.path.exists('results/object_points.json') and os.path.exists('results/image_points.json') and os.path.exists('results/shape.json'):
+        print('Image points already exist')
+    else:
+        print('Image points not exist, start to get image points')
+        get_points()
+    
     with open('results/rets.json', 'r') as f:
         rets = np.array(json.load(f))
     with open('results/object_points.json', 'r') as f:
@@ -76,18 +82,14 @@ def intrinsic_calibration(cameras):
 
     
 def main():
-    if os.path.exists('results/rets.json') and os.path.exists('results/object_points.json') and os.path.exists('results/image_points.json') and os.path.exists('results/shape.json'):
-        print('Image points already exist')
-        pass
-    else:
-        get_points()
             
     results = os.listdir('results')
     if 'intrinsic_cam0.json' in results and 'intrinsic_cam1.json' in results and 'intrinsic_cam2.json' in results and 'intrinsic_cam3.json' in results and 'intrinsic_wide.json' in results:
         print('Intrinsic calibration already done')
         pass
     else:
-        intrinsic_calibration(cameras)
+        print('Intrinsic calibration not done, start to do intrinsic calibration')
+        intrinsic_calibration()
     
 if __name__ == '__main__':
     main()
