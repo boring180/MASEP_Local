@@ -89,7 +89,7 @@ def arrow_projection():
         ax.set_title(f'After calibration')
         ax.axis('off')
             
-    plt.savefig('arrow_projection.png')
+    plt.savefig('results/arrow_projection.png')
     
 def main():
     results = os.listdir('results')
