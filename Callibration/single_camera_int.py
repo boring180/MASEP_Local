@@ -8,14 +8,14 @@ import random
 random.seed(time.time())
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-import utils.frame_concatent as resize_with_padding
+from utils.frame_concatent import resize_with_padding
 
-number_of_squares_x = 11
+number_of_squares_x = 36
+number_of_squares_y = 14
 number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
 number_of_internal_corners_y = number_of_squares_y - 1
-SQUARE_SIZE = 0.023 # in meters
-CAMERA_NAME = 'cam0'
+SQUARE_SIZE = 5.4/6.0  # in meters
+cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 
 image_path = '../photos/single_camera'
 
@@ -28,17 +28,20 @@ objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corner
 objp = objp * SQUARE_SIZE
 
         
-def intrinsic_calibration():
+def intrinsic_calibration(camera_name):
     images = os.listdir(image_path)
     obj_pts = []
     img_pts = []
-    
+    image_count = 0
+
     for image in images:
-        if image.split('.')[0].split('_')[-1] != CAMERA_NAME:
-            continue
+        if image.split('.')[0].split('_')[0] != camera_name:
+            continue        
+        
+        image_count += 1
         
         img = cv2.imread(f'{image_path}/{image}')
-        img = resize_with_padding(img, img.shape[1], img.shape[0])
+        img = resize_with_padding(img, np.max(img.shape), np.max(img.shape))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         shape = gray.shape
         ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x,number_of_internal_corners_y), None)
@@ -56,25 +59,25 @@ def intrinsic_calibration():
             cv2.imwrite(f'chessboard_points/{image}', img)
     
             
-        obj_pts = np.array(obj_pts)
-        img_pts = np.array(img_pts)
-        
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None)
-        
-        with open(f'results/intrinsic_{CAMERA_NAME}.json', 'w') as f:
-            json.dump({'mtx': mtx.tolist(), 'dist': dist.tolist()}, f)
-        
-        print(f'{CAMERA_NAME} has {len(obj_pts)}/{len(images)} successful images')
+    obj_pts = np.array(obj_pts)
+    img_pts = np.array(img_pts)
+    
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None)
+    
+    with open(f'results/intrinsic_{camera_name}.json', 'w') as f:
+        json.dump({'mtx': mtx.tolist(), 'dist': dist.tolist()}, f)
+    
+    print(f'{camera_name} has {len(obj_pts)}/{image_count} successful images')
 
-        mean_error = 0
-        for i in range(len(obj_pts)):
-            imgpoints2, _ = cv2.projectPoints(obj_pts[i], rvecs[i], tvecs[i], mtx, dist)
-            # Reshape imgpoints2 to match img_pts dimensions
-            imgpoints2 = imgpoints2.reshape(-1, 2)
-            error = cv2.norm(img_pts[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
-            mean_error += error
-        mean_error = mean_error / len(obj_pts)
-        print(f'{CAMERA_NAME} has mean error: {mean_error}')
+    mean_error = 0
+    for i in range(len(obj_pts)):
+        imgpoints2, _ = cv2.projectPoints(obj_pts[i], rvecs[i], tvecs[i], mtx, dist)
+        # Reshape imgpoints2 to match img_pts dimensions
+        imgpoints2 = imgpoints2.reshape(-1, 2)
+        error = cv2.norm(img_pts[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+        mean_error += error
+    mean_error = mean_error / len(obj_pts)
+    print(f'{camera_name} has mean error: {mean_error}')
             
     return
 
@@ -82,12 +85,12 @@ def intrinsic_calibration():
 def main():
             
     results = os.listdir('results')
-    if f'intrinsic_{CAMERA_NAME}.json' in results:
-        print(f'Intrinsic calibration for {CAMERA_NAME} already done')
-        pass
-    else:
-        print(f'Intrinsic calibration for {CAMERA_NAME} not done, start to do intrinsic calibration')
-        intrinsic_calibration()
+    for camera_name in cameras:
+        if f'intrinsic_{camera_name}.json' in results:
+            print(f'Intrinsic calibration for {camera_name} already done')
+        else:
+            print(f'Intrinsic calibration for {camera_name} not done, start to do intrinsic calibration')
+            intrinsic_calibration(camera_name)
     
 if __name__ == '__main__':
     main()
