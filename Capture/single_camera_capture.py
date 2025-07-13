@@ -16,11 +16,6 @@ objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y, 3)
 objp[:, :2] = np.mgrid[0:number_of_internal_corners_x, 0:number_of_internal_corners_y].T.reshape(-1, 2)
 objp *= SQUARE_SIZE
 
-# Arrays to store object points, image points, and poses
-objpoints = []
-imgpoints = []
-poses = []  # Store rotation and translation vectors for pose diversity
-
 # Initialize camera
 camera = cv2.VideoCapture(1)
 if not camera.isOpened():
@@ -44,6 +39,7 @@ path = '../photos/single_camera'
 os.makedirs(path, exist_ok=True)
 # Parameters for image selection
 MAX_IMAGES = 300  # Target number of images for calibration
+number_of_images = 0
 
 while True:
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -65,8 +61,10 @@ while True:
         cv2.imwrite(filename, frame)
 
     cv2.imshow('Camera', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q') or len(objpoints) >= MAX_IMAGES:
+    if cv2.waitKey(1) & 0xFF == ord('q') or number_of_images >= MAX_IMAGES:
         break
+    
+    number_of_images += 1
 
 # Release resources
 camera.release()
