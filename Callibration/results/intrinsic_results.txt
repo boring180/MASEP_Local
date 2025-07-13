@@ -1,0 +1,15 @@
+Intrinsic calibration for cam2 not done, start to do intrinsic calibration
+cam2 has 90/200 successful images
+cam2 has mean error: 0.2724289680533634
+Intrinsic calibration for cam3 not done, start to do intrinsic calibration
+cam3 has 112/200 successful images
+cam3 has mean error: 0.29723523007517544
+Intrinsic calibration for wide not done, start to do intrinsic calibration
+wide has 56/200 successful images
+wide has mean error: 0.27704127534143347
+Intrinsic calibration for cam0 not done, start to do intrinsic calibration
+cam0 has 123/200 successful images
+cam0 has mean error: 0.2608407661598915
+Intrinsic calibration for cam1 not done, start to do intrinsic calibration
+cam1 has 103/200 successful images
+cam1 has mean error: 0.289210595907279
