@@ -32,8 +32,6 @@ if not ret:
     camera.release()
     exit()
 
-height, width = frame.shape[:2]
-
 # Setup video writer
 path = '../photos/single_camera'
 os.makedirs(path, exist_ok=True)
