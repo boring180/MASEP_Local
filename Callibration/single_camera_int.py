@@ -44,7 +44,8 @@ def intrinsic_calibration(camera_name):
         img = resize_with_padding(img, np.max(img.shape), np.max(img.shape))
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         shape = gray.shape
-        ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x,number_of_internal_corners_y), None)
+        flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
+        ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x,number_of_internal_corners_y), flags=flags)
         
         if camera_name == 'cam2':
             img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
