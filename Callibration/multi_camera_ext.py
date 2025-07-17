@@ -3,7 +3,7 @@ import numpy as np
 import json
 import os
 
-from get_points import get_points
+from get_points import get_points_chess_board
 
 number_of_squares_x = 11
 number_of_internal_corners_x = number_of_squares_x - 1
@@ -11,6 +11,7 @@ number_of_squares_y = 8
 number_of_internal_corners_y = number_of_squares_y - 1
 SQUARE_SIZE = 0.023 # in meters
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
+image_path = '../photos/multi_camera'
 
 # termination criteria
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -21,19 +22,19 @@ objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corner
 objp = objp * SQUARE_SIZE
 
 def extrinsic_calibration():
-    if os.path.exists('results/rets.json') and os.path.exists('results/object_points.json') and os.path.exists('results/image_points.json') and os.path.exists('results/shape.json'):
+    if os.path.exists('chessboard_points/rets.json') and os.path.exists('chessboard_points/object_points.json') and os.path.exists('chessboard_points/image_points.json') and os.path.exists('chessboard_points/shape.json'):
         pass
     else:
         print('Image points not exist, start to get image points')
-        get_points()
+        get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE)
     
-    with open('results/rets.json', 'r') as f:
+    with open('chessboard_points/rets.json', 'r') as f:
         rets = np.array(json.load(f))
-    with open('results/object_points.json', 'r') as f:
+    with open('chessboard_points/object_points.json', 'r') as f:
         objpoints = np.array(json.load(f))
-    with open('results/image_points.json', 'r') as f:
+    with open('chessboard_points/image_points.json', 'r') as f:
         imgpoints = np.array(json.load(f))
-    with open('results/shape.json', 'r') as f:
+    with open('chessboard_points/shape.json', 'r') as f:
         shape = tuple(json.load(f))
     mtxs = {}
     dists = {}
@@ -72,7 +73,9 @@ def extrinsic_calibration():
             transformation_matrix[:3, :3] = R
             transformation_matrix[:3, 3] = T[:3, 0]
         
-        print(f'{camera_name} has {len(stereo_objpoints)} successful images')
+            print(f'{camera_name} has {len(stereo_objpoints)} successful images')
+            
+            
         print(f'{camera_name} transformation matrix: {transformation_matrix}')
         
         with open(f'results/extrinsic_{camera_name}.json', 'w') as f:
@@ -81,13 +84,13 @@ def extrinsic_calibration():
     
 def main():   
     if os.path.exists('results/intrinsic_cam0.json') and os.path.exists('results/intrinsic_cam1.json') and os.path.exists('results/intrinsic_cam2.json') and os.path.exists('results/intrinsic_cam3.json') and os.path.exists('results/intrinsic_wide.json'):
-        print('Intrinsic calibration already done')
+        pass
     else:
-        print('Intrinsic calibration not done, please run intrinsic_calibration.py first')
+        print('Intrinsic calibration not done, please run intrinsic_calibration.sh first')
         return
         
     if os.path.exists('results/extrinsic_cam0.json') and os.path.exists('results/extrinsic_cam1.json') and os.path.exists('results/extrinsic_cam2.json') and os.path.exists('results/extrinsic_cam3.json') and os.path.exists('results/extrinsic_wide.json'):
-        print('Extrinsic calibration already done')
+        pass
     else:
         print('Extrinsic calibration not done, start to do extrinsic calibration')
         extrinsic_calibration()

@@ -7,6 +7,8 @@ import time
 import random
 random.seed(time.time())
 
+from get_points import get_points_chess_board
+
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_concatent import resize_with_padding
 
@@ -29,49 +31,21 @@ objp = objp * SQUARE_SIZE
 
         
 def intrinsic_calibration(camera_name):
-    images = os.listdir(image_path)
-    obj_pts = []
-    img_pts = []
-    image_count = 0
-
-    for image in images:
-        if image.split('.')[0].split('_')[0] != camera_name:
-            continue        
-        
-        image_count += 1
-        
-        img = cv2.imread(f'{image_path}/{image}')
-        img = resize_with_padding(img, np.max(img.shape), np.max(img.shape))
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        shape = gray.shape
-        flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
-        ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x,number_of_internal_corners_y), flags=flags)
-        
-        if camera_name == 'cam2':
-            img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        elif camera_name == 'cam3':
-            img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        elif camera_name == 'cam0':
-            img = cv2.rotate(img, cv2.ROTATE_180)
-
-        if ret == True:
-            corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria=criteria)
-            obj_pts.append(objp)
-            img_pts.append(corners2[:, 0, :])
-                
-            cv2.drawChessboardCorners(img, (number_of_internal_corners_x,number_of_internal_corners_y), corners2, ret)
-            cv2.imwrite(f'chessboard_points/{image}', img)
+    object_points_files = os.listdir('chessboard_points/')
+    if f'{camera_name}_object_points.json' not in object_points_files or f'{camera_name}_image_points.json' not in object_points_files:
+        get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE, camera_name)
     
-            
-    obj_pts = np.array(obj_pts)
-    img_pts = np.array(img_pts)
-    
-    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None)
+    with open(f'chessboard_points/{camera_name}_object_points.json', 'r') as f:
+        obj_pts = np.array(json.load(f))
+    with open(f'chessboard_points/{camera_name}_image_points.json', 'r') as f:
+        img_pts = np.array(json.load(f))
+    with open(f'chessboard_points/shape.json', 'r') as f:
+        shape = json.load(f)
+        
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts.astype(np.float32), img_pts.astype(np.float32), shape[::-1], None, None)
     
     with open(f'results/intrinsic_{camera_name}.json', 'w') as f:
         json.dump({'mtx': mtx.tolist(), 'dist': dist.tolist()}, f)
-    
-    print(f'{camera_name} has {len(obj_pts)}/{image_count} successful images')
 
     mean_error = 0
     for i in range(len(obj_pts)):
@@ -87,7 +61,7 @@ def intrinsic_calibration(camera_name):
 
     
 def main():
-            
+    os.makedirs('results', exist_ok=True)
     results = os.listdir('results')
     for camera_name in cameras:
         if f'intrinsic_{camera_name}.json' in results:
