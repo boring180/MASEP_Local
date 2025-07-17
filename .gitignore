@@ -1,0 +1,9 @@
+video/
+*.DS_Store
+utils/__pycache__/
+Callibration/screen_shots/
+Callibration/reprojection/
+Callibration/chessboard_points/
+*.DS_Store
+photos/
+Callibration/__pycache__/
