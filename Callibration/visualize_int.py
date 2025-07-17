@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import sys
 import time
 import random
-from multi_camera_int import intrinsic_calibration
 random.seed(time.time())
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
@@ -92,12 +91,6 @@ def arrow_projection():
     plt.savefig('results/arrow_projection.png')
     
 def main():
-    results = os.listdir('results')
-    if 'intrinsic_cam0.json' in results and 'intrinsic_cam1.json' in results and 'intrinsic_cam2.json' in results and 'intrinsic_cam3.json' in results and 'intrinsic_wide.json' in results:
-        print('Intrinsic calibration already done')
-    else:
-        intrinsic_calibration()
-
     arrow_projection()
     
 if __name__ == '__main__':

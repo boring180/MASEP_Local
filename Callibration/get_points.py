@@ -57,13 +57,13 @@ def get_points_chess_board(image_path, number_of_internal_corners_x, number_of_i
         for i in range(len(frames)):
             frame = frames[i]
             shape = frame.shape
-            flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
-            ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=flags)
+            # flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
+            ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=None)
             
             if ret == True:
-                corners2 = cv2.cornerSubPix(frame, corners, (11,11), (-1,-1), criteria=criteria)
+                # corners = cv2.cornerSubPix(frame, corners, (11,11), (-1,-1), criteria=criteria)
                 frame_objpoints[i, :, :] = objp
-                frame_imgpoints[i, :, :] = corners2[:, 0, :]
+                frame_imgpoints[i, :, :] = corners[:, 0, :]
                 
             else:
                 frame_rets[i] = False
@@ -93,9 +93,7 @@ def get_points_chess_board(image_path, number_of_internal_corners_x, number_of_i
             json.dump(objpoints.tolist(), f)
         with open('chessboard_points/image_points.json', 'w') as f:
             json.dump(imgpoints.tolist(), f)
-            
-        for i in range(len(cameras)):
-            print(f'{cameras[i]} has {rets[i].sum()}/{rets[i].shape[0]} successful images')
+
     with open('chessboard_points/shape.json', 'w') as f:
         json.dump(shape, f)
         
