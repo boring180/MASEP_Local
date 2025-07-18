@@ -131,10 +131,10 @@ def chessboard_projection():
                     coord_thru_wide = transformation_matrix_wide @ objp_homogeneous.T
                     projected_coord = transformation_matrices[camera_name] @ coord_thru_cam
                     RMS_error = np.sqrt(np.mean((projected_coord[:3, :] - coord_thru_wide[:3, :])**2))
-                    space_between_points_cam = np.sqrt((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0])**2)
-                    space_between_points_wide = np.sqrt((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0])**2)
-                    RMS_error_between_points = np.sqrt(np.mean((space_between_points_cam - space_between_points_wide)**2))
-                    print(f'{camera_name} has RMS projectionerror: {RMS_error}, RMS error between points: {RMS_error_between_points}')
+                    space_between_points_cam = np.sqrt(np.mean(((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0]) - objp) ** 2))
+                    space_between_points_wide = np.sqrt(np.mean(((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0]) - objp) ** 2))
+                    print(f'{camera_name} has RMS projection error to wide: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between wide and ground truth: {space_between_points_wide}')
+                    
                     ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color=colors[cameras.index(camera_name)])
                     ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='black')
                     break
