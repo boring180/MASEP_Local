@@ -18,7 +18,7 @@ cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 
-def get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = None):        
+def get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = None):        
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(10,9,0)
     objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
     objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
@@ -58,6 +58,7 @@ def get_points_chess_board(image_path, number_of_internal_corners_x, number_of_i
             frame = frames[i]
             shape = frame.shape
             # flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
+            # TODO: Use single frame to get points
             ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=None)
             
             if ret == True:
@@ -97,9 +98,24 @@ def get_points_chess_board(image_path, number_of_internal_corners_x, number_of_i
     with open('chessboard_points/shape.json', 'w') as f:
         json.dump(shape, f)
         
+def get_points_single_frame():
+    number_of_squares_x = 36
+    number_of_squares_y = 14
+    number_of_internal_corners_x = number_of_squares_x - 1
+    number_of_internal_corners_y = number_of_squares_y - 1
+    square_size = 5.4/6.0  # in meters
+    
+    objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
+    objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
+    objp = objp * square_size
+    
+    # TODO: Return corners and objp
+    
+    pass
+        
 if __name__ == '__main__':
     image_path = '../photos/single_camera'
     number_of_internal_corners_x = 35
     number_of_internal_corners_y = 13
     square_size = 5.4/6.0
-    get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = 'cam0')
+    get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = 'cam0')

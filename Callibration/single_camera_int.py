@@ -7,7 +7,7 @@ import time
 import random
 random.seed(time.time())
 
-from get_points import get_points_chess_board
+from get_points import get_points
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_concatent import resize_with_padding
@@ -33,7 +33,7 @@ objp = objp * SQUARE_SIZE
 def intrinsic_calibration(camera_name):
     object_points_files = os.listdir('chessboard_points/')
     if f'{camera_name}_object_points.json' not in object_points_files or f'{camera_name}_image_points.json' not in object_points_files:
-        get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE, camera_name)
+        get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE, camera_name)
     
     with open(f'chessboard_points/{camera_name}_object_points.json', 'r') as f:
         obj_pts = np.array(json.load(f))
