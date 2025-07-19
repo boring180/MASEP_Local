@@ -43,6 +43,7 @@ def draw(img, corners, imgpts):
 
 def projection(img, mtx, dist):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # TODO: Use single frame to get points
     ret, corners = cv2.findChessboardCorners(gray, (number_of_internal_corners_x, number_of_internal_corners_y), None)
     if ret == True:
         corners2 = cv2.cornerSubPix(gray, corners, (11,11), (-1,-1), criteria=criteria)

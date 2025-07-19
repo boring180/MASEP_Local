@@ -93,7 +93,7 @@ def chessboard_projection():
             
     i = 1
     colors = ['red', 'green', 'blue', 'yellow', 'purple']
-    fig = plt.figure(figsize=(16, 24))
+    fig = plt.figure(figsize=(16, 16))
 
     for camera_name in cameras:
         images = os.listdir(image_path)
@@ -108,6 +108,7 @@ def chessboard_projection():
             
             gray_wide = cv2.cvtColor(wide_img, cv2.COLOR_BGR2GRAY)
             gray_cam = cv2.cvtColor(cam_img, cv2.COLOR_BGR2GRAY)
+            # TODO: Use single frame to get points
             ret_wide, corners_wide = cv2.findChessboardCorners(gray_wide, (number_of_internal_corners_x, number_of_internal_corners_y), None)
             ret_cam, corners_cam = cv2.findChessboardCorners(gray_cam, (number_of_internal_corners_x, number_of_internal_corners_y), None)
             
@@ -135,8 +136,9 @@ def chessboard_projection():
                     space_between_points_wide = np.sqrt(np.mean(((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0]) - objp) ** 2))
                     print(f'{camera_name} has RMS projection error to wide: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between wide and ground truth: {space_between_points_wide}')
                     
-                    ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color=colors[cameras.index(camera_name)])
-                    ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='black')
+                    ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color='red')
+                    ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='blue')
+                    ax.set_title(f'{camera_name}')
                     break
         i += 1
     
