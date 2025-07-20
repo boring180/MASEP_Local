@@ -12,28 +12,15 @@ from get_points import get_points
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_concatent import resize_with_padding
 
-number_of_squares_x = 36
-number_of_squares_y = 14
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_internal_corners_y = number_of_squares_y - 1
-SQUARE_SIZE = 5.4/6.0  # in meters
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 
 image_path = '../photos/single_camera'
-
-# termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(10,9,0)
-objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-objp = objp * SQUARE_SIZE
 
         
 def intrinsic_calibration(camera_name):
     object_points_files = os.listdir('chessboard_points/')
     if f'{camera_name}_object_points.json' not in object_points_files or f'{camera_name}_image_points.json' not in object_points_files:
-        get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE, camera_name)
+        get_points(image_path, camera_name)
     
     with open(f'chessboard_points/{camera_name}_object_points.json', 'r') as f:
         obj_pts = np.array(json.load(f))
