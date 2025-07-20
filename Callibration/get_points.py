@@ -14,22 +14,29 @@ from utils.frame_concatent import resize_with_padding
 
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 
-# termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+# number_of_squares_x = 36
+# number_of_squares_y = 14
+# number_of_internal_corners_x = number_of_squares_x - 1
+# number_of_internal_corners_y = number_of_squares_y - 1
+# square_size = 5.4/6.0  # in meters
 
+number_of_squares_x = 11
+number_of_internal_corners_x = number_of_squares_x - 1
+number_of_squares_y = 8
+number_of_internal_corners_y = number_of_squares_y - 1
+square_size = 0.023 # in meters
 
-def get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = None):        
-    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(10,9,0)
-    objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-    objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-    objp = objp * square_size
-    
-    imgpoints = [] # 2D points in image plane
-    objpoints = [] # 3D points in world coordinate system
-    rets = [] # boolean values
-    
+objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
+objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
+objp = objp * square_size
+
+def get_points(image_path, camera_name = None):            
     images = glob.glob(f'{image_path}/*.jpg')
     shape = (0,0)
+    imgpoints = []
+    objpoints = []
+    rets = []
+    
     
     for fname in images:
         if camera_name is not None and camera_name not in fname:
@@ -57,12 +64,10 @@ def get_points(image_path, number_of_internal_corners_x, number_of_internal_corn
         for i in range(len(frames)):
             frame = frames[i]
             shape = frame.shape
-            # flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE
-            # TODO: Use single frame to get points
-            ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=None)
+
+            ret, corners, objp = get_points_single_frame(frame)
             
             if ret == True:
-                # corners = cv2.cornerSubPix(frame, corners, (11,11), (-1,-1), criteria=criteria)
                 frame_objpoints[i, :, :] = objp
                 frame_imgpoints[i, :, :] = corners[:, 0, :]
                 
@@ -98,24 +103,10 @@ def get_points(image_path, number_of_internal_corners_x, number_of_internal_corn
     with open('chessboard_points/shape.json', 'w') as f:
         json.dump(shape, f)
         
-def get_points_single_frame():
-    number_of_squares_x = 36
-    number_of_squares_y = 14
-    number_of_internal_corners_x = number_of_squares_x - 1
-    number_of_internal_corners_y = number_of_squares_y - 1
-    square_size = 5.4/6.0  # in meters
-    
-    objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-    objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-    objp = objp * square_size
-    
-    # TODO: Return corners and objp
-    
-    pass
+def get_points_single_frame(frame, number_of_internal_corners_x=number_of_internal_corners_x, number_of_internal_corners_y=number_of_internal_corners_y, objp=objp):    
+    ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=None)
+    return ret, corners, objp
         
 if __name__ == '__main__':
     image_path = '../photos/single_camera'
-    number_of_internal_corners_x = 35
-    number_of_internal_corners_y = 13
-    square_size = 5.4/6.0
-    get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, square_size, camera_name = 'cam0')
+    get_points(image_path, camera_name = 'cam0')

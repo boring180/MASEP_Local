@@ -5,11 +5,6 @@ import os
 
 from get_points import get_points
 
-number_of_squares_x = 11
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
-number_of_internal_corners_y = number_of_squares_y - 1
-SQUARE_SIZE = 0.023 # in meters
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 image_path = '../photos/multi_camera'
 
@@ -18,7 +13,7 @@ def extrinsic_calibration():
         pass
     else:
         print('Image points not exist, start to get image points')
-        get_points(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE)
+        get_points(image_path)
     
     with open('chessboard_points/rets.json', 'r') as f:
         rets = np.array(json.load(f))
