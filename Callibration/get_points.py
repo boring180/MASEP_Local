@@ -14,17 +14,17 @@ from utils.frame_concatent import resize_with_padding
 
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 
-# number_of_squares_x = 36
-# number_of_squares_y = 14
-# number_of_internal_corners_x = number_of_squares_x - 1
-# number_of_internal_corners_y = number_of_squares_y - 1
-# square_size = 5.4/6.0  # in meters
-
-number_of_squares_x = 11
+number_of_squares_x = 36
+number_of_squares_y = 14
 number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
 number_of_internal_corners_y = number_of_squares_y - 1
-square_size = 0.023 # in meters
+square_size = 5.4/6.0  # in meters
+
+# number_of_squares_x = 11
+# number_of_internal_corners_x = number_of_squares_x - 1
+# number_of_squares_y = 8
+# number_of_internal_corners_y = number_of_squares_y - 1
+# square_size = 0.023 # in meters
 
 objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
 objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
