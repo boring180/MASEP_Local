@@ -16,13 +16,13 @@ from get_points import get_points_single_frame
 
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 
-image_path = '../photos/multi_camera'
+image_path = '../photos/single_camera'
 
-number_of_squares_x = 11
+number_of_squares_x = 36
+number_of_squares_y = 14
 number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
 number_of_internal_corners_y = number_of_squares_y - 1
-square_size = 0.023 # in meters
+square_size = 5.4/6.0  # in meters
 
 axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 axis = axis * square_size
@@ -61,7 +61,7 @@ def arrow_projection():
             
     fig = plt.figure(figsize=(20, 25))
 
-    for i in range(5):
+    for i in range(len(cameras)):
         images = os.listdir(image_path)
         random_index = random.randint(0, len(images) - 1)
         image = cv2.imread(f'{image_path}/{images[random_index]}')
