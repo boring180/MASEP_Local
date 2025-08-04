@@ -7,3 +7,5 @@ Callibration/chessboard_points/
 *.DS_Store
 photos/
 Callibration/__pycache__/
+history_video_and_photos/
+.idea
