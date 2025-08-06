@@ -25,19 +25,17 @@ def put_chessboard_corners(frame_queue, display_frames_queue):
             frames = frame_queue.get()
             if frames is None:
                 break
-            
+            for i in range(len(frames)):
+                frame = frames[i]
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
+                if ret:
+                    cv2.drawChessboardCorners(frame, CHESSBOARD_SIZE, corners, ret)
+                frames[i] = frame
             display_frames_queue.put(concatent_frame(frames))
         else:
             time.sleep(0.01)
             continue
-        
-        # display_frame = frame.copy()
-        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
-        # if ret:
-        #     corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), CRITERIA)
-        #     cv2.drawChessboardCorners(display_frame, CHESSBOARD_SIZE, corners, ret)
-        # display_frames.append(display_frame)
 
 def main():
     # Initialize cameras (only first three)
