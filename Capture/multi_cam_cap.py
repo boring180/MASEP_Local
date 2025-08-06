@@ -20,7 +20,7 @@ CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
 
-def put_chessboard_corners(frame_queue, display_frames_queue):
+def put_chessboard_corners(frame_queue):
     # Create display frame with chessboard corners
     while True:
         if not frame_queue.empty():
@@ -34,7 +34,9 @@ def put_chessboard_corners(frame_queue, display_frames_queue):
                 if ret:
                     cv2.drawChessboardCorners(frame, CHESSBOARD_SIZE, corners, ret)
                 frames[i] = frame
-            display_frames_queue.put(concatent_frame(frames))
+            show_frame = concatent_frame(frames)
+            cv2.imshow('Cameras with Chessboard', show_frame)
+            
         else:
             time.sleep(0.01)
             continue
@@ -50,7 +52,6 @@ def main():
             return
         
     frame_queue = Queue()
-    display_frames_queue = Queue()
     
     frames = []
     for i in range(len(cameras)):
@@ -74,12 +75,11 @@ def main():
 
     print("Press 'q' to stop recording")
     
-    chessboard_thread = threading.Thread(target=put_chessboard_corners, args=(frame_queue, display_frames_queue))
+    chessboard_thread = threading.Thread(target=put_chessboard_corners, args=(frame_queue))
     chessboard_thread.start()
 
     while True:
         frames = []
-        display_frames = []
 
         # Capture frames from all cameras
         for i in range(len(cameras)):
@@ -91,9 +91,6 @@ def main():
             
         # Write original frames (without chessboard) to video
         out.write(concatent_frame(frames))
-        
-        display_frame = display_frames_queue.get()
-        cv2.imshow('Cameras with Chessboard', display_frame)
 
         # Calculate and display FPS
         frame_count += 1
