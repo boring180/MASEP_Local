@@ -8,26 +8,16 @@ import time
 import random
 from multi_camera_ext import extrinsic_calibration
 random.seed(time.time())
+from get_points import get_points_single_frame
+from get_points import square_size
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 import utils.frame_slicing as frame_slicing
 import utils.frame_concatent as frame_concatent
 
-number_of_squares_x = 11
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
-number_of_internal_corners_y = number_of_squares_y - 1
-SQUARE_SIZE = 0.023 # in meters
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 image_path = '../photos/multi_camera'
 
-# termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(10,9,0)
-objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-objp = objp * SQUARE_SIZE
 
 def visualize(fig, elev, azim, roll, i):
     transformation_matrices = {}
@@ -58,7 +48,7 @@ def visualize(fig, elev, azim, roll, i):
     
     for camera_name in cameras:
         colors = ['red', 'green', 'blue']
-        axis = np.eye(3) * SQUARE_SIZE
+        axis = np.eye(3) * square_size
         for i in range(3):
             orientation = transformation_matrices[camera_name][:3, :3] @ axis[i, :]
             x = transformation_matrices[camera_name][0, 3]
@@ -93,7 +83,7 @@ def chessboard_projection():
             
     i = 1
     colors = ['red', 'green', 'blue', 'yellow', 'purple']
-    fig = plt.figure(figsize=(16, 24))
+    fig = plt.figure(figsize=(16, 16))
 
     for camera_name in cameras:
         images = os.listdir(image_path)
@@ -108,14 +98,12 @@ def chessboard_projection():
             
             gray_wide = cv2.cvtColor(wide_img, cv2.COLOR_BGR2GRAY)
             gray_cam = cv2.cvtColor(cam_img, cv2.COLOR_BGR2GRAY)
-            ret_wide, corners_wide = cv2.findChessboardCorners(gray_wide, (number_of_internal_corners_x, number_of_internal_corners_y), None)
-            ret_cam, corners_cam = cv2.findChessboardCorners(gray_cam, (number_of_internal_corners_x, number_of_internal_corners_y), None)
+            ret_wide, corners_wide, objp = get_points_single_frame(gray_wide)
+            ret_cam, corners_cam, objp = get_points_single_frame(gray_cam)
             
             if ret_wide == True and ret_cam == True:
-                img_points_wide = cv2.cornerSubPix(gray_wide, corners_wide, (11,11), (-1,-1), criteria=criteria)
-                img_points_cam = cv2.cornerSubPix(gray_cam, corners_cam, (11,11), (-1,-1), criteria=criteria)
-                ret_wide,rvecs_wide, tvecs_wide = cv2.solvePnP(objp, img_points_wide, mtxs[camera_name], dists[camera_name])
-                ret_cam,rvecs_cam, tvecs_cam = cv2.solvePnP(objp, img_points_cam, mtxs[camera_name], dists[camera_name])
+                ret_wide,rvecs_wide, tvecs_wide = cv2.solvePnP(objp, corners_wide, mtxs[camera_name], dists[camera_name])
+                ret_cam,rvecs_cam, tvecs_cam = cv2.solvePnP(objp, corners_cam, mtxs[camera_name], dists[camera_name])
                 if ret_wide == True and ret_cam == True:
                     ax = fig.add_subplot(2, 2, i, projection='3d')
                     transformation_matrix_wide = np.eye(4)
@@ -131,12 +119,13 @@ def chessboard_projection():
                     coord_thru_wide = transformation_matrix_wide @ objp_homogeneous.T
                     projected_coord = transformation_matrices[camera_name] @ coord_thru_cam
                     RMS_error = np.sqrt(np.mean((projected_coord[:3, :] - coord_thru_wide[:3, :])**2))
-                    space_between_points_cam = np.sqrt((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0])**2)
-                    space_between_points_wide = np.sqrt((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0])**2)
-                    RMS_error_between_points = np.sqrt(np.mean((space_between_points_cam - space_between_points_wide)**2))
-                    print(f'{camera_name} has RMS projectionerror: {RMS_error}, RMS error between points: {RMS_error_between_points}')
-                    ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color=colors[cameras.index(camera_name)])
-                    ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='black')
+                    space_between_points_cam = np.sqrt(np.mean(((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0]) - objp) ** 2))
+                    space_between_points_wide = np.sqrt(np.mean(((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0]) - objp) ** 2))
+                    print(f'{camera_name} has RMS projection error to wide: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between wide and ground truth: {space_between_points_wide}')
+                    
+                    ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color='red')
+                    ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='blue')
+                    ax.set_title(f'{camera_name}')
                     break
         i += 1
     

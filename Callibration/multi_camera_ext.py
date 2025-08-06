@@ -3,30 +3,17 @@ import numpy as np
 import json
 import os
 
-from get_points import get_points_chess_board
+from get_points import get_points
 
-number_of_squares_x = 11
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_squares_y = 8
-number_of_internal_corners_y = number_of_squares_y - 1
-SQUARE_SIZE = 0.023 # in meters
 cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 image_path = '../photos/multi_camera'
-
-# termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-# prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(10,9,0)
-objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-objp = objp * SQUARE_SIZE
 
 def extrinsic_calibration():
     if os.path.exists('chessboard_points/rets.json') and os.path.exists('chessboard_points/object_points.json') and os.path.exists('chessboard_points/image_points.json') and os.path.exists('chessboard_points/shape.json'):
         pass
     else:
         print('Image points not exist, start to get image points')
-        get_points_chess_board(image_path, number_of_internal_corners_x, number_of_internal_corners_y, SQUARE_SIZE)
+        get_points(image_path)
     
     with open('chessboard_points/rets.json', 'r') as f:
         rets = np.array(json.load(f))
