@@ -11,8 +11,10 @@ from queue import Queue
 import threading
 
 # Chessboard pattern settings for calibration
-CHESSBOARD_SIZE = (9, 6)  # Number of inner corners (columns, rows)
-SQUARE_SIZE = 0.025  # Size of a square in meters
+COL_NUM = 11
+ROW_NUM = 8
+CHESSBOARD_SIZE = (COL_NUM - 1, ROW_NUM - 1)  # Number of inner corners (columns, rows)
+SQUARE_SIZE = 0.023  # Size of a square in meters
 CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
@@ -39,7 +41,7 @@ def put_chessboard_corners(frame_queue, display_frames_queue):
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(1), cv2.VideoCapture(2), cv2.VideoCapture(3)]
+    cameras = [cv2.VideoCapture(0), cv2.VideoCapture(1), cv2.VideoCapture(3)]
     
     # Verify cameras opened successfully
     for i in range(len(cameras)):
