@@ -38,7 +38,7 @@ def display_video(frame_queue, display_frames_queue):
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(1), cv2.VideoCapture(2), cv2.VideoCapture(3)]
+    cameras = [(1, cv2.VideoCapture(1)), (2, cv2.VideoCapture(2)), (3, cv2.VideoCapture(3))]
     
     # Verify cameras opened successfully
     for idx, cap in cameras:
