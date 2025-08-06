@@ -38,21 +38,22 @@ def display_video(frame_queue, display_frames_queue):
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [(1, cv2.VideoCapture(1)), (2, cv2.VideoCapture(2)), (3, cv2.VideoCapture(3))]
+    cameras = [cv2.VideoCapture(1), cv2.VideoCapture(2), cv2.VideoCapture(3)]
     
     # Verify cameras opened successfully
-    for idx, cap in cameras:
-        if not cap.isOpened():
-            print(f"Error: Could not open camera {idx}")
+    for i in range(len(cameras)):
+        if not cameras[i].isOpened():
+            print(f"Error: Could not open camera {i}")
             return
         
     frame_queue = Queue()
     display_frames_queue = Queue()
     
     frames = []
-    for idx, cap in cameras:
-        ret, frame = cap.read()
+    for i in range(len(cameras)):
+        ret, frame = cameras[i].read()
         frames.append(frame)
+    print(f'Frame number: {len(frames)}')
     frame = concatent_frame(frames)
     height, width = frame.shape[:2]
 
@@ -78,12 +79,12 @@ def main():
         display_frames = []
 
         # Capture frames from all cameras
-        for idx, cap in cameras:
-            ret, frame = cap.read()
+        for i in range(len(cameras)):
+            ret, frame = cameras[i].read()
             if not ret:
-                print(f"Warning: Could not read frame from camera {idx}")
+                print(f"Warning: Could not read frame from camera {i}")
             frames.append(frame)
-            frame_queue.put(frame)
+            frame_queue.put(frames)
             
         # Write original frames (without chessboard) to video
         out.write(concatent_frame(frames))
