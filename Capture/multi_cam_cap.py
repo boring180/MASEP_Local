@@ -18,11 +18,14 @@ CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
 
-def display_video(frame_queue, display_frames_queue):
+def put_chessboard_corners(frame_queue, display_frames_queue):
     # Create display frame with chessboard corners
     while True:
         if not frame_queue.empty():
             frames = frame_queue.get()
+            if frames is None:
+                break
+            
             display_frames_queue.put(concatent_frame(frames))
         else:
             time.sleep(0.01)
@@ -71,8 +74,8 @@ def main():
 
     print("Press 'q' to stop recording")
     
-    display_thread = threading.Thread(target=display_video, args=(frame_queue, display_frames_queue))
-    display_thread.start()
+    chessboard_thread = threading.Thread(target=put_chessboard_corners, args=(frame_queue, display_frames_queue))
+    chessboard_thread.start()
 
     while True:
         frames = []
@@ -110,6 +113,12 @@ def main():
         cap.release()
     cv2.destroyAllWindows()
     print(f"Video saved as {filename}")
+    
+    frame_queue.put(None)
+    
+    chessboard_thread.join()
+    if chessboard_thread.is_alive():
+        chessboard_thread.terminate()
     
 if __name__ == "__main__":
     main()
