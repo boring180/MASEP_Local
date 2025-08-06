@@ -7,6 +7,7 @@ Callibration/chessboard_points/
 *.DS_Store
 photos/
 Callibration/__pycache__/
+<<<<<<< HEAD
 captures/
 history_video_and_photos/
 .idea
