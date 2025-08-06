@@ -64,7 +64,7 @@ def main():
         
         show_frames = []
         for i in range(len(frames)):
-            shown_frame = frames[i]
+            shown_frame = frames[i].copy()
             gray = cv2.cvtColor(shown_frame, cv2.COLOR_BGR2GRAY)
             ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
             if ret:
