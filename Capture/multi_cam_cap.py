@@ -7,6 +7,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import frame_slicing
 from utils.frame_concatent import concatent_frame
+from queue import Queue
+import threading
 
 # Chessboard pattern settings for calibration
 CHESSBOARD_SIZE = (9, 6)  # Number of inner corners (columns, rows)
@@ -15,6 +17,24 @@ CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
+
+def display_video(frame_queue, display_frames_queue):
+    # Create display frame with chessboard corners
+    while True:
+        if not frame_queue.empty():
+            frames = frame_queue.get()
+            display_frames_queue.put(concatent_frame(frames))
+        else:
+            time.sleep(0.01)
+            continue
+        
+        # display_frame = frame.copy()
+        # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
+        # if ret:
+        #     corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), CRITERIA)
+        #     cv2.drawChessboardCorners(display_frame, CHESSBOARD_SIZE, corners, ret)
+        # display_frames.append(display_frame)
 
 def main():
     # Initialize cameras (only first three)
@@ -26,6 +46,9 @@ def main():
             print(f"Error: Could not open camera {idx}")
             return
         
+    frame_queue = Queue()
+    display_frames_queue = Queue()
+    
     frames = []
     for idx, cap in cameras:
         ret, frame = cap.read()
@@ -46,6 +69,9 @@ def main():
     start_time = time.time()
 
     print("Press 'q' to stop recording")
+    
+    display_thread = threading.Thread(target=display_video, args=(frame_queue, display_frames_queue))
+    display_thread.start()
 
     while True:
         frames = []
@@ -57,22 +83,13 @@ def main():
             if not ret:
                 print(f"Warning: Could not read frame from camera {idx}")
             frames.append(frame)
-            output_frame = concatent_frame(frames)
+            frame_queue.put(frame)
             
-
-            # Create display frame with chessboard corners
-            display_frame = frame.copy()
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
-            if ret:
-                corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), CRITERIA)
-                cv2.drawChessboardCorners(display_frame, CHESSBOARD_SIZE, corners, ret)
-            display_frames.append(display_frame)
-
-        # Show preview with chessboard
-        cv2.imshow('Cameras with Chessboard', display_frame)
         # Write original frames (without chessboard) to video
-        out.write(output_frame)
+        out.write(concatent_frame(frames))
+        
+        display_frame = display_frames_queue.get()
+        cv2.imshow('Cameras with Chessboard', display_frame)
 
         # Calculate and display FPS
         frame_count += 1
@@ -92,6 +109,6 @@ def main():
         cap.release()
     cv2.destroyAllWindows()
     print(f"Video saved as {filename}")
-
+    
 if __name__ == "__main__":
     main()
