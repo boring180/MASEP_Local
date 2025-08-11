@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 import time
 import random
-from multi_camera_ext import extrinsic_calibration
+from callibration.camera_ext import extrinsic_calibration
 random.seed(time.time())
 from get_points import get_points_single_frame
 from get_points import square_size
