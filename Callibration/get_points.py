@@ -21,8 +21,10 @@ def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_
     return objp
 
 def get_points(settings, calibration_type):  
-    
-    single_camera = settings.internal_callibration_type == 'single'
+    if calibration_type == 'extrinsic' or settings.internal_callibration_type == 'multi':
+        single_camera = False
+    else:
+        single_camera = True
     
     # Automatically determine image path based on calibration type
     if single_camera:
@@ -36,12 +38,10 @@ def get_points(settings, calibration_type):
     objpoints = []
     rets = []
     
-    if settings.internal_callibration_type == 'single':
-        pattern_size = settings.pattern_size_internal
-        pattern_square_size = settings.pattern_square_size_internal
+    if calibration_type == 'intrinsic':
+        pattern_size = settings.pattern_size_internal 
     else:
         pattern_size = settings.pattern_size_external
-        pattern_square_size = settings.pattern_square_size_external
         
     pattern_size_X = pattern_size[0] - 1
     pattern_size_Y = pattern_size[1] - 1
