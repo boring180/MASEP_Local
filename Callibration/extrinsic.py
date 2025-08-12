@@ -9,7 +9,8 @@ from settings_loader import settings
 
 # Get settings - will raise exception if settings file is missing or invalid
 cameras = settings.cameras
-image_path = settings.image_path_external
+# External calibration always uses multi-camera images
+image_path = '../photos/multi_camera'
 
 def extrinsic_calibration():
     if os.path.exists('chessboard_points/rets.json') and os.path.exists('chessboard_points/object_points.json') and os.path.exists('chessboard_points/image_points.json') and os.path.exists('chessboard_points/shape.json'):

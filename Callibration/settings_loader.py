@@ -8,24 +8,15 @@ class CalibrationSettings:
                 self.settings = json.load(f)
         except:
             raise Exception(f"Error loading settings from {settings_file}")
+        
+    def __str__(self):
+        return json.dumps(self.settings, indent=4)
     
     @property
     def cameras(self):
         if 'cameras' not in self.settings:
             raise Exception("Error: 'cameras' not found in settings")
         return self.settings['cameras']
-    
-    @property
-    def image_path_internal(self):
-        if 'image_path_internal' not in self.settings:
-            raise Exception("Error: 'image_path_internal' not found in settings")
-        return self.settings['image_path_internal']
-    
-    @property
-    def image_path_external(self):
-        if 'image_path_external' not in self.settings:
-            raise Exception("Error: 'image_path_external' not found in settings")
-        return self.settings['image_path_external']
     
     @property
     def internal_callibration_type(self):
@@ -71,3 +62,10 @@ class CalibrationSettings:
 
 # Global settings instance
 settings = CalibrationSettings()
+
+def main():
+    settings = CalibrationSettings()
+    print(settings)
+
+if __name__ == '__main__':
+    main()
