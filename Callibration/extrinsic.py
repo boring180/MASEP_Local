@@ -1,41 +1,29 @@
 import cv2
 import numpy as np
-import json
 import os
 
 from get_points import get_points
-
 from settings_loader import settings
 
-# Get settings - will raise exception if settings file is missing or invalid
-cameras = settings.cameras
-# External calibration always uses multi-camera images
-image_path = '../photos/multi_camera'
-
-def extrinsic_calibration():
-    if os.path.exists('chessboard_points/rets.json') and os.path.exists('chessboard_points/object_points.json') and os.path.exists('chessboard_points/image_points.json') and os.path.exists('chessboard_points/shape.json'):
+def extrinsic_calibration(settings):
+    if os.path.exists('chessboard_points/extrinsic_rets.npy') and os.path.exists('chessboard_points/extrinsic_object_points.npy') and os.path.exists('chessboard_points/extrinsic_image_points.npy') and os.path.exists('chessboard_points/extrinsic_shape.npy'):
         pass
     else:
         print('Image points not exist, start to get image points')
-        get_points(image_path, calibration_type='external')
+        get_points(settings, calibration_type='extrinsic')
+        
+    cameras = settings.cameras
     
-    with open('chessboard_points/rets.json', 'r') as f:
-        rets = np.array(json.load(f))
-    with open('chessboard_points/object_points.json', 'r') as f:
-        objpoints = np.array(json.load(f))
-    with open('chessboard_points/image_points.json', 'r') as f:
-        imgpoints = np.array(json.load(f))
-    with open('chessboard_points/shape.json', 'r') as f:
-        shape = tuple(json.load(f))
+    rets = np.load('chessboard_points/extrinsic_rets.npy')
+    objpoints = np.load('chessboard_points/extrinsic_object_points.npy')
+    imgpoints = np.load('chessboard_points/extrinsic_image_points.npy')
+    shape = np.load('chessboard_points/extrinsic_shape.npy')
+    
     mtxs = {}
     dists = {}
-    for camera_name in cameras:
-        with open(f'results/intrinsic_{camera_name}.json', 'r') as f:
-            data = json.load(f)
-            mtx = np.array(data['mtx'])
-            dist = np.array(data['dist'])
-            mtxs[camera_name] = mtx
-            dists[camera_name] = dist
+    for camera_name in settings.cameras:
+        mtxs[camera_name] = np.load(f'results/mtx_{camera_name}.npy')
+        dists[camera_name] = np.load(f'results/dist_{camera_name}.npy')
     
     for camera_name in cameras:
         transformation_matrix = np.eye(4)
@@ -69,22 +57,11 @@ def extrinsic_calibration():
             
         print(f'{camera_name} transformation matrix: {transformation_matrix}')
         
-        with open(f'results/extrinsic_{camera_name}.json', 'w') as f:
-            json.dump(transformation_matrix.tolist(), f)
+        np.save(f'results/extrinsic_{camera_name}.npy', transformation_matrix)
     
     
 def main():   
-    if os.path.exists('results/intrinsic_cam0.json') and os.path.exists('results/intrinsic_cam1.json') and os.path.exists('results/intrinsic_cam2.json') and os.path.exists('results/intrinsic_cam3.json') and os.path.exists('results/intrinsic_wide.json'):
-        pass
-    else:
-        print('Intrinsic calibration not done, please run intrinsic_calibration.sh first')
-        return
-        
-    if os.path.exists('results/extrinsic_cam0.json') and os.path.exists('results/extrinsic_cam1.json') and os.path.exists('results/extrinsic_cam2.json') and os.path.exists('results/extrinsic_cam3.json') and os.path.exists('results/extrinsic_wide.json'):
-        pass
-    else:
-        print('Extrinsic calibration not done, start to do extrinsic calibration')
-        extrinsic_calibration()
+    extrinsic_calibration(settings)
     
 if __name__ == '__main__':
     main()
