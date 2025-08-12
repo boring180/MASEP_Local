@@ -18,7 +18,7 @@ cameras = settings.cameras
         
 def single_camera_intrinsic_calibration(camera_name):
     object_points_files = os.listdir('chessboard_points/')
-    if f'{camera_name}_object_points.json' not in object_points_files or f'{camera_name}_image_points.json' not in object_points_files:
+    if f'{camera_name}_object_points.npy' not in object_points_files or f'{camera_name}_image_points.npy' not in object_points_files:
         get_points(settings, calibration_type='single')
     
     obj_pts = np.load(f'chessboard_points/{camera_name}_object_points.npy')
@@ -40,20 +40,16 @@ def single_camera_intrinsic_calibration(camera_name):
     return
 
 def multi_camera_intrinsic_calibration():
-    if os.path.exists('results/rets.json') and os.path.exists('results/object_points.json') and os.path.exists('results/image_points.json') and os.path.exists('results/shape.json'):
+    if os.path.exists('results/rets.npy') and os.path.exists('results/object_points.npy') and os.path.exists('results/image_points.npy') and os.path.exists('results/shape.npy'):
         print('Image points already exist')
     else:
         print('Image points not exist, start to get image points')
-        get_points(image_path_external, calibration_type='external')
+        get_points(settings, calibration_type='multi')
     
-    with open('results/rets.json', 'r') as f:
-        rets = np.array(json.load(f))
-    with open('results/object_points.json', 'r') as f:
-        objpoints = np.array(json.load(f))
-    with open('results/image_points.json', 'r') as f:
-        imgpoints = np.array(json.load(f))
-    with open('results/shape.json', 'r') as f:
-        shape = tuple(json.load(f))
+    rets = np.load('results/rets.npy')
+    objpoints = np.load('results/object_points.npy')
+    imgpoints = np.load('results/image_points.npy')
+    shape = np.load('results/shape.npy')
     
     for camera_name in cameras:
         imgpoints_camera = imgpoints[:, cameras.index(camera_name), :, :]
@@ -76,20 +72,18 @@ def multi_camera_intrinsic_calibration():
         
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None)
         
-        with open(f'results/intrinsic_{camera_name}.json', 'w') as f:
-            json.dump({'mtx': mtx.tolist(), 'dist': dist.tolist()}, f)
+        np.save(f'results/intrinsic_{camera_name}.npy', np.array([mtx, dist]))
         
         print(f'{camera_name} has {number_of_success_images}/{number_of_images} successful images')
         
         mean_error = 0
         for i in range(number_of_success_images):
-            imgpoints2, _ = cv2.projectPoints(obj_pts[i], rvecs[i], tvecs[i], mtx, dist)
-            # Reshape imgpoints2 to match img_pts dimensions
-            imgpoints2 = imgpoints2.reshape(-1, 2)
-            error = cv2.norm(img_pts[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+            imgpoints_reprojected, _ = cv2.projectPoints(obj_pts[i], rvecs[i], tvecs[i], mtx, dist)
+            imgpoints_reprojected = imgpoints_reprojected.reshape(-1, 2)
+            error = cv2.norm(img_pts[i], imgpoints_reprojected, cv2.NORM_L2) / len(imgpoints_reprojected)
             mean_error += error
         mean_error = mean_error / number_of_success_images
-        print(f'{camera_name} has mean error: {mean_error}')
+        print(f'{camera_name} has reprojection error: {mean_error}')
             
     return
 
@@ -98,7 +92,7 @@ def main():
     os.makedirs('results', exist_ok=True)
     results = os.listdir('results')
     for camera_name in cameras:
-        if f'intrinsic_{camera_name}.json' in results:
+        if f'intrinsic_{camera_name}.npy' in results:
             print(f'Intrinsic calibration for {camera_name} already done')
         else:
             print(f'Intrinsic calibration for {camera_name} not done, start to do intrinsic calibration')
