@@ -10,8 +10,6 @@
 ```json
 {
     "cameras": ["cam2", "cam3", "wide", "cam0", "cam1"], # camera names
-    "image_path_internal": "../photos/single_camera", # path to internal images
-    "image_path_external": "../photos/multi_camera", # path to external images
     "internal_callibration_type": "single", # single or multi
     "pattern_internal": "chessboard", # chessboard or charuco
     "pattern_external": "chessboard", # chessboard or charuco
@@ -21,6 +19,10 @@
     "pattern_square_size_external": 0.025 # square size in meters
 }
 ```
+
+**Note**: Image paths are automatically determined based on the `internal_callibration_type`:
+- `"single"` → uses `../photos/single_camera` folder
+- `"multi"` → uses `../photos/multi_camera` folder
 
 ## Intrinsic Calibration with visualisation
 
