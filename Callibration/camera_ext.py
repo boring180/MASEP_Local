@@ -5,15 +5,18 @@ import os
 
 from get_points import get_points
 
-cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
-image_path = '../photos/multi_camera'
+from settings_loader import settings
+
+# Get settings - will raise exception if settings file is missing or invalid
+cameras = settings.cameras
+image_path = settings.image_path_external
 
 def extrinsic_calibration():
     if os.path.exists('chessboard_points/rets.json') and os.path.exists('chessboard_points/object_points.json') and os.path.exists('chessboard_points/image_points.json') and os.path.exists('chessboard_points/shape.json'):
         pass
     else:
         print('Image points not exist, start to get image points')
-        get_points(image_path)
+        get_points(image_path, calibration_type='external')
     
     with open('chessboard_points/rets.json', 'r') as f:
         rets = np.array(json.load(f))

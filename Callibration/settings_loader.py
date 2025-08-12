@@ -1,0 +1,73 @@
+import json
+
+class CalibrationSettings:
+    def __init__(self, settings_file='setting.json'):
+        """Load calibration settings from JSON file"""
+        try:
+            with open(settings_file, 'r') as f:
+                self.settings = json.load(f)
+        except:
+            raise Exception(f"Error loading settings from {settings_file}")
+    
+    @property
+    def cameras(self):
+        if 'cameras' not in self.settings:
+            raise Exception("Error: 'cameras' not found in settings")
+        return self.settings['cameras']
+    
+    @property
+    def image_path_internal(self):
+        if 'image_path_internal' not in self.settings:
+            raise Exception("Error: 'image_path_internal' not found in settings")
+        return self.settings['image_path_internal']
+    
+    @property
+    def image_path_external(self):
+        if 'image_path_external' not in self.settings:
+            raise Exception("Error: 'image_path_external' not found in settings")
+        return self.settings['image_path_external']
+    
+    @property
+    def internal_callibration_type(self):
+        if 'internal_callibration_type' not in self.settings:
+            raise Exception("Error: 'internal_callibration_type' not found in settings")
+        return self.settings['internal_callibration_type']
+    
+    @property
+    def pattern_internal(self):
+        if 'pattern_internal' not in self.settings:
+            raise Exception("Error: 'pattern_internal' not found in settings")
+        return self.settings['pattern_internal']
+    
+    @property
+    def pattern_external(self):
+        if 'pattern_external' not in self.settings:
+            raise Exception("Error: 'pattern_external' not found in settings")
+        return self.settings['pattern_external']
+    
+    @property
+    def pattern_size_internal(self):
+        if 'pattern_size_internal' not in self.settings:
+            raise Exception("Error: 'pattern_size_internal' not found in settings")
+        return self.settings['pattern_size_internal']
+    
+    @property
+    def pattern_size_external(self):
+        if 'pattern_size_external' not in self.settings:
+            raise Exception("Error: 'pattern_size_external' not found in settings")
+        return self.settings['pattern_size_external']
+    
+    @property
+    def pattern_square_size_internal(self):
+        if 'pattern_square_size_internal' not in self.settings:
+            raise Exception("Error: 'pattern_square_size_internal' not found in settings")
+        return self.settings['pattern_square_size_internal']
+    
+    @property
+    def pattern_square_size_external(self):
+        if 'pattern_square_size_external' not in self.settings:
+            raise Exception("Error: 'pattern_square_size_external' not found in settings")
+        return self.settings['pattern_square_size_external']
+
+# Global settings instance
+settings = CalibrationSettings()
