@@ -8,29 +8,20 @@ import time
 import random
 random.seed(time.time())
 
+from settings_loader import settings
+
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame
 from utils.frame_concatent import resize_with_padding
 
-cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
+def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size):
+    objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
+    objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
+    objp = objp * square_size
+    return objp
 
-number_of_squares_x = 36
-number_of_squares_y = 14
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_internal_corners_y = number_of_squares_y - 1
-square_size = 5.4/6.0  # in meters
-
-# number_of_squares_x = 11
-# number_of_internal_corners_x = number_of_squares_x - 1
-# number_of_squares_y = 8
-# number_of_internal_corners_y = number_of_squares_y - 1
-# square_size = 0.023 # in meters
-
-objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-objp = objp * square_size
-
-def get_points(image_path, camera_name = None):            
+def get_points(settings, calibration_type):            
+    
     images = glob.glob(f'{image_path}/*.jpg')
     shape = (0,0)
     imgpoints = []
@@ -103,7 +94,8 @@ def get_points(image_path, camera_name = None):
     with open('chessboard_points/shape.json', 'w') as f:
         json.dump(shape, f)
         
-def get_points_single_frame(frame, number_of_internal_corners_x=number_of_internal_corners_x, number_of_internal_corners_y=number_of_internal_corners_y, objp=objp):    
+def get_points_single_frame(frame, number_of_internal_corners_x, number_of_internal_corners_y, square_size):
+    objp = get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size)
     ret, corners = cv2.findChessboardCorners(frame, (number_of_internal_corners_x,number_of_internal_corners_y), flags=None)
     return ret, corners, objp
         
