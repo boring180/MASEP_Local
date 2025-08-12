@@ -8,21 +8,24 @@ import time
 import random
 random.seed(time.time())
 
+from settings_loader import settings
+
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-import utils.frame_slicing as frame_slicing
-import utils.frame_concatent as frame_concatent
+from utils.frame_slicing import slicing_frame
+from utils.frame_concatent import concatent_frame
 
 from get_points import get_points_single_frame
 
-cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
-
-image_path = '../photos/single_camera'
-
-number_of_squares_x = 36
-number_of_squares_y = 14
-number_of_internal_corners_x = number_of_squares_x - 1
-number_of_internal_corners_y = number_of_squares_y - 1
-square_size = 5.4/6.0  # in meters
+# Use settings from configuration file
+cameras = settings.cameras
+# Automatically determine image path based on calibration type
+if settings.internal_callibration_type == 'single':
+    image_path = '../photos/single_camera'
+else:
+    image_path = '../photos/multi_camera'
+number_of_internal_corners_x = settings.pattern_size_internal[0]
+number_of_internal_corners_y = settings.pattern_size_internal[1]
+square_size = settings.pattern_square_size_internal
 
 axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 axis = axis * square_size
@@ -40,49 +43,65 @@ def projection(img, mtx, dist):
     objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
     objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
     objp = objp * square_size
-    ret, corners, objp = get_points_single_frame(gray, number_of_internal_corners_x, number_of_internal_corners_y, objp)
+    ret, corners, objp = get_points_single_frame(gray, settings)
     if ret == True:
         ret,rvecs, tvecs = cv2.solvePnP(objp, corners, mtx, dist)
         imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
         img = draw(img, corners, imgpts)
-        
-    return img
+        return img
+    else:
+        return None
 
 def arrow_projection():
     mtxs = {}
     dists = {}
     for camera_name in cameras:
-        with open(f'results/intrinsic_{camera_name}.json', 'r') as f:
-            data = json.load(f)
-            mtx = np.array(data['mtx'])
-            dist = np.array(data['dist'])
-            mtxs[camera_name] = mtx
-            dists[camera_name] = dist
+        data = np.load(f'results/intrinsic_{camera_name}.npy')
+        mtx = data[0]
+        dist = data[1]
+        mtxs[camera_name] = mtx
+        dists[camera_name] = dist
             
-    fig = plt.figure(figsize=(20, 25))
+    fig = plt.figure(figsize=(20, 15))
+    
+    before_calibration = []
+    after_calibration = []
 
-    for i in range(len(cameras)):
-        images = os.listdir(image_path)
-        random_index = random.randint(0, len(images) - 1)
-        image = cv2.imread(f'{image_path}/{images[random_index]}')
-        ax = fig.add_subplot(5, 2, i * 2 + 1)
-        ax.imshow(image)
-        ax.set_title(f'Before calibration')
-        ax.axis('off')
+    images = os.listdir(image_path)
+    random_index = random.randint(0, len(images) - 1)
+    
+    while True:
+        image_before = cv2.imread(f'{image_path}/{images[random_index]}')
+        if settings.internal_callibration_type == 'single':
+            camera_name = image_before.split('/')[-1].split('.')[0].split('_')[0]
+            image_after = projection(image_before, mtxs[camera_name], dists[camera_name])
+            if image_after is not None:
+                before_calibration.append(image_before)
+                after_calibration.append(image_after)
+        else:
+            frames = slicing_frame(image_before)[:5]
+            for camera_name in cameras:
+                frame_index = cameras.index(camera_name)
+                frame_before = frames[frame_index]
+                frame_after = projection(frame_before, mtxs[camera_name], dists[camera_name])
+                if frame_after is not None:
+                    before_calibration.append(frame_before)
+                    after_calibration.append(frame_after)
         
-        frames = frame_slicing.slicing_frame(image)[:5]
+        if len(before_calibration) == len(settings.cameras):
+            break
+        else:
+            random_index = random.randint(0, len(images) - 1)
         
-        for camera_name in cameras:
-            frame_index = cameras.index(camera_name)
-            frame = frames[frame_index] 
-            dst = cv2.undistort(frame, mtxs[camera_name], dists[camera_name])
-            frames[cameras.index(camera_name)] = projection(dst, mtxs[camera_name], dists[camera_name])
-        
-        images_after_calibration = frame_concatent.concatent_frame(frames)
-        ax = fig.add_subplot(5, 2, i * 2 + 2)
-        ax.imshow(images_after_calibration)
-        ax.set_title(f'After calibration')
-        ax.axis('off')
+    ax = fig.add_subplot(1, 2, 1)
+    ax.imshow(concatent_frame(before_calibration))
+    ax.set_title(f'Before calibration')
+    ax.axis('off')
+    
+    ax = fig.add_subplot(1, 2, 2)
+    ax.imshow(concatent_frame(after_calibration))
+    ax.set_title(f'After calibration')
+    ax.axis('off')
             
     plt.savefig('results/arrow_projection.png')
     

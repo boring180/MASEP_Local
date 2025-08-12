@@ -6,25 +6,19 @@ import matplotlib.pyplot as plt
 import sys
 import time
 import random
-from multi_camera_ext import extrinsic_calibration
 random.seed(time.time())
 from get_points import get_points_single_frame
-from get_points import square_size
+from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 import utils.frame_slicing as frame_slicing
-import utils.frame_concatent as frame_concatent
-
-cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 image_path = '../photos/multi_camera'
 
-
-def visualize(fig, elev, azim, roll, i):
+def visualize(settings, fig, elev, azim, roll, i):
     transformation_matrices = {}
-    for camera_name in cameras:
-        with open(f'results/extrinsic_{camera_name}.json', 'r') as f:
-            transformation_matrix = np.array(json.load(f))
-            transformation_matrices[camera_name] = transformation_matrix
+    for camera_name in settings.cameras:
+        transformation_matrix = np.load(f'results/extrinsic_{camera_name}.npy')
+        transformation_matrices[camera_name] = transformation_matrix
             
     ax = fig.add_subplot(1, 3, i, projection='3d', elev=elev, azim=azim, roll=roll)
     length = 0.5
@@ -46,9 +40,9 @@ def visualize(fig, elev, azim, roll, i):
     for i in range(4):
         ax.plot([-length/2, length/2], [y[i], y[i]], [z[i], z[i]], 'b-')
     
-    for camera_name in cameras:
+    for camera_name in settings.cameras:
         colors = ['red', 'green', 'blue']
-        axis = np.eye(3) * square_size
+        axis = np.eye(3) * settings.pattern_square_size_external
         for i in range(3):
             orientation = transformation_matrices[camera_name][:3, :3] @ axis[i, :]
             x = transformation_matrices[camera_name][0, 3]
@@ -66,26 +60,22 @@ def visualize(fig, elev, azim, roll, i):
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         
-def chessboard_projection():
+def chessboard_projection(settings):
     mtxs = {}
     dists = {}
     transformation_matrices = {}
-    for camera_name in cameras:
-        with open(f'results/intrinsic_{camera_name}.json', 'r') as f:
-            data = json.load(f)
-            mtx = np.array(data['mtx'])
-            dist = np.array(data['dist'])
-            mtxs[camera_name] = mtx
-            dists[camera_name] = dist
-        with open(f'results/extrinsic_{camera_name}.json', 'r') as f:
-            transformation_matrix = np.array(json.load(f))
-            transformation_matrices[camera_name] = transformation_matrix
+    for camera_name in settings.cameras:
+        mtx = np.load(f'results/mtx_{camera_name}.npy')
+        dist = np.load(f'results/dist_{camera_name}.npy')
+        mtxs[camera_name] = mtx
+        dists[camera_name] = dist
+        transformation_matrix = np.load(f'results/extrinsic_{camera_name}.npy')
+        transformation_matrices[camera_name] = transformation_matrix
             
     i = 1
-    colors = ['red', 'green', 'blue', 'yellow', 'purple']
     fig = plt.figure(figsize=(16, 16))
 
-    for camera_name in cameras:
+    for camera_name in settings.cameras:
         images = os.listdir(image_path)
         if camera_name == 'wide':
             continue
@@ -93,13 +83,13 @@ def chessboard_projection():
             random_index = random.randint(0, len(images) - 1)
             frame = cv2.imread(f'{image_path}/{images[random_index]}')
             frames = frame_slicing.slicing_frame(frame)
-            wide_img = frames[cameras.index('wide')]
-            cam_img = frames[cameras.index(camera_name)]
+            wide_img = frames[settings.cameras.index('wide')]
+            cam_img = frames[settings.cameras.index(camera_name)]
             
             gray_wide = cv2.cvtColor(wide_img, cv2.COLOR_BGR2GRAY)
             gray_cam = cv2.cvtColor(cam_img, cv2.COLOR_BGR2GRAY)
-            ret_wide, corners_wide, objp = get_points_single_frame(gray_wide)
-            ret_cam, corners_cam, objp = get_points_single_frame(gray_cam)
+            ret_wide, corners_wide, objp = get_points_single_frame(gray_wide, settings, 'extrinsic')
+            ret_cam, corners_cam, objp = get_points_single_frame(gray_cam, settings, 'extrinsic')
             
             if ret_wide == True and ret_cam == True:
                 ret_wide,rvecs_wide, tvecs_wide = cv2.solvePnP(objp, corners_wide, mtxs[camera_name], dists[camera_name])
@@ -130,17 +120,12 @@ def chessboard_projection():
         i += 1
     
 def main():
-    if os.path.exists('results/extrinsic_cam0.json') and os.path.exists('results/extrinsic_cam1.json') and os.path.exists('results/extrinsic_cam2.json') and os.path.exists('results/extrinsic_cam3.json') and os.path.exists('results/extrinsic_wide.json'):
-        print('Extrinsic calibration already done')
-    else:
-        extrinsic_calibration()
-
     fig = plt.figure(figsize=(15, 10))
-    visualize(fig, 45, 0, 0, i=1)
-    visualize(fig, elev=45, azim=45, roll=0, i=2)
-    visualize(fig, elev=-90, azim=90, roll=0, i=3)
+    visualize(settings, fig, 45, 0, 0, i=1)
+    visualize(settings, fig, elev=45, azim=45, roll=0, i=2)
+    visualize(settings, fig, elev=-90, azim=90, roll=0, i=3)
     plt.savefig('results/visualize_ext.png')
-    chessboard_projection()
+    chessboard_projection(settings)
     plt.savefig('results/chessboard_projection.png')
     
 if __name__ == '__main__':
