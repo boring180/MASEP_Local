@@ -5,24 +5,26 @@ import os
 import time
 import sys
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-from utils.frame_slicing import slicing_frame
-from utils.frame_concatent import concatent_frame
-from queue import Queue
-import threading
 
 # Chessboard pattern settings for calibration
 COL_NUM = 11
 ROW_NUM = 8
 CHESSBOARD_SIZE = (COL_NUM - 1, ROW_NUM - 1)  # Number of inner corners (columns, rows)
 SQUARE_SIZE = 0.023  # Size of a square in meters
-CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+FLAGS = cv2.CALIB_CB_FAST_CHECK 
 
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
 
+def frame_concatenate(frames, reference_shape):
+    for i in range(len(frames)):
+        frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
+    return np.concatenate(frames, axis=1)
+
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(1)]
+    cameras = [cv2.VideoCapture(0)]
+    reference_shape = cameras[0].read()[1].shape[:2]
     
     # Verify cameras opened successfully
     for i in range(len(cameras)):
@@ -34,8 +36,8 @@ def main():
     for i in range(len(cameras)):
         ret, frame = cameras[i].read()
         frames.append(frame)
-    print(f'Frame number: {len(frames)}')
-    frame = concatent_frame(frames)
+
+    frame = frame_concatenate(frames, reference_shape)
     height, width = frame.shape[:2]
 
     # Create output directory
@@ -46,21 +48,21 @@ def main():
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, 24, (width, height))
 
+    prev_time = time.time()
+
     while True:
         frames = []
 
         # Capture frames from all cameras
         for i in range(len(cameras)):
             ret, frame = cameras[i].read()
-            if not ret:
-                print(f"Warning: Could not read frame from camera {i}")
             frames.append(frame)
         
         show_frames = []
         for i in range(len(frames)):
             shown_frame = frames[i].copy()
             gray = cv2.cvtColor(shown_frame, cv2.COLOR_BGR2GRAY)
-            ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
+            ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None, FLAGS)
             if ret:
                 text = "Detected"
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -75,8 +77,17 @@ def main():
             show_frames.append(shown_frame)
             
         # Write original frames (without chessboard) to video
-        out.write(concatent_frame(frames))
-        cv2.imshow('Cameras with Chessboard', concatent_frame(show_frames))
+        # out.write(concatent_frame(frames))
+        
+        time_elapsed = time.time() - prev_time
+        FPS = 1 / time_elapsed
+        print(f"FPS: {FPS}")
+        prev_time = time.time()
+        
+        cv2.imshow('Frames', frame_concatenate(show_frames, reference_shape))
+        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
     # Cleanup
     out.release()
