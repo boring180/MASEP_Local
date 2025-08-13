@@ -20,7 +20,7 @@
     "pattern_square_size_internal": 0.009,
     "pattern_square_size_external": 0.023
 }
-Image points already exist
+Image points not exist, start to get image points
 cam2 has 94 successful images
 cam2 has reprojection error: 0.020273456184791337
 cam3 has 98 successful images
