@@ -13,6 +13,7 @@ from settings_loader import settings
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame
 from utils.frame_concatent import concatent_frame
+from utils.frame_concatent import resize_with_padding
 
 from get_points import get_points_single_frame
 
@@ -43,12 +44,23 @@ def projection(img, mtx, dist):
     objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
     objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
     objp = objp * square_size
-    ret, corners, objp = get_points_single_frame(gray, settings)
+    ret, corners, objp = get_points_single_frame(gray, settings, 'intrinsic')
+    img = img.copy()
+    h,  w = img.shape[:2]
+    h_original, w_original = img.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    # undistort
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    # crop the image
+    x, y, w, h = roi
+    dst = dst[y:y+h, x:x+w]
+    dst = resize_with_padding(dst, w_original, h_original)
+    
     if ret == True:
         ret,rvecs, tvecs = cv2.solvePnP(objp, corners, mtx, dist)
         imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-        img = draw(img, corners, imgpts)
-        return img
+        dst = draw(dst, corners, imgpts)
+        return dst
     else:
         return None
 
@@ -56,13 +68,12 @@ def arrow_projection():
     mtxs = {}
     dists = {}
     for camera_name in cameras:
-        data = np.load(f'results/intrinsic_{camera_name}.npy')
-        mtx = data[0]
-        dist = data[1]
+        mtx = np.load(f'results/mtx_{camera_name}.npy')
+        dist = np.load(f'results/dist_{camera_name}.npy')
         mtxs[camera_name] = mtx
         dists[camera_name] = dist
             
-    fig = plt.figure(figsize=(20, 15))
+    fig = plt.figure(figsize=(30, 45))
     
     before_calibration = []
     after_calibration = []
@@ -71,9 +82,10 @@ def arrow_projection():
     random_index = random.randint(0, len(images) - 1)
     
     while True:
-        image_before = cv2.imread(f'{image_path}/{images[random_index]}')
+        file_name = image_path + '/' + images[random_index]
+        image_before = cv2.imread(file_name)
         if settings.internal_callibration_type == 'single':
-            camera_name = image_before.split('/')[-1].split('.')[0].split('_')[0]
+            camera_name = file_name.split('/')[-1].split('.')[0].split('_')[0]
             image_after = projection(image_before, mtxs[camera_name], dists[camera_name])
             if image_after is not None:
                 before_calibration.append(image_before)
@@ -92,15 +104,25 @@ def arrow_projection():
             break
         else:
             random_index = random.randint(0, len(images) - 1)
+            
+            
+    before_calibration = concatent_frame(before_calibration)
+    after_calibration = concatent_frame(after_calibration)
+    difference = cv2.absdiff(before_calibration, after_calibration)
         
-    ax = fig.add_subplot(1, 2, 1)
-    ax.imshow(concatent_frame(before_calibration))
+    ax = fig.add_subplot(3, 1, 1)
+    ax.imshow(before_calibration)
     ax.set_title(f'Before calibration')
     ax.axis('off')
     
-    ax = fig.add_subplot(1, 2, 2)
-    ax.imshow(concatent_frame(after_calibration))
+    ax = fig.add_subplot(3, 1, 2)
+    ax.imshow(after_calibration)
     ax.set_title(f'After calibration')
+    ax.axis('off')
+    
+    ax = fig.add_subplot(3, 1, 3)
+    ax.imshow(difference)
+    ax.set_title(f'Difference')
     ax.axis('off')
             
     plt.savefig('results/arrow_projection.png')
