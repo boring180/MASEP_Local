@@ -22,7 +22,7 @@ objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1,
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(0), cv2.VideoCapture(1), cv2.VideoCapture(3)]
+    cameras = [cv2.VideoCapture(1)]
     
     # Verify cameras opened successfully
     for i in range(len(cameras)):
@@ -46,12 +46,6 @@ def main():
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, 24, (width, height))
 
-    # Frame rate monitoring
-    frame_count = 0
-    start_time = time.time()
-
-    print("Press 'q' to stop recording")
-
     while True:
         frames = []
 
@@ -68,24 +62,21 @@ def main():
             gray = cv2.cvtColor(shown_frame, cv2.COLOR_BGR2GRAY)
             ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None)
             if ret:
-                cv2.drawChessboardCorners(shown_frame, CHESSBOARD_SIZE, corners, ret)
+                text = "Detected"
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 15
+                thickness = 30
+                color = (0, 0, 255)
+                (text_width, text_height), baseline = cv2.getTextSize(text, font, font_scale, thickness)
+                center_x = shown_frame.shape[1] // 2
+                center_y = shown_frame.shape[0] // 2
+                org = (center_x - text_width // 2, center_y + text_height // 2)
+                cv2.putText(shown_frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
             show_frames.append(shown_frame)
             
         # Write original frames (without chessboard) to video
         out.write(concatent_frame(frames))
         cv2.imshow('Cameras with Chessboard', concatent_frame(show_frames))
-        
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-        # Calculate and display FPS
-        frame_count += 1
-        elapsed_time = time.time() - start_time
-        if elapsed_time > 0:
-            current_fps = frame_count / elapsed_time
-            frame_count = 0
-            start_time = time.time()
-            print(f"Current FPS: {current_fps:.2f}")
 
     # Cleanup
     out.release()
