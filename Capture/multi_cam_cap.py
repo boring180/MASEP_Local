@@ -77,7 +77,7 @@ def main():
             show_frames.append(shown_frame)
             
         # Write original frames (without chessboard) to video
-        # out.write(concatent_frame(frames))
+        out.write(frame_concatent(frames, reference_shape))
         
         time_elapsed = time.time() - prev_time
         FPS = 1 / time_elapsed
