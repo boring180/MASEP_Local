@@ -16,7 +16,7 @@ FLAGS = cv2.CALIB_CB_FAST_CHECK
 objp = np.zeros((CHESSBOARD_SIZE[0] * CHESSBOARD_SIZE[1], 3), np.float32)
 objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1, 2)
 
-def frame_concatenate(frames, reference_shape):
+def frame_concatent(frames, reference_shape):
     for i in range(len(frames)):
         frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
     return np.concatenate(frames, axis=1)
@@ -37,7 +37,7 @@ def main():
         ret, frame = cameras[i].read()
         frames.append(frame)
 
-    frame = frame_concatenate(frames, reference_shape)
+    frame = frame_concatent(frames, reference_shape)
     height, width = frame.shape[:2]
 
     # Create output directory
@@ -77,14 +77,14 @@ def main():
             show_frames.append(shown_frame)
             
         # Write original frames (without chessboard) to video
-        # out.write(concatent_frame(frames))
+        out.write(frame_concatent(frames, reference_shape))
         
         time_elapsed = time.time() - prev_time
         FPS = 1 / time_elapsed
         print(f"FPS: {FPS}")
         prev_time = time.time()
         
-        cv2.imshow('Frames', frame_concatenate(show_frames, reference_shape))
+        cv2.imshow('Frames', frame_concatent(show_frames, reference_shape))
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
