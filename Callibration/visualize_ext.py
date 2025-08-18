@@ -11,7 +11,7 @@ from get_points import get_points_single_frame
 from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-import utils.frame_slicing as frame_slicing
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 image_path = '../photos/multi_camera'
 
 def visualize(settings, fig, elev, azim, roll, i):
@@ -82,7 +82,7 @@ def chessboard_projection(settings):
         while True:
             random_index = random.randint(0, len(images) - 1)
             frame = cv2.imread(f'{image_path}/{images[random_index]}')
-            frames = frame_slicing.slicing_frame(frame)
+            frames = slicing_frame3_1(frame)
             wide_img = frames[settings.cameras.index('wide')]
             cam_img = frames[settings.cameras.index(camera_name)]
             
