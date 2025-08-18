@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
-import utils.frame_slicing as frame_slicing
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 import utils.frame_concatent as frame_concatent
 
 video_path = '../video/test1.mp4'
@@ -16,7 +16,7 @@ cameras = ['cam2', 'cam3', 'wide', 'cam0', 'cam1']
 SQUARE_SIZE = 0.023 # in meters
 
 def raw_localization(frame):
-    frames = frame_slicing.slicing_frame(frame)
+    frames = slicing_frame3_1(frame)
     frames[0] = cv2.rotate(frames[0], cv2.ROTATE_90_COUNTERCLOCKWISE)
     frames[1] = cv2.rotate(frames[1], cv2.ROTATE_90_CLOCKWISE)
     frames[3] = cv2.rotate(frames[3], cv2.ROTATE_180)
