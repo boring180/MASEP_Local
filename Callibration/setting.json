@@ -1,5 +1,5 @@
 {
-    "cameras": ["cam2", "cam3", "wide", "cam0", "cam1"],
+    "cameras": ["wide", "cam0", "cam1"],
     "internal_callibration_type": "single",
     "pattern_internal": "chessboard",
     "pattern_external": "chessboard",

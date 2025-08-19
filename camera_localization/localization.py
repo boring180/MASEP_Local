@@ -8,7 +8,7 @@ from scipy.spatial.transform import Rotation as R
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
-import utils.frame_concatent as frame_concatent
+from utils.frame_concatent import concatent_frame3_1, concatent_frame3_2
 
 video_path = '../video/test1.mp4'
 callibration_path = '../Callibration/results/'
@@ -51,7 +51,7 @@ def raw_localization(frame):
             transformation_matrix[:3, 3] = tvecs[0]
             results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
             
-    frame = frame_concatent.concatent_frame(frames)
+    frame = concatent_frame3_1(frames)
             
     return results, frame, ret
 
