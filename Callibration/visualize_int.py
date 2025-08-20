@@ -11,9 +11,8 @@ random.seed(time.time())
 from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-from utils.frame_slicing import slicing_frame
-from utils.frame_concatent import concatent_frame
-from utils.frame_concatent import resize_with_padding
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
+from utils.frame_concatent import concatent_frame3_2, concatent_frame3_1, resize_with_padding
 
 from get_points import get_points_single_frame
 
@@ -91,7 +90,7 @@ def arrow_projection():
                 before_calibration.append(image_before)
                 after_calibration.append(image_after)
         else:
-            frames = slicing_frame(image_before)[:5]
+            frames = slicing_frame3_1(image_before)[:5]
             for camera_name in cameras:
                 frame_index = cameras.index(camera_name)
                 frame_before = frames[frame_index]
@@ -106,8 +105,8 @@ def arrow_projection():
             random_index = random.randint(0, len(images) - 1)
             
             
-    before_calibration = concatent_frame(before_calibration)
-    after_calibration = concatent_frame(after_calibration)
+    before_calibration = concatent_frame3_2(before_calibration)
+    after_calibration = concatent_frame3_2(after_calibration)
     difference = cv2.absdiff(before_calibration, after_calibration)
         
     ax = fig.add_subplot(3, 1, 1)
