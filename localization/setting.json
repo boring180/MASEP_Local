@@ -1,0 +1,6 @@
+{
+    "cameras": ["wide", "cam0", "cam1"],
+    "video_path": "../video/test1.mp4",
+    "callibration_path": "../Callibration/results/",
+    "square_size": 0.023
+}
