@@ -1,7 +1,5 @@
 {
     "cameras": [
-        "cam2",
-        "cam3",
         "wide",
         "cam0",
         "cam1"
@@ -21,31 +19,19 @@
     "pattern_square_size_external": 0.023
 }
 Image points not exist, start to get image points
-cam2 has 73 successful images
-cam2 transformation matrix: [[ 0.99991428  0.01281089  0.002703   -0.06900339]
- [-0.01279335  0.99989762 -0.00641004 -0.01470453]
- [-0.00278484  0.00637491  0.9999758  -0.00917833]
- [ 0.          0.          0.          1.        ]]
-cam3 has 88 successful images
-cam3 transformation matrix: [[ 0.99948736 -0.01447324  0.02855767  0.081206  ]
- [ 0.01425005  0.99986643  0.00800367 -0.01383109]
- [-0.02866969 -0.00759262  0.9995601  -0.01754189]
- [ 0.          0.          0.          1.        ]]
 wide transformation matrix: [[1. 0. 0. 0.]
  [0. 1. 0. 0.]
  [0. 0. 1. 0.]
  [0. 0. 0. 1.]]
-cam0 has 77 successful images
-cam0 transformation matrix: [[ 0.9995118  -0.0058772   0.03068583  0.00990507]
- [ 0.00573081  0.99997179  0.00485644  0.06357654]
- [-0.0307135  -0.00467822  0.99951728 -0.00684489]
+cam0 has 280 successful images
+cam0 transformation matrix: [[ 0.99800471  0.02826378 -0.05646029 -0.00473486]
+ [-0.02852065  0.99958617 -0.00374878 -0.16795026]
+ [ 0.05633097  0.00535159  0.99839781  0.00975973]
  [ 0.          0.          0.          1.        ]]
-cam1 has 63 successful images
-cam1 transformation matrix: [[ 0.99956014  0.01529254  0.02541008  0.0062721 ]
- [-0.01494865  0.99979483 -0.0136688  -0.09259098]
- [-0.0256139   0.01328294  0.99958366 -0.00515798]
+cam1 has 191 successful images
+cam1 transformation matrix: [[ 0.99555866  0.03948868 -0.08546105 -0.00416101]
+ [-0.0374709   0.99898275  0.02508777  0.15864147]
+ [ 0.08636479 -0.02177404  0.99602561  0.00879694]
  [ 0.          0.          0.          1.        ]]
-cam2 has RMS projection error to wide: 0.15189838529740995, RMS projection error to ground truth: 0.05776332757532689. RMS error between wide and ground truth: 0.06106089297218282
-cam3 has RMS projection error to wide: 0.15511384975504888, RMS projection error to ground truth: 0.1709907447742423. RMS error between wide and ground truth: 0.1707786353372792
-cam0 has RMS projection error to wide: 0.15113460119068903, RMS projection error to ground truth: 0.1708134899773282. RMS error between wide and ground truth: 0.17043149915482764
-cam1 has RMS projection error to wide: 0.14604375052981436, RMS projection error to ground truth: 0.022492304020034735. RMS error between wide and ground truth: 0.029080228778295976
+cam0 has RMS projection error to wide: 0.20642036620397075, RMS projection error to ground truth: 0.10190084247642238. RMS error between wide and ground truth: 0.10346158312439137
+cam1 has RMS projection error to wide: 0.1812992630826358, RMS projection error to ground truth: 0.12084634275957955. RMS error between wide and ground truth: 0.12293495744274562
