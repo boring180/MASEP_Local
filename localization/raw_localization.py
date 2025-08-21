@@ -10,7 +10,7 @@ def raw_localization(frames):
         camera_index = settings.cameras.index(camera_name)
         ret[camera_name] = False
         
-        mtx = np.load(f'{settings.callibration_path}/intrinsic_{camera_name}.npy')
+        mtx = np.load(f'{settings.callibration_path}/mtx_{camera_name}.npy')
         dist = np.load(f'{settings.callibration_path}/dist_{camera_name}.npy')
         extrinsic = np.load(f'{settings.callibration_path}/extrinsic_{camera_name}.npy')
             
