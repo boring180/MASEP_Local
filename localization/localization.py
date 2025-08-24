@@ -44,10 +44,6 @@ def main():
         if not ret:
             break
         
-        frame_count += 1
-        if frame_count % 10 != 0:
-            continue
-        
         frames = slicing_frame3_1(frame)
         frames[2] = cv2.rotate(frames[2], cv2.ROTATE_180)
         results, ret_vals = raw_localization(frames)
@@ -60,8 +56,8 @@ def main():
                         results[camera_name][2, 0]]
                 points[camera_name].append(point)
         
-        frame = concatent_frame3_1(frames)
-        out.write(frame)
+        frame_concat = concatent_frame3_1(frames)
+        out.write(frame_concat)
 
     cap.release()
     out.release()

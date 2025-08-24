@@ -15,3 +15,5 @@ tracking_video/
 localization/output/
 
 localization/__pycache__/
+
+.vscode/
