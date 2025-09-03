@@ -17,3 +17,5 @@ localization/output/
 localization/__pycache__/
 
 .vscode/
+
+capture/output/
