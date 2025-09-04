@@ -30,7 +30,7 @@ def resize_with_padding(frame, width, height):
     
     return result
 
-def concatent_frame(frames):
+def concatent_frame3_2(frames):
     """
     Concatenate six frames into a single frame.
     The order of the parts is:
@@ -59,3 +59,22 @@ def concatent_frame(frames):
     row2 = np.concatenate(frames[3:6], axis=1)
 
     return np.concatenate([row1, row2], axis=0)
+
+def concatent_frame3_1(frames):
+    """
+    Concatenate three frames into a single frame.
+    The order of the parts is:
+    left, center, right
+    """
+    width = 0
+    
+    for i in range(len(frames)):
+        width = max(width, frames[i].shape[1])
+        width = max(width, frames[i].shape[0])
+    
+    for i in range(len(frames)):
+        frames[i] = resize_with_padding(frames[i], width, width)
+        
+    while len(frames) < 3:
+        frames.append(np.zeros_like(frames[0]))
+    return np.concatenate(frames, axis=1)

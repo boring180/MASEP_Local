@@ -11,7 +11,7 @@ random.seed(time.time())
 from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-from utils.frame_slicing import slicing_frame
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 from utils.frame_concatent import resize_with_padding
 
 def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size):
@@ -53,6 +53,8 @@ def get_points(settings, calibration_type):
         
         if single_camera:
             camera_name = fname.split('/')[-1].split('.')[0].split('_')[0]
+            if camera_name not in settings.cameras:
+                continue
         
         img = cv2.imread(fname)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -67,7 +69,7 @@ def get_points(settings, calibration_type):
                 gray = cv2.rotate(gray, cv2.ROTATE_180)
             frames = [gray]
         else:
-            frames = slicing_frame(gray)
+            frames = slicing_frame3_1(gray)
         
         for i in range(len(frames)):
             frame = frames[i]

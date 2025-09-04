@@ -11,7 +11,7 @@ from get_points import get_points_single_frame
 from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-import utils.frame_slicing as frame_slicing
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 image_path = '../photos/multi_camera'
 
 def visualize(settings, fig, elev, azim, roll, i):
@@ -82,7 +82,7 @@ def chessboard_projection(settings):
         while True:
             random_index = random.randint(0, len(images) - 1)
             frame = cv2.imread(f'{image_path}/{images[random_index]}')
-            frames = frame_slicing.slicing_frame(frame)
+            frames = slicing_frame3_1(frame)
             wide_img = frames[settings.cameras.index('wide')]
             cam_img = frames[settings.cameras.index(camera_name)]
             
@@ -112,6 +112,8 @@ def chessboard_projection(settings):
                     space_between_points_cam = np.sqrt(np.mean(((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0]) - objp) ** 2))
                     space_between_points_wide = np.sqrt(np.mean(((coord_thru_wide[:3, :].T - coord_thru_wide[:3, 0]) - objp) ** 2))
                     print(f'{camera_name} has RMS projection error to wide: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between wide and ground truth: {space_between_points_wide}')
+                    with open(f'results/extrinsic_reproject_error.json', 'a') as f:
+                        f.write(f'{camera_name}: {RMS_error}\n')
                     
                     ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color='red')
                     ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='blue')

@@ -41,7 +41,9 @@ def camera_intrinsic_calibration(settings):
         obj_pts = np.array(obj_pts)
         img_pts = np.array(img_pts)        
         
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None)
+        # flags = cv2.CALIB_RATIONAL_MODEL
+        flags = None
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None, flags=flags)
         
         np.save(f'results/mtx_{camera_name}.npy', mtx)
         np.save(f'results/dist_{camera_name}.npy', dist)
@@ -56,7 +58,8 @@ def camera_intrinsic_calibration(settings):
             mean_error += error
         mean_error = mean_error / number_of_success_images
         print(f'{camera_name} has reprojection error: {mean_error}')
-            
+        with open(f'results/intrinsic_reproject_error.json', 'a') as f:
+            f.write(f'{camera_name}: {mean_error}\n')
     return
 
     
