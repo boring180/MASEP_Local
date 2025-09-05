@@ -35,10 +35,10 @@ def main():
         for camera_name in settings.cameras:
             if ret_vals[camera_name]:
                 frame_rets[settings.cameras.index(camera_name)] = True
-                frame_points[settings.cameras.index(camera_name)] = results[camera_name]
+                frame_points[settings.cameras.index(camera_name)] = results[camera_name][:3, 3]
             else:
-                frame_points[settings.cameras.index(camera_name)] = np.zeros((4, 4)).astype(np.float32)
                 frame_rets[settings.cameras.index(camera_name)] = False
+                frame_points[settings.cameras.index(camera_name)] = np.zeros((3)).astype(np.float32)
                 
         points.append(frame_points)
         rets.append(frame_rets)

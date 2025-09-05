@@ -16,7 +16,7 @@ def visualize():
     for camera_name in settings.cameras:
         camera_index = settings.cameras.index(camera_name)
         camera_rets = rets[:, camera_index]
-        points_camera = points[camera_rets,camera_index, :3, 3]
+        points_camera = points[camera_rets, camera_index, :]
         ax.scatter(points_camera[:, 0], points_camera[:, 1], points_camera[:, 2], 
                     color=colors[camera_index],
                     alpha=0.3, marker='.')
@@ -36,11 +36,11 @@ def error_between_points():
     for camera_name in settings.cameras:
         if camera_name == 'wide':
             continue
-        rets_camera = rets[settings.cameras.index(camera_name)]
-        rets_wide = rets[settings.cameras.index('wide')]
+        rets_camera = rets[:, settings.cameras.index(camera_name)]
+        rets_wide = rets[:, settings.cameras.index('wide')]
         rets_between = rets_camera & rets_wide
-        points_camera = points[settings.cameras.index(camera_name)][rets_between][:, :3]
-        points_wide = points[settings.cameras.index('wide')][rets_between][:, :3]
+        points_camera = points[rets_between, settings.cameras.index(camera_name), :3, 3]
+        points_wide = points[rets_between, settings.cameras.index('wide'), :3, 3]
         error = np.linalg.norm(points_camera - points_wide, axis=1)
         print(f'{camera_name} has error: {error}')
         with open(f'output/error.json', 'a') as f:
