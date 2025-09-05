@@ -8,7 +8,6 @@ def raw_localization(frames):
     ret = {}
     for camera_name in settings.cameras:
         camera_index = settings.cameras.index(camera_name)
-        ret[camera_name] = False
         
         mtx = np.load(f'{settings.callibration_path}/mtx_{camera_name}.npy')
         dist = np.load(f'{settings.callibration_path}/dist_{camera_name}.npy')
@@ -27,5 +26,7 @@ def raw_localization(frames):
             transformation_matrix[:3, :3] = R.from_rotvec(rvecs[0]).as_matrix()
             transformation_matrix[:3, 3] = tvecs[0]
             results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
+        else:
+            ret[camera_name] = False
             
     return results, ret
