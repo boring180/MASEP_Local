@@ -27,24 +27,6 @@ def visualize():
     
     # Show the plot in non-blocking mode
     plt.show()
-    
-    
-        
-def error_between_points():
-    rets = np.load('output/rets.npy')
-    points = np.load('output/points.npy')
-    for camera_name in settings.cameras:
-        if camera_name == 'wide':
-            continue
-        rets_camera = rets[:, settings.cameras.index(camera_name)]
-        rets_wide = rets[:, settings.cameras.index('wide')]
-        rets_between = rets_camera & rets_wide
-        points_camera = points[rets_between, settings.cameras.index(camera_name), :3, 3]
-        points_wide = points[rets_between, settings.cameras.index('wide'), :3, 3]
-        error = np.linalg.norm(points_camera - points_wide, axis=1)
-        print(f'{camera_name} has error: {error}')
-        with open(f'output/error.json', 'a') as f:
-            f.write(f'{camera_name}: {error}\n')
         
 def main():
     visualize()
