@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 import pickle
+import tqdm
 from settings_loader import settings
 from raw_localization import raw_localization
 from visualize import visualize
@@ -19,9 +20,9 @@ def main():
     # Initialize historical points dictionary
     points = {camera_name: [] for camera_name in settings.cameras}
 
-    frame_count = 0
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    while True:
+    for _ in tqdm.tqdm(range(frame_count)):
         ret, frame = cap.read()
         if not ret:
             break
