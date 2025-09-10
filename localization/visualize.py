@@ -78,6 +78,10 @@ def visualize_single_frame(frame_points, frame_index):
     fig = plt.figure(figsize=(1920/dpi, 1080/dpi), dpi=dpi)
     ax = fig.add_subplot(1, 1, 1, projection='3d')
     ax.set_title('3D Point Cloud')
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+    ax.set_zlim(-1, 1)
+    ax.set_box_aspect([1,1,1])
     colors = ['red', 'green', 'blue', 'yellow', 'purple']
     for camera_name in settings.cameras:
         camera_index = settings.cameras.index(camera_name)
@@ -89,6 +93,8 @@ def visualize_single_frame(frame_points, frame_index):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_box_aspect([1,1,1])
+    legend = ax.legend(settings.cameras, title='Cameras')
+    legend.set_bbox_to_anchor((1.0, 1.0))
     os.makedirs('output/shared', exist_ok=True)
     plt.savefig(f'output/shared/single_frame_{frame_index}.png')
     plt.close(fig)
@@ -96,5 +102,6 @@ def visualize_single_frame(frame_points, frame_index):
 def main():
     visualize()
     calculate_difference()
+    
 if __name__ == '__main__':
     main()
