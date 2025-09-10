@@ -15,10 +15,8 @@ def visualize():
     
     for camera_name in settings.cameras:
         camera_index = settings.cameras.index(camera_name)
-        points_camera = points[camera_index][rets[camera_index]]
-        if len(points_camera) == 0:
-            continue
-        points_camera = np.array(points_camera)
+        camera_rets = rets[:, camera_index]
+        points_camera = points[camera_rets, camera_index, :]
         ax.scatter(points_camera[:, 0], points_camera[:, 1], points_camera[:, 2], 
                     color=colors[camera_index],
                     alpha=0.3, marker='.')
@@ -29,28 +27,9 @@ def visualize():
     
     # Show the plot in non-blocking mode
     plt.show()
-    
-    
-        
-def error_between_points():
-    rets = np.load('output/rets.npy')
-    points = np.load('output/points.npy')
-    for camera_name in settings.cameras:
-        if camera_name == 'wide':
-            continue
-        rets_camera = rets[settings.cameras.index(camera_name)]
-        rets_wide = rets[settings.cameras.index('wide')]
-        rets_between = rets_camera & rets_wide
-        points_camera = points[settings.cameras.index(camera_name)][rets_between]
-        points_wide = points[settings.cameras.index('wide')][rets_between]
-        error = np.linalg.norm(points_camera - points_wide, axis=1)
-        print(f'{camera_name} has error: {error}')
-        with open(f'output/error.json', 'a') as f:
-            f.write(f'{camera_name}: {error}\n')
         
 def main():
-    points = pickle.load(open('output/points.pkl', 'rb'))
-    visualize(points)
+    visualize()
     
 if __name__ == '__main__':
     main()
