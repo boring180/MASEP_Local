@@ -85,6 +85,9 @@ def arrow_projection():
         image_before = cv2.imread(file_name)
         if settings.internal_callibration_type == 'single':
             camera_name = file_name.split('/')[-1].split('.')[0].split('_')[0]
+            if camera_name not in settings.cameras:
+                random_index = random.randint(0, len(images) - 1)
+                continue
             image_after = projection(image_before, mtxs[camera_name], dists[camera_name])
             if image_after is not None:
                 before_calibration.append(image_before)
