@@ -58,7 +58,8 @@ def camera_intrinsic_calibration(settings):
             mean_error += error
         mean_error = mean_error / number_of_success_images
         print(f'{camera_name} has reprojection error: {mean_error}')
-            
+        with open(f'results/intrinsic_reproject_error.json', 'a') as f:
+            f.write(f'{camera_name}: {mean_error}\n')
     return
 
     
