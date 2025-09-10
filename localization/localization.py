@@ -33,11 +33,13 @@ def main():
         frame_rets = [[] for i in range(len(settings.cameras))]
         # Store current points in historical data
         for camera_name in settings.cameras:
-            frame_rets[settings.cameras.index(camera_name)] = ret_vals[camera_name]
             if ret_vals[camera_name]:
+                frame_rets[settings.cameras.index(camera_name)] = True
+                # frame_points[settings.cameras.index(camera_name)] = results[camera_name][:3, 3]
                 frame_points[settings.cameras.index(camera_name)] = results[camera_name]
             else:
-                frame_points[settings.cameras.index(camera_name)] = np.zeros((3, 1)).astype(np.float32)
+                frame_rets[settings.cameras.index(camera_name)] = False
+                frame_points[settings.cameras.index(camera_name)] = np.zeros((3,)).astype(float)
                 
         points.append(frame_points)
         rets.append(frame_rets)
@@ -45,7 +47,6 @@ def main():
     if not os.path.exists('output'):
         os.makedirs('output')
         
-    print(points)
     points = np.array(points)
     rets = np.array(rets)
     np.save('output/points.npy', points)
