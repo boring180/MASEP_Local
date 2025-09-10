@@ -26,7 +26,7 @@ def raw_localization(frames):
             # transformation_matrix[:3, :3] = R.from_rotvec(rvecs[0]).as_matrix()
             # transformation_matrix[:3, 3] = tvecs[0]
             # results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
-            results[camera_name] = (tvecs[0].reshape(1, 3) - extrinsic[:3, 3])[0] # Shape: (3, )
+            results[camera_name] = (tvecs[0].reshape(1, 3) + extrinsic[:3, 3])[0] # Shape: (3, )
         else:
             ret[camera_name] = False
             
