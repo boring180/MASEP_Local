@@ -2,47 +2,20 @@ import numpy as np
 from settings_loader import settings
 import matplotlib.pyplot as plt
 import matplotlib
-import signal
-import sys
 import pickle
 
-# Set matplotlib to use a non-blocking backend
-matplotlib.use('TkAgg')
-
-def signal_handler(sig, frame):
-    """Handle Ctrl+C gracefully"""
-    print('\nExiting visualization...')
-    plt.close('all')
-    sys.exit(0)
-
-def visualize(points):
-    # Set up signal handler for graceful exit
-    signal.signal(signal.SIGINT, signal_handler)
-    
-    # Enable interactive mode
-    plt.ion()
-    
+def visualize(points):    
     dpi = 100
     fig = plt.figure(figsize=(1920/dpi, 1080/dpi), dpi=dpi)
     ax = fig.add_subplot(1, 1, 1, projection='3d')
-    ax.set_title('3D Point Cloud - Press Ctrl+C to exit')
+    ax.set_title('3D Point Cloud')
     draw_detection_graph(ax, points)
     
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     
-    # Show the plot in non-blocking mode
-    plt.show(block=False)
-    
-    # Keep the window open and responsive
-    try:
-        while plt.get_fignums():
-            plt.pause(0.1)
-    except KeyboardInterrupt:
-        print('\nExiting visualization...')
-    finally:
-        plt.close('all')
+    plt.show()
     
 
 def draw_detection_graph(ax, points):
