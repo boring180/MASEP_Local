@@ -6,7 +6,7 @@ import tqdm
 
 from settings_loader import settings
 from raw_localization import raw_localization
-from visualize import visualize
+from visualize import visualize, calculate_difference, visualize_single_frame
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
@@ -41,6 +41,9 @@ def main():
                 frame_rets[settings.cameras.index(camera_name)] = False
                 frame_points[settings.cameras.index(camera_name)] = np.zeros((3,)).astype(float)
                 
+        if np.sum(frame_rets) == len(settings.cameras):
+            visualize_single_frame(frame_points, _)
+        
         points.append(frame_points)
         rets.append(frame_rets)
         
@@ -54,7 +57,7 @@ def main():
 
     cap.release()
 
-    visualize()
+    calculate_difference()
 
 if __name__ == '__main__':
     main()

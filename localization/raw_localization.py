@@ -22,11 +22,9 @@ def raw_localization(frames):
             ret[camera_name] = True
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, settings.square_size, mtx, dist)
 
-            # transformation_matrix = np.eye(4)
-            # transformation_matrix[:3, :3] = R.from_rotvec(rvecs[0]).as_matrix()
-            # transformation_matrix[:3, 3] = tvecs[0]
-            # results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
-            results[camera_name] = (tvecs[0].reshape(1, 3) + extrinsic[:3, 3])[0] # Shape: (3, )
+            homogeneous_translation = np.ones((4, 1))
+            homogeneous_translation[:3, 0] = tvecs[0]
+            results[camera_name] = (extrinsic @ homogeneous_translation)[:3, 0]
         else:
             ret[camera_name] = False
             
