@@ -18,5 +18,3 @@ localization/__pycache__/
 .vscode/
 
 capture/output/
-
-localization/output/shared/
