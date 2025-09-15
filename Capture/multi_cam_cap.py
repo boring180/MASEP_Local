@@ -23,7 +23,7 @@ def frame_concatent(frames, reference_shape):
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(2), cv2.VideoCapture(3), cv2.VideoCapture(4)]
+    cameras = [cv2.VideoCapture(1), cv2.VideoCapture(2), cv2.VideoCapture(3)]
     reference_shape = cameras[0].read()[1].shape[:2]
     
     # Verify cameras opened successfully
@@ -93,9 +93,10 @@ def main():
 
     # Cleanup
     out.release()
-    for _, cap in cameras:
-        cap.release()
+    for i in range(len(cameras)):
+        cameras[i].release()
     cv2.destroyAllWindows()
+    
     print(f"Video saved as {filename}")
     
 if __name__ == "__main__":
