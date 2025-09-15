@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import random
+import tqdm
 random.seed(time.time())
 
 from settings_loader import settings
@@ -46,7 +47,8 @@ def get_points(settings, calibration_type):
     pattern_size_X = pattern_size[0] - 1
     pattern_size_Y = pattern_size[1] - 1
 
-    for fname in images:
+    number_of_images = len(images)
+    for fname in tqdm.tqdm(images):
         frame_imgpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 2))
         frame_objpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 3))
         frame_rets = (np.zeros(len(settings.cameras), dtype=bool) + True) & False
