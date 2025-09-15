@@ -3,7 +3,8 @@ from settings_loader import settings
 import matplotlib.pyplot as plt
 import pickle
 import os
-
+import cv2
+import pandas as pd
 
 def visualize():
     dpi = 100
@@ -99,19 +100,20 @@ def visualize_single_frame(frame_points, frame_index, frame):
     legend = ax.legend(settings.cameras, title='Cameras')
     legend.set_bbox_to_anchor((1.0, 1.0))
     ax = fig.add_subplot(2, 2, 2)
-    ax.imshow(frame, cmap='gray')
+    # Convert BGR to RGB for proper color display
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    ax.imshow(frame_rgb)
     ax.set_title('Frame')
     ax = fig.add_subplot(2, 2, 3)
-    import pandas as pd
     table_data = []
     for camera_name in settings.cameras:
         camera_index = settings.cameras.index(camera_name)
         coords = frame_points[camera_index, :]
         table_data.append({
             'Camera': camera_name,
-            'X': coords[0],
-            'Y': coords[1],
-            'Z': coords[2]
+            'X': f"{coords[0]:.4f}",
+            'Y': f"{coords[1]:.4f}",
+            'Z': f"{coords[2]:.4f}"
         })
     df = pd.DataFrame(table_data)
     ax.axis('off')
