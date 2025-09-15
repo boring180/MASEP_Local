@@ -61,12 +61,6 @@ def get_points(settings, calibration_type):
         
         if single_camera:
             gray = resize_with_padding(gray, np.max(gray.shape), np.max(gray.shape))
-            if camera_name == 'cam2':
-                gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            elif camera_name == 'cam3':
-                gray = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
-            elif camera_name == 'cam0':
-                gray = cv2.rotate(gray, cv2.ROTATE_180)
             frames = [gray]
         else:
             frames = slicing_frame3_1(gray)
