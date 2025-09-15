@@ -1,0 +1,20 @@
+{
+    "cameras": [
+        "cam0",
+        "cam1",
+        "cam2"
+    ],
+    "internal_callibration_type": "multi",
+    "pattern_internal": "chessboard",
+    "pattern_external": "chessboard",
+    "pattern_size_internal": [
+        8,
+        11
+    ],
+    "pattern_size_external": [
+        8,
+        11
+    ],
+    "pattern_square_size_internal": 0.023,
+    "pattern_square_size_external": 0.023
+}

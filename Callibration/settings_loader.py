@@ -65,7 +65,8 @@ settings = CalibrationSettings()
 
 def main():
     settings = CalibrationSettings()
-    print(settings)
+    with open('results/settings.json', 'w') as f:
+        json.dump(settings.settings, f, indent=4)
 
 if __name__ == '__main__':
     main()

@@ -53,10 +53,14 @@ def extrinsic_calibration(settings):
             transformation_matrix[:3, 3] = T[:3, 0]
         
             print(f'{camera_name} has {len(stereo_objpoints)} successful images')
+            with open(f'results/extrinsic_calibration.log', 'a') as f:
+                f.write(f'{camera_name} has {len(stereo_objpoints)} successful images\n')
             
             
         print(f'{camera_name} transformation matrix: {transformation_matrix}')
-        
+        with open(f'results/extrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} transformation matrix: {transformation_matrix}\n')
+
         np.save(f'results/extrinsic_{camera_name}.npy', transformation_matrix)
     
     

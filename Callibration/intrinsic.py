@@ -49,6 +49,8 @@ def camera_intrinsic_calibration(settings):
         np.save(f'results/dist_{camera_name}.npy', dist)
         
         print(f'{camera_name} has {number_of_success_images} successful images')
+        with open(f'results/intrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} has {number_of_success_images} successful images\n')
         
         mean_error = 0
         for i in range(number_of_success_images):
@@ -58,8 +60,8 @@ def camera_intrinsic_calibration(settings):
             mean_error += error
         mean_error = mean_error / number_of_success_images
         print(f'{camera_name} has reprojection error: {mean_error}')
-        with open(f'results/intrinsic_reproject_error.json', 'a') as f:
-            f.write(f'{camera_name}: {mean_error}\n')
+        with open(f'results/intrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} has reprojection error: {mean_error}\n')
     return
 
     
