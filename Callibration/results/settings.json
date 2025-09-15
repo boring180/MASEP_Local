@@ -4,6 +4,7 @@
         "cam1",
         "cam2"
     ],
+    "same_pattern": true,
     "internal_callibration_type": "multi",
     "pattern_internal": "chessboard",
     "pattern_external": "chessboard",
