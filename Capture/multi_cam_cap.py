@@ -23,11 +23,13 @@ def frame_concatent(frames, reference_shape):
 
 def main():
     # Initialize cameras (only first three)
-    cameras = [cv2.VideoCapture(0)]
+    cameras = [cv2.VideoCapture(2), cv2.VideoCapture(3), cv2.VideoCapture(4)]
     reference_shape = cameras[0].read()[1].shape[:2]
     
     # Verify cameras opened successfully
     for i in range(len(cameras)):
+        cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
         if not cameras[i].isOpened():
             print(f"Error: Could not open camera {i}")
             return
