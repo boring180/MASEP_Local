@@ -53,6 +53,8 @@ def get_points(settings, calibration_type):
         
         if single_camera:
             camera_name = fname.split('/')[-1].split('.')[0].split('_')[0]
+            if camera_name not in settings.cameras:
+                continue
         
         img = cv2.imread(fname)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

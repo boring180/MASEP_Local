@@ -1,0 +1,71 @@
+import cv2
+import numpy as np
+import os
+import sys
+import tqdm
+import random
+import time
+random.seed(time.time())
+
+from settings_loader import settings
+from raw_localization import raw_localization
+from visualize import visualize, calculate_difference, visualize_single_frame
+sys.path.append(os.path.dirname(os.path.abspath('.')))
+
+from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
+from utils.frame_concatent import concatent_frame3_1, concatent_frame3_2, resize_with_padding
+
+def main():
+    cap = cv2.VideoCapture(settings.video_path)
+
+    # Initialize historical points dictionary
+    points = []
+    rets = []
+    
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    for _ in tqdm.tqdm(range(total_frames)):
+        ret, frame = cap.read()
+        if not ret:
+            continue
+        
+        frames = slicing_frame3_1(frame)
+        frames[2] = cv2.rotate(frames[2], cv2.ROTATE_180)
+        for i in range(len(frames)):
+            frames[i] = resize_with_padding(frames[i], 640, 640)
+        results, ret_vals = raw_localization(frames)
+        
+        frame_points = [[] for i in range(len(settings.cameras))]
+        frame_rets = [[] for i in range(len(settings.cameras))]
+        # Store current points in historical data
+        for camera_name in settings.cameras:
+            if ret_vals[camera_name]:
+                frame_rets[settings.cameras.index(camera_name)] = True
+                # frame_points[settings.cameras.index(camera_name)] = results[camera_name][:3, 3]
+                frame_points[settings.cameras.index(camera_name)] = results[camera_name]
+            else:
+                frame_rets[settings.cameras.index(camera_name)] = False
+                frame_points[settings.cameras.index(camera_name)] = np.zeros((3,)).astype(float)
+                
+        if np.sum(frame_rets) == len(settings.cameras):
+            if random.random() < 0.005:
+                visualize_single_frame(frame_points, _, concatent_frame3_1(frames))
+            
+        
+        points.append(frame_points)
+        rets.append(frame_rets)
+        
+    if not os.path.exists('output'):
+        os.makedirs('output')
+        
+    points = np.array(points)
+    rets = np.array(rets)
+    np.save('output/points.npy', points)
+    np.save('output/rets.npy', rets)
+
+    cap.release()
+
+    calculate_difference()
+
+if __name__ == '__main__':
+    main()
