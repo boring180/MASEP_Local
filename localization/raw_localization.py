@@ -18,6 +18,8 @@ def raw_localization(frames):
         
         corners, ids, rejected = cv2.aruco.detectMarkers(frames[camera_index], aruco_dict, parameters=parameters)
         
+        cv2.aruco.drawDetectedMarkers(frames[camera_index], corners, ids)
+        
         if ids is not None:
             ret[camera_name] = True
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, settings.square_size, mtx, dist)
