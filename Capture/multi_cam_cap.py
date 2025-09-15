@@ -22,25 +22,22 @@ def frame_concatent(frames, reference_shape):
     return np.concatenate(frames, axis=1)
 
 def main():
-    # Initialize cameras (only first three)
     cameras = [cv2.VideoCapture(1), cv2.VideoCapture(2), cv2.VideoCapture(3)]
     reference_shape = cameras[0].read()[1].shape[:2]
+    frames = []
     
-    # Verify cameras opened successfully
     for i in range(len(cameras)):
+        cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
         if not cameras[i].isOpened():
             print(f"Error: Could not open camera {i}")
             return
-    
-    frames = []
-    for i in range(len(cameras)):
         ret, frame = cameras[i].read()
         frames.append(frame)
 
     frame = frame_concatent(frames, reference_shape)
     height, width = frame.shape[:2]
 
-    # Create output directory
     if not os.path.exists('output'):
         os.makedirs('output')
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -52,14 +49,11 @@ def main():
 
     while True:
         frames = []
-
-        # Capture frames from all cameras
+        
+        show_frames = []
         for i in range(len(cameras)):
             ret, frame = cameras[i].read()
             frames.append(frame)
-        
-        show_frames = []
-        for i in range(len(frames)):
             shown_frame = frames[i].copy()
             gray = cv2.cvtColor(shown_frame, cv2.COLOR_BGR2GRAY)
             ret, corners = cv2.findChessboardCorners(gray, CHESSBOARD_SIZE, None, FLAGS)
@@ -76,7 +70,6 @@ def main():
                 cv2.putText(shown_frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
             show_frames.append(shown_frame)
             
-        # Write original frames (without chessboard) to video
         out.write(frame_concatent(frames, reference_shape))
         
         time_elapsed = time.time() - prev_time
@@ -89,11 +82,11 @@ def main():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # Cleanup
     out.release()
-    for _, cap in cameras:
-        cap.release()
+    for i in range(len(cameras)):
+        cameras[i].release()
     cv2.destroyAllWindows()
+    
     print(f"Video saved as {filename}")
     
 if __name__ == "__main__":
