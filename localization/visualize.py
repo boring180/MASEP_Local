@@ -70,13 +70,16 @@ def calculate_difference():
         wide_points = points[shared_rets, wide_index, :]
         difference = points_camera - wide_points
         print(f'{camera_name} has difference: {np.mean(difference, axis=0)}')
+        with open('output/error.json', 'a') as f:
+            f.write(f'{camera_name}_mean: {np.sqrt(np.mean(difference*difference, axis=0))}\n')
+            f.write(f'{camera_name}_std: {np.std(difference, axis=0)}\n')
         
-def visualize_single_frame(frame_points, frame_index):
+def visualize_single_frame(frame_points, frame_index, frame):
     frame_points = np.array(frame_points)
     frame_index = np.array(frame_index)
     dpi = 100
     fig = plt.figure(figsize=(1920/dpi, 1080/dpi), dpi=dpi)
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    ax = fig.add_subplot(2, 2, 1, projection='3d')
     ax.set_title('3D Point Cloud')
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
@@ -95,9 +98,31 @@ def visualize_single_frame(frame_points, frame_index):
     ax.set_box_aspect([1,1,1])
     legend = ax.legend(settings.cameras, title='Cameras')
     legend.set_bbox_to_anchor((1.0, 1.0))
+    ax = fig.add_subplot(2, 2, 2)
+    ax.imshow(frame, cmap='gray')
+    ax.set_title('Frame')
+    ax = fig.add_subplot(2, 2, 3)
+    import pandas as pd
+    table_data = []
+    for camera_name in settings.cameras:
+        camera_index = settings.cameras.index(camera_name)
+        coords = frame_points[camera_index, :]
+        table_data.append({
+            'Camera': camera_name,
+            'X': coords[0],
+            'Y': coords[1],
+            'Z': coords[2]
+        })
+    df = pd.DataFrame(table_data)
+    ax.axis('off')
+    table = ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(12)
+    table.scale(1, 2)
     os.makedirs('output/shared', exist_ok=True)
     plt.savefig(f'output/shared/single_frame_{frame_index}.png')
     plt.close(fig)
+    
         
 def main():
     visualize()

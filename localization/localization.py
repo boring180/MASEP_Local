@@ -3,6 +3,9 @@ import numpy as np
 import os
 import sys
 import tqdm
+import random
+import time
+random.seed(time.time())
 
 from settings_loader import settings
 from raw_localization import raw_localization
@@ -10,6 +13,7 @@ from visualize import visualize, calculate_difference, visualize_single_frame
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
+from utils.frame_concatent import concatent_frame3_1, concatent_frame3_2, resize_with_padding
 
 def main():
     cap = cv2.VideoCapture(settings.video_path)
@@ -27,6 +31,8 @@ def main():
         
         frames = slicing_frame3_1(frame)
         frames[2] = cv2.rotate(frames[2], cv2.ROTATE_180)
+        for i in range(len(frames)):
+            frames[i] = resize_with_padding(frames[i], 640, 640)
         results, ret_vals = raw_localization(frames)
         
         frame_points = [[] for i in range(len(settings.cameras))]
@@ -42,7 +48,9 @@ def main():
                 frame_points[settings.cameras.index(camera_name)] = np.zeros((3,)).astype(float)
                 
         if np.sum(frame_rets) == len(settings.cameras):
-            visualize_single_frame(frame_points, _)
+            if random.random() < 0.005:
+                visualize_single_frame(frame_points, _, concatent_frame3_1(frames))
+            
         
         points.append(frame_points)
         rets.append(frame_rets)
