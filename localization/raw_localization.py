@@ -14,19 +14,18 @@ def raw_localization(frames):
         extrinsic = np.load(f'{settings.callibration_path}/extrinsic_{camera_name}.npy')
             
         aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
-        parameters = cv2.aruco.DetectorParameters()
+        parameters = cv2.aruco.DetectorParameters() 
         
         corners, ids, rejected = cv2.aruco.detectMarkers(frames[camera_index], aruco_dict, parameters=parameters)
+        cv2.aruco.drawDetectedMarkers(frames[camera_index], corners, ids)
         
         if ids is not None:
             ret[camera_name] = True
             rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, settings.square_size, mtx, dist)
 
-            # transformation_matrix = np.eye(4)
-            # transformation_matrix[:3, :3] = R.from_rotvec(rvecs[0]).as_matrix()
-            # transformation_matrix[:3, 3] = tvecs[0]
-            # results[camera_name] = np.linalg.inv(extrinsic) @ transformation_matrix
-            results[camera_name] = (tvecs[0].reshape(1, 3) + extrinsic[:3, 3])[0] # Shape: (3, )
+            homogeneous_translation = np.ones((4, 1))
+            homogeneous_translation[:3, 0] = tvecs[0]
+            results[camera_name] = (extrinsic @ homogeneous_translation)[:3, 0]
         else:
             ret[camera_name] = False
             
