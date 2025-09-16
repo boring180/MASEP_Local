@@ -6,13 +6,13 @@ import os
 import sys
 import time
 import random
+import tqdm
 random.seed(time.time())
 
 from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
-from utils.frame_concatent import resize_with_padding
 
 def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size):
     objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
@@ -26,7 +26,6 @@ def get_points(settings, calibration_type):
     else:
         single_camera = True
     
-    # Automatically determine image path based on calibration type
     if single_camera:
         image_path = '../photos/single_camera'
     else:
@@ -46,7 +45,8 @@ def get_points(settings, calibration_type):
     pattern_size_X = pattern_size[0] - 1
     pattern_size_Y = pattern_size[1] - 1
 
-    for fname in images:
+    number_of_images = len(images)
+    for fname in tqdm.tqdm(images):
         frame_imgpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 2))
         frame_objpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 3))
         frame_rets = (np.zeros(len(settings.cameras), dtype=bool) + True) & False
@@ -60,13 +60,6 @@ def get_points(settings, calibration_type):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
         if single_camera:
-            gray = resize_with_padding(gray, np.max(gray.shape), np.max(gray.shape))
-            if camera_name == 'cam2':
-                gray = cv2.rotate(gray, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            elif camera_name == 'cam3':
-                gray = cv2.rotate(gray, cv2.ROTATE_90_CLOCKWISE)
-            elif camera_name == 'cam0':
-                gray = cv2.rotate(gray, cv2.ROTATE_180)
             frames = [gray]
         else:
             frames = slicing_frame3_1(gray)

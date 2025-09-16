@@ -1,27 +1,19 @@
-{
-    "cameras": [
-        "wide",
-        "cam0",
-        "cam1"
-    ],
-    "internal_callibration_type": "single",
-    "pattern_internal": "chessboard",
-    "pattern_external": "chessboard",
-    "pattern_size_internal": [
-        36,
-        14
-    ],
-    "pattern_size_external": [
-        8,
-        11
-    ],
-    "pattern_square_size_internal": 0.009,
-    "pattern_square_size_external": 0.023
-}
-Image points already exist
-wide has 56 successful images
-wide has reprojection error: 0.017293494875120653
-cam0 has 120 successful images
-cam0 has reprojection error: 0.016338132799655052
-cam1 has 103 successful images
-cam1 has reprojection error: 0.014724498242966918
+cam2 has 86 successful images
+cam2 has 86 successful images
+cam2 has reprojection error: 0.06217976122916244
+cam1 has 73 successful images
+cam1 has reprojection error: 0.05922505433162141
+cam0 has 25 successful images
+cam0 has reprojection error: 0.07149261392634099
+cam2 has 86 successful images
+cam2 has reprojection error: 0.06217976122916244
+cam1 has 73 successful images
+cam1 has reprojection error: 0.05922505433162141
+cam0 has 25 successful images
+cam0 has reprojection error: 0.07149261392634099
+cam2 has 86 successful images
+cam2 has reprojection error: 0.06217976122916244
+cam1 has 73 successful images
+cam1 has reprojection error: 0.05922505433162141
+cam0 has 25 successful images
+cam0 has reprojection error: 0.07149261392634099
