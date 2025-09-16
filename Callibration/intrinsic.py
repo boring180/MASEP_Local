@@ -31,6 +31,9 @@ def camera_intrinsic_calibration(settings):
         objpoints_camera = objpoints_camera[rets_camera, :, :]
 
         number_of_success_images = np.sum(rets_camera.astype(int))
+        print(f'{camera_name} has {number_of_success_images} successful images')
+        with open(f'results/intrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} has {number_of_success_images} successful images\n')
         
         obj_pts = []
         img_pts = []
@@ -42,13 +45,11 @@ def camera_intrinsic_calibration(settings):
         img_pts = np.array(img_pts)        
         
         # flags = cv2.CALIB_RATIONAL_MODEL
-        flags = None
+        flags = cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_THIN_PRISM_MODEL + cv2.CALIB_TILTED_MODEL
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None, flags=flags)
         
         np.save(f'results/mtx_{camera_name}.npy', mtx)
         np.save(f'results/dist_{camera_name}.npy', dist)
-        
-        print(f'{camera_name} has {number_of_success_images} successful images')
         
         mean_error = 0
         for i in range(number_of_success_images):
@@ -58,8 +59,8 @@ def camera_intrinsic_calibration(settings):
             mean_error += error
         mean_error = mean_error / number_of_success_images
         print(f'{camera_name} has reprojection error: {mean_error}')
-        with open(f'results/intrinsic_reproject_error.json', 'a') as f:
-            f.write(f'{camera_name}: {mean_error}\n')
+        with open(f'results/intrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} has reprojection error: {mean_error}\n')
     return
 
     

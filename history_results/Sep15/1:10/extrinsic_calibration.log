@@ -1,0 +1,16 @@
+cam0 has 105 successful images
+cam0 transformation matrix: [[ 9.99774097e-01 -2.11671108e-02  1.92551520e-03 -2.28265998e-01]
+ [ 2.11675799e-02  9.99775917e-01 -2.23565473e-04 -7.78200362e-03]
+ [-1.92035149e-03  2.64273465e-04  9.99998121e-01 -1.98074045e-02]
+ [ 0.00000000e+00  0.00000000e+00  0.00000000e+00  1.00000000e+00]]
+cam1 transformation matrix: [[1. 0. 0. 0.]
+ [0. 1. 0. 0.]
+ [0. 0. 1. 0.]
+ [0. 0. 0. 1.]]
+cam2 has 77 successful images
+cam2 transformation matrix: [[ 0.99990447 -0.00137388  0.01375356  0.23332453]
+ [ 0.00117376  0.99989348  0.01454845  0.00708381]
+ [-0.01377208 -0.01453092  0.99979957 -0.01601961]
+ [ 0.          0.          0.          1.        ]]
+cam0 has RMS projection error to center: 0.026587673304120693, RMS projection error to ground truth: 0.09831915094226767. RMS error between center and ground truth: 0.09812482443856584
+cam2 has RMS projection error to center: 0.043986310940614844, RMS projection error to ground truth: 0.08685258402196919. RMS error between center and ground truth: 0.08730083146631572
