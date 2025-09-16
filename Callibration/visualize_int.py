@@ -12,8 +12,8 @@ from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
-from utils.frame_concatent import concatent_frame3_2, concatent_frame3_1, resize_with_padding
-
+from utils.frame_concatent import concatent_frame3_2, concatent_frame3_1
+from utils.frame_concatent import resize_with_padding
 from get_points import get_points_single_frame
 
 # Use settings from configuration file
@@ -44,23 +44,18 @@ def projection(img, mtx, dist):
     objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
     objp = objp * square_size
     ret, corners, objp = get_points_single_frame(gray, settings, 'intrinsic')
-    img = img.copy()
+    if ret == False:
+        return None
     h,  w = img.shape[:2]
-    h_original, w_original = img.shape[:2]
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-    # undistort
     dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
-    # crop the image
     x, y, w, h = roi
     dst = dst[y:y+h, x:x+w]
-    
-    if ret == True:
-        ret,rvecs, tvecs = cv2.solvePnP(objp, corners, mtx, dist)
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
-        dst = draw(dst, corners, imgpts)
-        return dst
-    else:
-        return None
+
+    ret,rvecs, tvecs = cv2.solvePnP(objp, corners, mtx, dist)
+    imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, mtx, dist)
+    dst = draw(dst, corners, imgpts)
+    return dst
 
 def arrow_projection():
     mtxs = {}
@@ -89,6 +84,7 @@ def arrow_projection():
                 continue
             image_after = projection(image_before, mtxs[camera_name], dists[camera_name])
             if image_after is not None:
+                image_after = resize_with_padding(image_after, image_before.shape[1], image_before.shape[0])
                 before_calibration.append(image_before)
                 after_calibration.append(image_after)
         else:
@@ -98,10 +94,8 @@ def arrow_projection():
                 frame_before = frames[frame_index]
                 frame_after = projection(frame_before, mtxs[camera_name], dists[camera_name])
                 if frame_after is not None:
+                    frame_after = resize_with_padding(frame_after, frame_before.shape[1], frame_before.shape[0])
                     before_calibration.append(frame_before)
-                    w, h = frame_before.shape[:2]
-                    frame_after = resize_with_padding(frame_after, w, h)
-                    print("hello world")
                     after_calibration.append(frame_after)
         
         if len(before_calibration) == len(settings.cameras):
