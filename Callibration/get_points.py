@@ -87,6 +87,7 @@ def get_points(settings, calibration_type):
         imgpoints.append(frame_imgpoints)
         objpoints.append(frame_objpoints)
         rets.append(frame_rets)
+        print(frame_rets)
         
     imgpoints = np.array(imgpoints)
     objpoints = np.array(objpoints)
