@@ -1,9 +1,10 @@
 {
     "cameras": [
-        "cam0",
+        "cam2",
         "cam1",
-        "cam2"
+        "cam0"
     ],
+    "center_camera": "cam1",
     "same_pattern": true,
     "internal_callibration_type": "multi",
     "pattern_internal": "chessboard",

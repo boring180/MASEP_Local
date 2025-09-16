@@ -109,16 +109,15 @@ def chessboard_projection(settings):
                     coord_thru_cam = transformation_matrix_cam @ objp_homogeneous.T
                     coord_thru_center = transformation_matrix_center @ objp_homogeneous.T
                     projected_coord = transformation_matrices[camera_name] @ coord_thru_cam
-                    RMS_error = np.sqrt(np.mean((projected_coord[:3, :] - coord_thru_center[:3, :])**2))
-                    space_between_points_cam = np.sqrt(np.mean(((coord_thru_cam[:3, :].T - coord_thru_cam[:3, 0]) - objp) ** 2))
-                    space_between_points_center = np.sqrt(np.mean(((coord_thru_center[:3, :].T - coord_thru_center[:3, 0]) - objp) ** 2))
-                    print(f'{camera_name} has RMS projection error to center: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between center and ground truth: {space_between_points_center}')
+                    error = np.mean(projected_coord[:3, :], axis=1) - np.mean(coord_thru_center[:3, :], axis=1)
+                    print(f'{camera_name} has RMS projection error to center: {error}')
                     with open(f'results/extrinsic_calibration.log', 'a') as f:
-                        f.write(f'{camera_name} has RMS projection error to center: {RMS_error}, RMS projection error to ground truth: {space_between_points_cam}. RMS error between center and ground truth: {space_between_points_center}\n')
+                        f.write(f'{camera_name} has RMS projection error to center: {error}\n')
                     
                     ax.scatter(coord_thru_cam[0, :], coord_thru_cam[1, :], coord_thru_cam[2, :], color='red')
                     ax.scatter(projected_coord[0, :], projected_coord[1, :], projected_coord[2, :], color='blue')
                     ax.set_title(f'{camera_name}')
+                    ax.set_box_aspect([1,1,1])
                     break
         i += 1
     
