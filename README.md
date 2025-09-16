@@ -7,3 +7,5 @@ This is a Final Year Project for the Hong Kong University of Science and Technol
 ## 2.Overview
 
 ## 3.Features
+
+The internal and external callibration only accept images with padding
