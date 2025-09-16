@@ -13,7 +13,6 @@ from settings_loader import settings
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
-from utils.frame_concatent import resize_with_padding
 
 def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size):
     objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
@@ -27,7 +26,6 @@ def get_points(settings, calibration_type):
     else:
         single_camera = True
     
-    # Automatically determine image path based on calibration type
     if single_camera:
         image_path = '../photos/single_camera'
     else:
@@ -62,7 +60,6 @@ def get_points(settings, calibration_type):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         
         if single_camera:
-            gray = resize_with_padding(gray, np.max(gray.shape), np.max(gray.shape))
             frames = [gray]
         else:
             frames = slicing_frame3_1(gray)
@@ -87,7 +84,6 @@ def get_points(settings, calibration_type):
         imgpoints.append(frame_imgpoints)
         objpoints.append(frame_objpoints)
         rets.append(frame_rets)
-        print(frame_rets)
         
     imgpoints = np.array(imgpoints)
     objpoints = np.array(objpoints)

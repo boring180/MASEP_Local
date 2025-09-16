@@ -53,7 +53,6 @@ def projection(img, mtx, dist):
     # crop the image
     x, y, w, h = roi
     dst = dst[y:y+h, x:x+w]
-    dst = resize_with_padding(dst, w_original, h_original)
     
     if ret == True:
         ret,rvecs, tvecs = cv2.solvePnP(objp, corners, mtx, dist)
@@ -100,16 +99,19 @@ def arrow_projection():
                 frame_after = projection(frame_before, mtxs[camera_name], dists[camera_name])
                 if frame_after is not None:
                     before_calibration.append(frame_before)
+                    w, h = frame_before.shape[:2]
+                    frame_after = resize_with_padding(frame_after, w, h)
+                    print("hello world")
                     after_calibration.append(frame_after)
         
         if len(before_calibration) == len(settings.cameras):
             break
         else:
             random_index = random.randint(0, len(images) - 1)
-            
-            
-    before_calibration = concatent_frame3_2(before_calibration)
-    after_calibration = concatent_frame3_2(after_calibration)
+        
+    
+    before_calibration = concatent_frame3_1(before_calibration)
+    after_calibration = concatent_frame3_1(after_calibration)
     difference = cv2.absdiff(before_calibration, after_calibration)
         
     ax = fig.add_subplot(3, 1, 1)
