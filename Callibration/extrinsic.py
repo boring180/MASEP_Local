@@ -5,6 +5,8 @@ import os
 from get_points import get_points
 from settings_loader import settings
 
+
+
 def extrinsic_calibration(settings):
     if settings.same_pattern:
         if os.path.exists('chessboard_points/intrinsic_rets.npy') and os.path.exists('chessboard_points/intrinsic_object_points.npy') and os.path.exists('chessboard_points/intrinsic_image_points.npy') and os.path.exists('chessboard_points/intrinsic_shape.npy'):
