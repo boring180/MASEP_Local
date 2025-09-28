@@ -1,7 +1,7 @@
 {
-    "cameras": ["cam2"],
+    "cameras": ["cam0"],
     "pattern_type": "chessboard",
     "pattern_size": [18, 27],
-    "pattern_square_size": 0.01,
+    "pattern_square_size": 0.0848,
     "chessboard_flags": "CALIB_CB_FAST_CHECK"
 }
