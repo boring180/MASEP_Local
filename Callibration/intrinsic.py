@@ -45,7 +45,8 @@ def camera_intrinsic_calibration(settings):
         img_pts = np.array(img_pts)        
         
         # flags = cv2.CALIB_RATIONAL_MODEL
-        flags = cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_THIN_PRISM_MODEL + cv2.CALIB_TILTED_MODEL
+        # flags = cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_THIN_PRISM_MODEL + cv2.CALIB_TILTED_MODEL
+        flags = None
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts, shape[::-1], None, None, flags=flags)
         
         np.save(f'results/mtx_{camera_name}.npy', mtx)
