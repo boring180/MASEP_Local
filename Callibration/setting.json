@@ -1,5 +1,5 @@
 {
-    "cameras": ["cam2", "cam1", "cam0"],
+    "cameras": ["cam0", "cam1", "cam2"],
     "center_camera": "cam1",
     "same_pattern": false,
     "internal_callibration_type": "single",
@@ -7,7 +7,7 @@
     "pattern_external": "chessboard",
     "pattern_size_internal": [18, 27],
     "pattern_size_external": [8, 11],
-    "pattern_square_size_internal": 0.01,
+    "pattern_square_size_internal": 0.0848,
     "marker_size_internal": 0.01,
     "pattern_square_size_external": 0.023,
     "marker_size_external": 0.017,
