@@ -54,7 +54,6 @@ def undistort_comparison():
     while True:
         file_name = image_path + '/' + images[random_index]
         image_before = cv2.imread(file_name)
-        image_before = cv2.cvtColor(image_before, cv2.COLOR_BGR2GRAY)
         if settings.internal_callibration_type == 'single':
             camera_name = file_name.split('/')[-1].split('.')[0].split('_')[0]
             if camera_name not in settings.cameras:
