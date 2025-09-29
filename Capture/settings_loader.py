@@ -41,6 +41,12 @@ class CaptureSettings:
         if 'chessboard_flags' not in self.settings:
             raise Exception("Error: 'chessboard_flags' not found in settings")
         return self.settings['chessboard_flags']
+    
+    @property
+    def marker_size(self):
+        if 'marker_size' not in self.settings:
+            raise Exception("Error: 'marker_size' not found in settings")
+        return self.settings['marker_size']
 
 # Global settings instance
 settings = CaptureSettings()
