@@ -7,6 +7,7 @@ import sys
 import time
 import random
 import tqdm
+import pickle
 random.seed(time.time())
 
 from settings_loader import settings
@@ -69,9 +70,9 @@ def get_points(settings, calibration_type):
 
     number_of_images = len(images)
     for fname in tqdm.tqdm(images):
-        frame_imgpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 2))
-        frame_objpoints = np.zeros((len(settings.cameras), pattern_size_X * pattern_size_Y, 3))
-        frame_rets = (np.zeros(len(settings.cameras), dtype=bool) + True) & False
+        frame_imgpoints = {}
+        frame_objpoints = {}
+        frame_rets = {camera_name: False for camera_name in settings.cameras}
         
         if single_camera:
             camera_name = fname.split('/')[-1].split('.')[0].split('_')[0]
@@ -90,32 +91,27 @@ def get_points(settings, calibration_type):
             frame = frames[i]
             shape = frame.shape
             
-            if single_camera:
-                i = settings.cameras.index(camera_name)
+            if not single_camera:
+                camera_name = settings.cameras[i]
 
             ret, imgp, objp = get_points_single_frame(frame, settings, calibration_type)
             
             if ret == True:
-                frame_objpoints[i, :, :] = objp
-                frame_imgpoints[i, :, :] = imgp[:, 0, :]
-                frame_rets[i] = True
-                
-            if single_camera:
-                break
+                frame_objpoints.update({camera_name: objp})
+                frame_imgpoints.update({camera_name: imgp[:, 0, :]})
+                frame_rets.update({camera_name: True})
+            else:
+                frame_rets.update({camera_name: False})
                 
         imgpoints.append(frame_imgpoints)
         objpoints.append(frame_objpoints)
         rets.append(frame_rets)
-        
-    imgpoints = np.array(imgpoints)
-    objpoints = np.array(objpoints)
-    rets = np.array(rets)
     
     os.makedirs('chessboard_points', exist_ok=True)
-    np.save(f'chessboard_points/{calibration_type}_rets.npy', rets)
-    np.save(f'chessboard_points/{calibration_type}_object_points.npy', objpoints)
-    np.save(f'chessboard_points/{calibration_type}_image_points.npy', imgpoints)
-    np.save(f'chessboard_points/{calibration_type}_shape.npy', shape)
+    pickle.dump(rets, open(f'chessboard_points/{calibration_type}_rets.pkl', 'wb'))
+    pickle.dump(objpoints, open(f'chessboard_points/{calibration_type}_object_points.pkl', 'wb'))
+    pickle.dump(imgpoints, open(f'chessboard_points/{calibration_type}_image_points.pkl', 'wb'))
+    pickle.dump(shape, open(f'chessboard_points/{calibration_type}_shape.pkl', 'wb'))
         
 ### ----------------------------- Get points from single frame----------------------------- ###
 def get_points_single_frame(frame, settings, calibration_type):
@@ -150,3 +146,14 @@ def get_points_single_frame(frame, settings, calibration_type):
     ## ----------------------------- Invalid pattern type ----------------------------- ##
     else:
         raise ValueError(f'Invalid pattern type: {settings.pattern_internal}')
+
+### ----------------------------- Main function ----------------------------- ###
+def main():
+    args = sys.argv[1:]
+    if 'intrinsic' in args:
+        get_points(settings, calibration_type='intrinsic')
+    if 'extrinsic' in args:
+        get_points(settings, calibration_type='extrinsic')
+
+if __name__ == '__main__':
+    main()
