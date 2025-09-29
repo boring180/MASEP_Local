@@ -20,9 +20,9 @@ objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1,
 ### ----------------------------- Charuco pattern settings ----------------------------- ###
 SQUARE_SIZE = settings.pattern_square_size  # Size of a square in meters
 MARKER_SIZE = settings.marker_size
-DICT = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_50)
-board = cv2.aruco.CharucoBoard((CHESSBOARD_SIZE[0], CHESSBOARD_SIZE[1]), SQUARE_SIZE, MARKER_SIZE, DICT)
-detector = cv2.aruco.CharucoDetector(board)
+DICT = cv2.aruco.getPredefinedDictionary(settings.aruco_dict)
+board = cv2.aruco.CharucoBoard((settings.pattern_size[0], settings.pattern_size[1]), SQUARE_SIZE, MARKER_SIZE, DICT)
+parameters = cv2.aruco.DetectorParameters()
     
 def frame_concatent(frames, reference_shape):
     for i in range(len(frames)):
@@ -45,13 +45,13 @@ def chessboard_detection(frame):
         cv2.putText(frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
         
 def charuco_detection(frame):
-    current_charuco_ids = None
-    current_charuco_corners = None
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    current_charuco_corners, current_charuco_ids, _, _ = detector.detectBoard(gray)
+    charuco_ids = []
+    charuco_corners = []
+    cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    charuco_corners, charuco_ids, rejected = cv2.aruco.detectMarkers(frame, DICT, parameters=parameters)
     
-    if current_charuco_ids is not None:
-        text = f"{len(current_charuco_ids)}"
+    if charuco_ids is not None:
+        text = f"{len(charuco_ids)}"
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 15
         thickness = 30

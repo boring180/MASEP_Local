@@ -1,4 +1,5 @@
 import json
+import cv2
 
 class CaptureSettings:
     def __init__(self, settings_file='setting.json'):
@@ -47,6 +48,12 @@ class CaptureSettings:
         if 'marker_size' not in self.settings:
             raise Exception("Error: 'marker_size' not found in settings")
         return self.settings['marker_size']
+    
+    @property
+    def aruco_dict(self):
+        if 'aruco_dict' not in self.settings:
+            raise Exception("Error: 'aruco_dict' not found in settings")
+        return getattr(cv2.aruco, self.settings['aruco_dict'])
 
 # Global settings instance
 settings = CaptureSettings()
