@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 import time
 import sys
+import json
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 
 from settings_loader import settings
@@ -87,6 +88,8 @@ def main():
         filename = f'output/{settings.cameras[0]}_{timestamp}.mp4'
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(filename, fourcc, 24, (width, height))
+    with open(f'output/{timestamp}.json', 'w') as f:
+        json.dump(settings.settings, f)
 
     prev_time = time.time()
 
