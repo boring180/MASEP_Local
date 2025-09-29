@@ -2,6 +2,7 @@
     "cameras": ["cam0", "cam1", "cam2"],
     "center_camera": "cam1",
     "same_pattern": false,
+    "recalibrate": false,
     "internal_callibration_type": "single",
     "pattern_internal": "chessboard",
     "pattern_external": "chessboard",
