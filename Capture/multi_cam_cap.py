@@ -20,7 +20,7 @@ objp[:, :2] = np.mgrid[0:CHESSBOARD_SIZE[0], 0:CHESSBOARD_SIZE[1]].T.reshape(-1,
 ### ----------------------------- Charuco pattern settings ----------------------------- ###
 SQUARE_SIZE = settings.pattern_square_size  # Size of a square in meters
 MARKER_SIZE = settings.marker_size
-DICT = cv2.aruco.getPredefinedDictionary(settings.aruco_dict)
+DICT = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, settings.aruco_dict))
 board = cv2.aruco.CharucoBoard((settings.pattern_size[0], settings.pattern_size[1]), SQUARE_SIZE, MARKER_SIZE, DICT)
 parameters = cv2.aruco.DetectorParameters()
     

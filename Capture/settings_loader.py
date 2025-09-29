@@ -53,7 +53,7 @@ class CaptureSettings:
     def aruco_dict(self):
         if 'aruco_dict' not in self.settings:
             raise Exception("Error: 'aruco_dict' not found in settings")
-        return getattr(cv2.aruco, self.settings['aruco_dict'])
+        return self.settings['aruco_dict']
 
 # Global settings instance
 settings = CaptureSettings()
