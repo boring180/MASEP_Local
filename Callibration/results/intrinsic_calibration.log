@@ -11,3 +11,170 @@ cam1 has 46 successful images
 cam1 has reprojection error: [0.41280221]
 cam2 has 34 successful images
 cam2 has reprojection error: [0.56379594]
+cam0 has 45 successful images
+cam0 has reprojection error: [[0.41338985]
+ [0.32215263]
+ [0.95897213]
+ [0.35185817]
+ [1.02456374]
+ [0.60367386]
+ [1.36441764]
+ [0.59382227]
+ [1.25279939]
+ [0.2918048 ]
+ [0.71738227]
+ [0.64209811]
+ [0.42934851]
+ [2.18897622]
+ [0.511473  ]
+ [1.538463  ]
+ [0.27410396]
+ [0.35594822]
+ [1.41066399]
+ [0.77565199]
+ [0.42190583]
+ [0.35472599]
+ [0.58628833]
+ [0.56711903]
+ [0.53206102]
+ [1.0431518 ]
+ [0.52375336]
+ [0.45120072]
+ [1.09032508]
+ [0.76063516]
+ [0.3175544 ]
+ [0.36090662]
+ [1.17475537]
+ [0.98329515]
+ [1.13565109]
+ [0.38770499]
+ [0.6913413 ]
+ [1.56413792]
+ [1.0123549 ]
+ [0.96880298]
+ [0.76908516]
+ [0.33305777]
+ [1.68969149]
+ [0.90349614]
+ [0.33010181]]
+cam1 has 46 successful images
+cam1 has reprojection error: [[0.32246356]
+ [0.49171385]
+ [0.34473019]
+ [0.27988872]
+ [0.33219213]
+ [0.54955903]
+ [0.2385288 ]
+ [0.83320318]
+ [0.29980891]
+ [0.34507944]
+ [0.58642868]
+ [0.27954715]
+ [0.40092374]
+ [0.27304243]
+ [0.41292534]
+ [0.54047734]
+ [0.37522047]
+ [0.26650712]
+ [0.34446892]
+ [0.27814543]
+ [0.51912627]
+ [0.45084544]
+ [0.37668401]
+ [0.41598561]
+ [0.22895473]
+ [0.32585957]
+ [0.54571049]
+ [0.28197124]
+ [0.41434041]
+ [0.34955365]
+ [0.3988219 ]
+ [0.4260163 ]
+ [0.39725617]
+ [0.31812462]
+ [1.03618067]
+ [0.28478936]
+ [0.34043728]
+ [0.77341177]
+ [0.27316832]
+ [0.45009474]
+ [0.32492572]
+ [0.38321322]
+ [0.45677892]
+ [0.54155736]
+ [0.56728268]
+ [0.31295667]]
+cam2 has 34 successful images
+cam2 has reprojection error: [[0.34010994]
+ [0.43284417]
+ [0.59725032]
+ [1.32654582]
+ [0.42640769]
+ [0.41994859]
+ [0.85275646]
+ [0.45041263]
+ [1.67675853]
+ [1.5011132 ]
+ [0.22017394]
+ [0.46003618]
+ [0.42653834]
+ [0.1998163 ]
+ [0.24678456]
+ [0.46117119]
+ [0.35472794]
+ [0.68031991]
+ [0.3406799 ]
+ [0.31897264]
+ [1.27243328]
+ [0.47347416]
+ [0.98140541]
+ [0.34168558]
+ [0.33318574]
+ [0.58538848]
+ [0.35689851]
+ [0.29700001]
+ [0.31068435]
+ [0.41810126]
+ [0.8517471 ]
+ [0.27751945]
+ [0.37460417]
+ [0.56156612]]
+cam0 has 45 successful images
+cam0 has reprojection error: 0.7772148258373777
+cam1 has 46 successful images
+cam1 has reprojection error: 0.4128022073365127
+cam2 has 34 successful images
+cam2 has reprojection error: 0.5637959367608448
+cam0 has 45 successful images
+cam0 has 45 successful images
+cam0 has reprojection error: 0.7771836359128601
+cam1 has 46 successful images
+cam1 has reprojection error: 0.41279306152375916
+cam2 has 34 successful images
+cam2 has reprojection error: 0.563784905176028
+cam0 has 45 successful images
+cam0 has reprojection error: 0.7771836359128601
+cam1 has 46 successful images
+cam1 has reprojection error: 0.41279306152375916
+cam2 has 34 successful images
+cam2 has reprojection error: 0.563784905176028
+cam0 has 45 successful images
+cam0 has reprojection error: 0.7772148050284465
+cam1 has 46 successful images
+cam1 has reprojection error: 0.41280220472775614
+cam2 has 34 successful images
+cam2 has reprojection error: 0.5637959345642313
+cam0 has 45 successful images
+cam0 has 45 successful images
+cam0 has 45 successful images
+cam0 has reprojection error: 16.340007109447534
+cam1 has 46 successful images
+cam1 has reprojection error: 8.678670882251463
+cam2 has 34 successful images
+cam2 has reprojection error: 11.8531313313142
+cam0 has 45 successful images
+cam0 has reprojection error: 0.7771836359128601
+cam1 has 46 successful images
+cam1 has reprojection error: 0.41279306152375916
+cam2 has 34 successful images
+cam2 has reprojection error: 0.563784905176028

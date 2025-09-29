@@ -25,6 +25,12 @@ class CalibrationSettings:
         return self.settings['center_camera']
     
     @property
+    def recalibrate(self):
+        if 'recalibrate' not in self.settings:
+            raise Exception("Error: 'recalibrate' not found in settings")
+        return self.settings['recalibrate']
+    
+    @property
     def internal_callibration_type(self):
         if 'internal_callibration_type' not in self.settings:
             raise Exception("Error: 'internal_callibration_type' not found in settings")

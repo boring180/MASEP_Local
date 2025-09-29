@@ -44,9 +44,10 @@ def camera_intrinsic_calibration(settings):
         
         # flags = cv2.CALIB_RATIONAL_MODEL
         # flags = cv2.CALIB_RATIONAL_MODEL + cv2.CALIB_THIN_PRISM_MODEL + cv2.CALIB_TILTED_MODEL
+        termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
         flags = None
-        ret, mtx, dist, rvecs, tvecs, _, _, error = cv2.calibrateCameraExtended(camera_obj_pts, camera_img_pts, shape[::-1], None, None, flags=flags)
-        error = np.mean(error, axis=0)
+        ret, mtx, dist, rvecs, tvecs, _, _, error = cv2.calibrateCameraExtended(camera_obj_pts, camera_img_pts, shape[::-1], None, None, flags=flags, criteria=termination_criteria)
+        error = np.mean(error)
         pickle.dump(mtx, open(f'results/mtx_{camera_name}.pkl', 'wb'))
         pickle.dump(dist, open(f'results/dist_{camera_name}.pkl', 'wb'))
         
