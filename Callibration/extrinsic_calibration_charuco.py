@@ -15,145 +15,83 @@ from settings_loader import settings
 sys.path.append(os.path.dirname(os.path.abspath('.')))
 from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 
-### ----------------------------- Charuco pattern settings ----------------------------- ###
-def get_charuco_settings(settings, calibration_type):
-    if calibration_type == 'intrinsic':
-        pattern_size = settings.pattern_size_internal
-        pattern_square_size = settings.pattern_square_size_internal
-        marker_size = settings.marker_size_internal
-        aruco_dict = settings.aruco_dict_internal
-    elif calibration_type == 'extrinsic':
-        pattern_size = settings.pattern_size_external
-        pattern_square_size = settings.pattern_square_size_external
-        marker_size = settings.marker_size_external
-        aruco_dict = settings.aruco_dict_external
-    SQUARE_SIZE = pattern_square_size
-    MARKER_SIZE = marker_size
-    DICT = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, aruco_dict))
-    board = cv2.aruco.CharucoBoard((pattern_size[0], pattern_size[1]), SQUARE_SIZE, MARKER_SIZE, DICT)
-    parameters = cv2.aruco.DetectorParameters()
-    return board, parameters, DICT
-
-### ----------------------------- Chessboard pattern settings ----------------------------- ###
-def get_objp(number_of_internal_corners_x, number_of_internal_corners_y, square_size):
-    objp = np.zeros((number_of_internal_corners_x * number_of_internal_corners_y,3), np.float32)
-    objp[:,:2] = np.mgrid[0:number_of_internal_corners_x,0:number_of_internal_corners_y].T.reshape(-1,2)
-    objp = objp * square_size
-    return objp
-
-
-### ----------------------------- Get points from images----------------------------- ###
-def get_points(settings, calibration_type):  
-    if calibration_type == 'extrinsic' or settings.internal_callibration_type == 'multi':
-        single_camera = False
-    else:
-        single_camera = True
-    
-    if single_camera:
-        image_path = '../photos/single_camera'
-    else:
-        image_path = '../photos/multi_camera'
-    
-    images = glob.glob(f'{image_path}/*.jpg')
-    shape = (0,0)
-    imgpoints = []
-    objpoints = []
-    rets = []
-    
-    if calibration_type == 'intrinsic':
-        pattern_size = settings.pattern_size_internal 
-    else:
-        pattern_size = settings.pattern_size_external
+class ExtrinsicCalibrationCharuco:
+    def __init__(self, settings):
+        self.dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, settings.aruco_dict_external))
+        self.board = cv2.aruco.CharucoBoard((settings.pattern_size_external[0], settings.pattern_size_external[1]), settings.pattern_square_size_external, settings.marker_size_external, self.dict)
+        self.parameters = cv2.aruco.DetectorParameters()
+        self.detector = cv2.aruco.ArucoDetector(self.dict, self.parameters)
         
-    pattern_size_X = pattern_size[0] - 1
-    pattern_size_Y = pattern_size[1] - 1
-
-    number_of_images = len(images)
-    for fname in tqdm.tqdm(images):
-        frame_imgpoints = {}
-        frame_objpoints = {}
-        frame_rets = {camera_name: False for camera_name in settings.cameras}
+        self.center_camera = settings.center_camera
+        self.cameras = settings.cameras
         
-        if single_camera:
-            camera_name = fname.split('/')[-1].split('.')[0].split('_')[0]
-            if camera_name not in settings.cameras:
-                continue
+        self.camera_points = []
         
-        img = cv2.imread(fname)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        self.camera_mtx = {}
+        self.camera_dist = {}
+        self.camera_extrinsic = {}
         
-        if single_camera:
-            frames = [gray]
-        else:
-            frames = slicing_frame3_1(gray)
+        for camera_name in settings.cameras:
+            self.camera_mtx[camera_name] = pickle.load(open(f'results/mtx_{camera_name}.pkl', 'rb'))
+            self.camera_dist[camera_name] = pickle.load(open(f'results/dist_{camera_name}.pkl', 'rb'))
         
-        for i in range(len(frames)):
-            frame = frames[i]
-            shape = frame.shape
-            
-            if not single_camera:
-                camera_name = settings.cameras[i]
-
-            ret, imgp, objp = get_points_single_frame(frame, settings, calibration_type)
-            
-            if ret == True:
-                frame_objpoints.update({camera_name: objp})
-                frame_imgpoints.update({camera_name: imgp[:, 0, :]})
-                frame_rets.update({camera_name: True})
-            else:
-                frame_rets.update({camera_name: False})
+    def get_camera_points(self):
+        image_path = f'../photos/multi_camera'
+        images = glob.glob(f'{image_path}/*.jpg')
+        
+        for image_path in tqdm.tqdm(images):
+            frame_rets = {}
+            frame_points = {}
+            image = cv2.imread(image_path)
+            frames = slicing_frame3_1(image)
+            for frame in frames:
+                camera_name = self.cameras[0]
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                corners, ids, rejected = self.detector.detectMarkers(gray)
+                if ids is None:
+                    frame_points[camera_name] = None
+                    continue
                 
-        imgpoints.append(frame_imgpoints)
-        objpoints.append(frame_objpoints)
-        rets.append(frame_rets)
-    
-    os.makedirs('chessboard_points', exist_ok=True)
-    pickle.dump(rets, open(f'chessboard_points/{calibration_type}_rets.pkl', 'wb'))
-    pickle.dump(objpoints, open(f'chessboard_points/{calibration_type}_object_points.pkl', 'wb'))
-    pickle.dump(imgpoints, open(f'chessboard_points/{calibration_type}_image_points.pkl', 'wb'))
-    pickle.dump(shape, open(f'chessboard_points/{calibration_type}_shape.pkl', 'wb'))
+                ret, corners, ids = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, self.board)
+                if not ret:
+                    frame_points[camera_name] = None
+                    continue
+                
+                ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
+                frame_points[camera_name] = (rvec, tvec)
+                
+            self.camera_points.append(frame_points)
+            
+    def calibrate(self, camera_name):
+        camera_Rs = []
+        camera_Ts = []
         
-### ----------------------------- Get points from single frame----------------------------- ###
-def get_points_single_frame(frame, settings, calibration_type):
-    ## ----------------------------- Chessboard pattern ----------------------------- ##
-    if settings.pattern_internal == 'chessboard':
-        if calibration_type == 'intrinsic':
-            pattern_size = settings.pattern_size_internal
-            pattern_square_size = settings.pattern_square_size_internal
-        elif calibration_type == 'extrinsic':
-            pattern_size = settings.pattern_size_external
-            pattern_square_size = settings.pattern_square_size_external
-        internal_corners_X = pattern_size[0] - 1
-        internal_corners_Y = pattern_size[1] - 1
+        center_Rs = []
+        center_Ts = []
         
-        objp = get_objp(internal_corners_X, internal_corners_Y, pattern_square_size)
-        ret, corners = cv2.findChessboardCorners(frame, (internal_corners_X,internal_corners_Y), flags=None)
-
-        return ret, corners, objp
+        for frame_points in self.camera_points:
+            if frame_points[camera_name] is not None:
+                camera_Rs.append(frame_points[camera_name][0])
+                camera_Ts.append(frame_points[camera_name][1])
+            if frame_points[self.center_camera] is not None:
+                center_Rs.append(frame_points[self.center_camera][0])
+                center_Ts.append(frame_points[self.center_camera][1])
+        
+        camera_Rs = np.array(camera_Rs)
+        camera_Ts = np.array(camera_Ts)
+        center_Rs = np.array(center_Rs)
+        center_Ts = np.array(center_Ts)
+        
+        
+        pass
     
-    ## ----------------------------- Charuco pattern ----------------------------- ##
-    elif settings.pattern_internal == 'charuco':
-        board, parameters, aruco_dict = get_charuco_settings(settings, calibration_type)
-        charuco_corners, charuco_ids, rejected = cv2.aruco.detectMarkers(frame, aruco_dict, parameters=parameters)
-        ret = charuco_ids is not None
-        if ret:
-            objp, imgp = board.matchImagePoints(charuco_corners, charuco_ids)
-        else:
-            objp = None
-            imgp = None
-        return ret, imgp, objp
-    
-    ## ----------------------------- Invalid pattern type ----------------------------- ##
-    else:
-        raise ValueError(f'Invalid pattern type: {settings.pattern_internal}')
+    def evaluate(self):
+        pass
 
 ### ----------------------------- Main function ----------------------------- ###
 def main():
-    args = sys.argv[1:]
-    if 'intrinsic' in args:
-        get_points(settings, calibration_type='intrinsic')
-    if 'extrinsic' in args:
-        get_points(settings, calibration_type='extrinsic')
+    extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco(settings)
+    extrinsic_calibration_charuco.get_camera_points()
 
 if __name__ == '__main__':
     main()
