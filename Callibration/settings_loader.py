@@ -25,6 +25,12 @@ class CalibrationSettings:
         return self.settings['center_camera']
     
     @property
+    def recalibrate(self):
+        if 'recalibrate' not in self.settings:
+            raise Exception("Error: 'recalibrate' not found in settings")
+        return self.settings['recalibrate']
+    
+    @property
     def internal_callibration_type(self):
         if 'internal_callibration_type' not in self.settings:
             raise Exception("Error: 'internal_callibration_type' not found in settings")
@@ -71,6 +77,30 @@ class CalibrationSettings:
         if 'same_pattern' not in self.settings:
             raise Exception("Error: 'same_pattern' not found in settings")
         return self.settings['same_pattern']
+    
+    @property
+    def marker_size_internal(self):
+        if 'marker_size_internal' not in self.settings:
+            raise Exception("Error: 'marker_size_internal' not found in settings")
+        return self.settings['marker_size_internal']
+    
+    @property
+    def marker_size_external(self):
+        if 'marker_size_external' not in self.settings:
+            raise Exception("Error: 'marker_size_external' not found in settings")
+        return self.settings['marker_size_external']
+    
+    @property
+    def aruco_dict_internal(self):
+        if 'aruco_dict_internal' not in self.settings:
+            raise Exception("Error: 'aruco_dict_internal' not found in settings")
+        return self.settings['aruco_dict_internal']
+    
+    @property
+    def aruco_dict_external(self):
+        if 'aruco_dict_external' not in self.settings:
+            raise Exception("Error: 'aruco_dict_external' not found in settings")
+        return self.settings['aruco_dict_external']
 
 # Global settings instance
 settings = CalibrationSettings()

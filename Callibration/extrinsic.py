@@ -1,28 +1,29 @@
 import cv2
 import numpy as np
 import os
+import pickle
 
 from get_points import get_points
 from settings_loader import settings
 
 def extrinsic_calibration(settings):
     if settings.same_pattern:
-        if os.path.exists('chessboard_points/intrinsic_rets.npy') and os.path.exists('chessboard_points/intrinsic_object_points.npy') and os.path.exists('chessboard_points/intrinsic_image_points.npy') and os.path.exists('chessboard_points/intrinsic_shape.npy'):
-            rets = np.load('chessboard_points/intrinsic_rets.npy')
-            objpoints = np.load('chessboard_points/intrinsic_object_points.npy')
-            imgpoints = np.load('chessboard_points/intrinsic_image_points.npy')
-            shape = np.load('chessboard_points/intrinsic_shape.npy')
+        if os.path.exists('chessboard_points/intrinsic_rets.pkl') and os.path.exists('chessboard_points/intrinsic_object_points.pkl') and os.path.exists('chessboard_points/intrinsic_image_points.pkl') and os.path.exists('chessboard_points/intrinsic_shape.pkl'):
+            rets = pickle.load(open('chessboard_points/intrinsic_rets.pkl', 'rb'))
+            objpoints = pickle.load(open('chessboard_points/intrinsic_object_points.pkl', 'rb'))
+            imgpoints = pickle.load(open('chessboard_points/intrinsic_image_points.pkl', 'rb'))
+            shape = pickle.load(open('chessboard_points/intrinsic_shape.pkl', 'rb'))
     else:
-        if os.path.exists('chessboard_points/extrinsic_rets.npy') and os.path.exists('chessboard_points/extrinsic_object_points.npy') and os.path.exists('chessboard_points/extrinsic_image_points.npy') and os.path.exists('chessboard_points/extrinsic_shape.npy'):
+        if os.path.exists('chessboard_points/extrinsic_rets.pkl') and os.path.exists('chessboard_points/extrinsic_object_points.pkl') and os.path.exists('chessboard_points/extrinsic_image_points.pkl') and os.path.exists('chessboard_points/extrinsic_shape.pkl'):
             pass
         else:
             print('Image points not exist, start to get image points')
             get_points(settings, calibration_type='extrinsic')
             
-        rets = np.load('chessboard_points/extrinsic_rets.npy')
-        objpoints = np.load('chessboard_points/extrinsic_object_points.npy')
-        imgpoints = np.load('chessboard_points/extrinsic_image_points.npy')
-        shape = np.load('chessboard_points/extrinsic_shape.npy')
+        rets = pickle.load(open('chessboard_points/extrinsic_rets.pkl', 'rb'))
+        objpoints = pickle.load(open('chessboard_points/extrinsic_object_points.pkl', 'rb'))
+        imgpoints = pickle.load(open('chessboard_points/extrinsic_image_points.pkl', 'rb'))
+        shape = pickle.load(open('chessboard_points/extrinsic_shape.pkl', 'rb'))
     
     cameras = settings.cameras
     center_camera = settings.center_camera
@@ -30,23 +31,28 @@ def extrinsic_calibration(settings):
     mtxs = {}
     dists = {}
     for camera_name in settings.cameras:
-        mtxs[camera_name] = np.load(f'results/mtx_{camera_name}.npy')
-        dists[camera_name] = np.load(f'results/dist_{camera_name}.npy')
+        mtxs[camera_name] = pickle.load(open(f'results/mtx_{camera_name}.pkl', 'rb'))
+        dists[camera_name] = pickle.load(open(f'results/dist_{camera_name}.pkl', 'rb'))
     
     for camera_name in cameras:
         transformation_matrix = np.eye(4)
         if camera_name == center_camera:
             pass
         else:
-            stereo_objpoints = []
+            stereo_objpoints_camera = []
+            stereo_objpoints_center = []
             stereo_imgpoints_camera = []
             stereo_imgpoints_center = []
             for i in range(len(objpoints)):
-                if rets[i, cameras.index(camera_name)] and rets[i, cameras.index(center_camera)]:
-                    stereo_objpoints.append(objpoints[i, cameras.index(camera_name), :, :].astype(np.float32))
-                    stereo_imgpoints_camera.append(imgpoints[i, cameras.index(camera_name), :, :].astype(np.float32))
-                    stereo_imgpoints_center.append(imgpoints[i, cameras.index(center_camera), :, :].astype(np.float32))
-            stereo_objpoints = np.array(stereo_objpoints)
+                if rets[i][camera_name] and rets[i][center_camera]:
+                    stereo_objpoints_camera.append(objpoints[i][camera_name].astype(np.float32))
+                    stereo_objpoints_center.append(objpoints[i][center_camera].astype(np.float32))
+                    stereo_imgpoints_camera.append(imgpoints[i][camera_name].astype(np.float32))
+                    stereo_imgpoints_center.append(imgpoints[i][center_camera].astype(np.float32))
+                    
+                    
+            stereo_objpoints_camera = np.array(stereo_objpoints_camera)
+            stereo_objpoints_center = np.array(stereo_objpoints_center)
             stereo_imgpoints_camera = np.array(stereo_imgpoints_camera)
             stereo_imgpoints_center = np.array(stereo_imgpoints_center)
             
@@ -88,7 +94,7 @@ def extrinsic_calibration(settings):
         with open(f'results/extrinsic_calibration.log', 'a') as f:
             f.write(f'{camera_name} transformation matrix: {transformation_matrix}\n')
 
-        np.save(f'results/extrinsic_{camera_name}.npy', transformation_matrix)
+        pickle.dump(transformation_matrix, open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
     
     
 def main():   

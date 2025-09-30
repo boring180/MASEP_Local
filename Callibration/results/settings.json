@@ -6,9 +6,10 @@
     ],
     "center_camera": "cam1",
     "same_pattern": false,
+    "recalibrate": false,
     "internal_callibration_type": "single",
     "pattern_internal": "chessboard",
-    "pattern_external": "chessboard",
+    "pattern_external": "charuco",
     "pattern_size_internal": [
         18,
         27
@@ -17,6 +18,10 @@
         8,
         11
     ],
-    "pattern_square_size_internal": 0.01,
-    "pattern_square_size_external": 0.023
+    "pattern_square_size_internal": 0.0848,
+    "marker_size_internal": 0.01,
+    "pattern_square_size_external": 0.0217,
+    "marker_size_external": 0.016,
+    "aruco_dict_internal": "DICT_4X4_100",
+    "aruco_dict_external": "DICT_4X4_100"
 }
