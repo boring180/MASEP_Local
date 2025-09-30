@@ -191,8 +191,8 @@ def main():
     visualize_camera_location(settings, fig, elev=45, azim=45, roll=0, i=2)
     visualize_camera_location(settings, fig, elev=-90, azim=90, roll=0, i=3)
     plt.savefig('results/visualize_ext.png')
-    chessboard_projection(settings)
-    plt.savefig('results/chessboard_projection.png')
+    # chessboard_projection(settings)
+    # plt.savefig('results/chessboard_projection.png')
     
 if __name__ == '__main__':
     main()
