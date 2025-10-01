@@ -106,8 +106,11 @@ class ExtrinsicCalibrationCharuco:
         center_Rs = np.array(center_Rs)
         center_Ts = np.array(center_Ts)
         
+        camera_number_of_corners = np.array(camera_number_of_corners)
+        center_number_of_corners = np.array(center_number_of_corners)
+        
         if weighted:
-            pass
+            weight = camera_number_of_corners + center_number_of_corners
         else:
             weight = np.ones(camera_Rs.shape[0])
         
@@ -208,9 +211,9 @@ class ExtrinsicCalibrationCharuco:
 def main():
     extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco(settings)
     extrinsic_calibration_charuco.get_camera_points()
-    extrinsic_calibration_charuco.calibrate('cam0')
-    extrinsic_calibration_charuco.calibrate('cam1')
-    extrinsic_calibration_charuco.calibrate('cam2')
+    extrinsic_calibration_charuco.calibrate('cam0', weighted=True)
+    extrinsic_calibration_charuco.calibrate('cam1', weighted=True)
+    extrinsic_calibration_charuco.calibrate('cam2', weighted=True)
     extrinsic_calibration_charuco.evaluate()
 
 if __name__ == '__main__':
