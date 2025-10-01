@@ -45,6 +45,7 @@ class Capture:
             center_y = frame.shape[0] // 2
             org = (center_x - text_width // 2, center_y + text_height // 2)
             cv2.putText(frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
+        return corners
         
     def charuco_capture(self, frame, camera_name):
         pass
@@ -79,10 +80,12 @@ class Capture:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(filename, fourcc, 24, (self.width, self.height))
 
-
+        data = {}
+        frame_count = 0
         while True:
             frames = []
             show_frames = []
+            frame_data = {}
             
             for i in range(len(self.cameras)):
                 camera_name = self.settings['cameras'][i]
@@ -92,17 +95,21 @@ class Capture:
                     shown_frame = frames[i].copy()
                 else:
                     shown_frame = frame
-                capture_function(shown_frame, camera_name)
+                frame_data[camera_name] = capture_function(shown_frame, camera_name)
                 show_frames.append(shown_frame)
                 
             frame = self.frame_concatent(frames, self.reference_shape)
             show_frame = self.frame_concatent(show_frames, self.reference_shape)
             out.write(frame)
             cv2.imshow('Frames', show_frame)
-
+            data[frame_count] = frame_data
+            frame_count += 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
+
+        with open(f'output/{timestamp}.json', 'w') as f:
+            json.dump(data, f)
         out.release()
         cv2.destroyAllWindows()
         
@@ -129,7 +136,8 @@ class Localization(Capture):
         
     def localization(self, frame, camera_name):
         corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.detect_dict_localization, parameters=self.detect_param_localization)
-
+        frame_data = []
+        
         for i in range(len(corners)):
             rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], self.settings['marker_size_localization'], self.cameras_mtx[camera_name], self.cameras_dist[camera_name])
             homogeneous_marker_point = np.eye(4)
@@ -138,12 +146,14 @@ class Localization(Capture):
             
             homogeneous_marker_point = self.cameras_extrinsic[camera_name] @ homogeneous_marker_point
             marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.4f} Y: {homogeneous_marker_point[:3, 3][1]:.4f} Z: {homogeneous_marker_point[:3, 3][2]:.4f}")
+            frame_data.append(homogeneous_marker_point[:3, 3])
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 1
             thickness = 2
             color = (0, 0, 255)
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
-
+            
+        return frame_data
     
         
 def main():
