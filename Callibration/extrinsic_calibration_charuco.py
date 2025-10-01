@@ -8,7 +8,7 @@ import time
 import random
 import tqdm
 import pickle
-import scipy.spatial.transform.Rotation as R
+from scipy.spatial.transform import Rotation as R
 random.seed(time.time())
 
 from settings_loader import settings
@@ -54,16 +54,18 @@ class ExtrinsicCalibrationCharuco:
                     continue
                 
                 ret, corners, ids = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, self.board)
-                number_of_corners = len(corners)
+                if ret:
+                    number_of_corners = len(corners)
+                if not ret:
+                    number_of_corners = 0
 
-                # if ret:
-                #     name = f"{image_path.split('/')[-1].split('.')[0]}_{camera_name}"
-                #     self.draw_points(gray, corners, ids, name)
+                if ret:
+                    name = f"{image_path.split('/')[-1].split('.')[0]}_{camera_name}"
+                    self.draw_points(gray, corners, ids, name)
                 
-                if not ret or number_of_corners < 6:
+                if number_of_corners < 6:
                     frame_points[camera_name] = None
                     continue
-                
                 
                 ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
                 # Change to board to camera transformation
@@ -74,6 +76,12 @@ class ExtrinsicCalibrationCharuco:
             self.camera_points.append(frame_points)
             
     def calibrate(self, camera_name, weighted = False):
+        if camera_name == self.center_camera:
+            self.camera_extrinsic[camera_name] = np.eye(4)
+            pickle.dump(self.camera_extrinsic, open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
+            return
+        
+        
         camera_Rs = []
         camera_Ts = []
         camera_number_of_corners = []
@@ -96,6 +104,10 @@ class ExtrinsicCalibrationCharuco:
         camera_Ts = np.array(camera_Ts)
         center_Rs = np.array(center_Rs)
         center_Ts = np.array(center_Ts)
+        print(camera_Rs.shape)
+        print(camera_Ts.shape)
+        print(center_Rs.shape)
+        print(center_Ts.shape)
         
         if weighted:
             pass
@@ -201,6 +213,9 @@ def main():
     extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco(settings)
     extrinsic_calibration_charuco.get_camera_points()
     extrinsic_calibration_charuco.calibrate('cam0')
+    extrinsic_calibration_charuco.calibrate('cam1')
+    extrinsic_calibration_charuco.calibrate('cam2')
+    extrinsic_calibration_charuco.evaluate()
 
 if __name__ == '__main__':
     main()
