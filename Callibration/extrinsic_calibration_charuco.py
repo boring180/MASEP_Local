@@ -8,6 +8,7 @@ import time
 import random
 import tqdm
 import pickle
+import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 random.seed(time.time())
 
@@ -104,10 +105,6 @@ class ExtrinsicCalibrationCharuco:
         camera_Ts = np.array(camera_Ts)
         center_Rs = np.array(center_Rs)
         center_Ts = np.array(center_Ts)
-        print(camera_Rs.shape)
-        print(camera_Ts.shape)
-        print(center_Rs.shape)
-        print(center_Ts.shape)
         
         if weighted:
             pass
@@ -118,14 +115,18 @@ class ExtrinsicCalibrationCharuco:
         with open(f'results/extrinsic_calibration.log', 'a') as f:
             f.write(f'{camera_name} has {camera_Ts.shape[0]} points\n')
         
-        R, t, rmsd = self.point_cloud_matching(camera_Ts, center_Ts, weight)
+        Rotation, transformation, rmsd = self.point_cloud_matching(camera_Ts, center_Ts, weight)
         print(f'{camera_name} has RMSD: {rmsd}')
         with open(f'results/extrinsic_calibration.log', 'a') as f:
             f.write(f'{camera_name} has RMSD: {rmsd}\n')
         
         self.camera_extrinsic[camera_name] = np.eye(4)
-        self.camera_extrinsic[camera_name][:3, :3] = R.as_matrix()
-        self.camera_extrinsic[camera_name][:3, 3] = t
+        self.camera_extrinsic[camera_name][:3, :3] = Rotation.as_matrix()
+        self.camera_extrinsic[camera_name][:3, 3] = transformation
+        
+        print(f'{camera_name} transformation matrix: {self.camera_extrinsic[camera_name]}')
+        with open(f'results/extrinsic_calibration.log', 'a') as f:
+            f.write(f'{camera_name} transformation matrix: {self.camera_extrinsic[camera_name]}\n')
         
         pickle.dump(self.camera_extrinsic, open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
     
@@ -136,15 +137,15 @@ class ExtrinsicCalibrationCharuco:
     # weight: (N,)
     def point_cloud_matching(self, P, Q, weight):
         assert P.shape == Q.shape
-        assert weight.shape == P.shape[0]
+        assert weight.shape[0] == P.shape[0]
 
         transformation = (Q - P) * weight[:, np.newaxis]
         transformation = transformation.sum(axis=0) / weight.sum()
         
         P_prime = P + transformation
         
-        R, rssd, sse = R.align_vectors(Q, P_prime, weights=weight)
-        return R, transformation, rmsd
+        Rotation, rmsd = R.align_vectors(Q, P_prime, weights=weight)
+        return Rotation, transformation, rmsd
     
     def evaluate(self):
         fig = plt.figure(figsize=(15, 10))
@@ -155,11 +156,6 @@ class ExtrinsicCalibrationCharuco:
         
         
     def visualize_camera_location(self, settings, fig, elev, azim, roll, i):
-        transformation_matrices = {}
-        for camera_name in settings.cameras:
-            transformation_matrix = pickle.load(open(f'results/extrinsic_{camera_name}.pkl', 'rb'))
-            transformation_matrices[camera_name] = transformation_matrix
-                
         ax = fig.add_subplot(1, 3, i, projection='3d', elev=elev, azim=azim, roll=roll)
         ax.set_box_aspect([1,1,1])
         length = 0.5
@@ -185,10 +181,10 @@ class ExtrinsicCalibrationCharuco:
             colors = ['red', 'green', 'blue']
             axis = np.eye(3) * settings.pattern_square_size_external
             for i in range(3):
-                orientation = transformation_matrices[camera_name][:3, :3] @ axis[i, :]
-                x = transformation_matrices[camera_name][0, 3]
-                y = transformation_matrices[camera_name][1, 3]
-                z = transformation_matrices[camera_name][2, 3]
+                orientation = self.camera_extrinsic[camera_name][:3, :3] @ axis[i, :]
+                x = self.camera_extrinsic[camera_name][0, 3]
+                y = self.camera_extrinsic[camera_name][1, 3]
+                z = self.camera_extrinsic[camera_name][2, 3]
                 u = orientation[0]
                 v = orientation[1]
                 w = orientation[2]
