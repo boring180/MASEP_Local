@@ -69,8 +69,6 @@ class ExtrinsicCalibrationCharuco:
                     continue
                 
                 ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
-                # Change to board to camera transformation
-                tvec = -tvec
                 
                 frame_points[camera_name] = (rvec, tvec, number_of_corners)
                 
