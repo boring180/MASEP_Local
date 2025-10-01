@@ -1,36 +1,24 @@
-{
-    "cameras": [
-        "wide",
-        "cam0",
-        "cam1"
-    ],
-    "internal_callibration_type": "single",
-    "pattern_internal": "chessboard",
-    "pattern_external": "chessboard",
-    "pattern_size_internal": [
-        36,
-        14
-    ],
-    "pattern_size_external": [
-        8,
-        11
-    ],
-    "pattern_square_size_internal": 0.009,
-    "pattern_square_size_external": 0.023
-}
-wide transformation matrix: [[1. 0. 0. 0.]
- [0. 1. 0. 0.]
- [0. 0. 1. 0.]
- [0. 0. 0. 1.]]
-cam0 has 280 successful images
-cam0 transformation matrix: [[ 0.99800471  0.02826376 -0.05646031 -0.00473484]
- [-0.02852063  0.99958617 -0.00374884 -0.16795023]
- [ 0.05633099  0.00535164  0.99839781  0.00975973]
+cam0 has 23 points
+cam0 has RMSD: 0.5341934845840165
+cam0 transformation matrix: [[ 0.99996215 -0.00775594  0.00394356 -0.24401798]
+ [ 0.0078153   0.99985291 -0.0152669  -0.0051597 ]
+ [-0.00382457  0.01529714  0.99987568  0.01791253]
  [ 0.          0.          0.          1.        ]]
-cam1 has 191 successful images
-cam1 transformation matrix: [[ 0.99555993  0.03948747 -0.0854469  -0.00417126]
- [-0.03747011  0.99898281  0.02508654  0.15864221]
- [ 0.08635058 -0.02177345  0.99602685  0.00879796]
+cam2 has 15 points
+cam2 has RMSD: 0.036255978532620574
+cam2 transformation matrix: [[ 9.99983726e-01  5.70219141e-03 -1.78915081e-04  2.14000311e-01]
+ [-5.70275082e-03  9.99978295e-01 -3.29974761e-03  2.66681209e-02]
+ [ 1.60095405e-04  3.30071422e-03  9.99994540e-01 -5.86218931e-03]
+ [ 0.00000000e+00  0.00000000e+00  0.00000000e+00  1.00000000e+00]]
+cam0 has 23 points
+cam0 has RMSD: 2.9422741196975983
+cam0 transformation matrix: [[ 0.99999122 -0.00349123  0.00231591 -0.24315674]
+ [ 0.00351417  0.99994408 -0.00997418 -0.0040654 ]
+ [-0.00228096  0.00998223  0.99994757  0.01306716]
  [ 0.          0.          0.          1.        ]]
-cam0 has RMS projection error to wide: 0.2107719492737115, RMS projection error to ground truth: 0.14101373866551678. RMS error between wide and ground truth: 0.1422146473952679
-cam1 has RMS projection error to wide: 0.18846044370640933, RMS projection error to ground truth: 0.12953838627628034. RMS error between wide and ground truth: 0.13159000503883392
+cam2 has 15 points
+cam2 has RMSD: 0.210684966536182
+cam2 transformation matrix: [[ 9.99962891e-01  8.60077751e-03 -4.93489405e-04  2.13881471e-01]
+ [-8.60241980e-03  9.99957121e-01 -3.42834949e-03  2.63334986e-02]
+ [ 4.63981774e-04  3.43246747e-03  9.99994001e-01 -5.48728902e-03]
+ [ 0.00000000e+00  0.00000000e+00  0.00000000e+00  1.00000000e+00]]

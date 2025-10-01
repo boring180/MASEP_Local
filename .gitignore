@@ -3,7 +3,6 @@ video/
 utils/__pycache__/
 Callibration/screen_shots/
 Callibration/reprojection/
-Callibration/chessboard_points/
 *.DS_Store
 photos/
 Callibration/__pycache__/
@@ -18,3 +17,7 @@ localization/__pycache__/
 .vscode/
 
 capture/output/
+
+callibration/debug_frames/
+
+**pycache**

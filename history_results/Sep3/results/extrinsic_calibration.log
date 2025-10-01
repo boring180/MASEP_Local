@@ -1,0 +1,36 @@
+{
+    "cameras": [
+        "wide",
+        "cam0",
+        "cam1"
+    ],
+    "internal_callibration_type": "single",
+    "pattern_internal": "chessboard",
+    "pattern_external": "chessboard",
+    "pattern_size_internal": [
+        36,
+        14
+    ],
+    "pattern_size_external": [
+        8,
+        11
+    ],
+    "pattern_square_size_internal": 0.009,
+    "pattern_square_size_external": 0.023
+}
+wide transformation matrix: [[1. 0. 0. 0.]
+ [0. 1. 0. 0.]
+ [0. 0. 1. 0.]
+ [0. 0. 0. 1.]]
+cam0 has 280 successful images
+cam0 transformation matrix: [[ 0.99800471  0.02826376 -0.05646031 -0.00473484]
+ [-0.02852063  0.99958617 -0.00374884 -0.16795023]
+ [ 0.05633099  0.00535164  0.99839781  0.00975973]
+ [ 0.          0.          0.          1.        ]]
+cam1 has 191 successful images
+cam1 transformation matrix: [[ 0.99555993  0.03948747 -0.0854469  -0.00417126]
+ [-0.03747011  0.99898281  0.02508654  0.15864221]
+ [ 0.08635058 -0.02177345  0.99602685  0.00879796]
+ [ 0.          0.          0.          1.        ]]
+cam0 has RMS projection error to wide: 0.2107719492737115, RMS projection error to ground truth: 0.14101373866551678. RMS error between wide and ground truth: 0.1422146473952679
+cam1 has RMS projection error to wide: 0.18846044370640933, RMS projection error to ground truth: 0.12953838627628034. RMS error between wide and ground truth: 0.13159000503883392
