@@ -2,6 +2,7 @@ import cv2
 import json
 import numpy as np
 import os
+import pickle
 from datetime import datetime
 
 class Capture:
@@ -23,10 +24,10 @@ class Capture:
     def __str__(self):
         return json.dumps(self.settings, indent=4)
             
-    def default_capture(self, frame):
+    def default_capture(self, frame, camera_name):
         return frame
     
-    def chessboard_capture(self, frame):
+    def chessboard_capture(self, frame, camera_name):
         row_number = self.settings['pattern_size'][0]
         col_number = self.settings['pattern_size'][1]
         internal_corners_X = col_number - 1
@@ -45,6 +46,9 @@ class Capture:
             org = (center_x - text_width // 2, center_y + text_height // 2)
             cv2.putText(frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
         
+    def charuco_capture(self, frame, camera_name):
+        pass
+    
     def save_video(self, capture_function = None):
         if capture_function is None:
             capture_function = self.default_capture
@@ -81,10 +85,11 @@ class Capture:
             show_frames = []
             
             for i in range(len(self.cameras)):
+                camera_name = self.settings['cameras'][i]
                 ret, frame = self.cameras[i].read()
                 frames.append(frame)
                 shown_frame = frames[i].copy()
-                capture_function(shown_frame)
+                capture_function(shown_frame, camera_name)
                 show_frames.append(shown_frame)
                 
             frame = self.frame_concatent(frames, self.reference_shape)
@@ -102,10 +107,46 @@ class Capture:
         for i in range(len(frames)):
             frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
         return np.concatenate(frames, axis=1)
+    
+    
+class Localization(Capture):
+    def __init__(self, cameras):
+        super().__init__(cameras)
+        self.cameras_mtx = {}
+        self.cameras_dist = {}
+        self.cameras_extrinsic = {}
+        for camera_name in self.settings['cameras']:
+            self.cameras_mtx[camera_name] = pickle.load(open(f'{self.settings["camera_parameter_path"]}/mtx_{camera_name}.pkl', 'rb'))
+            self.cameras_dist[camera_name] = pickle.load(open(f'{self.settings["camera_parameter_path"]}/dist_{camera_name}.pkl', 'rb'))
+            self.cameras_extrinsic[camera_name] = pickle.load(open(f'{self.settings["camera_parameter_path"]}/extrinsic_{camera_name}.pkl', 'rb'))
+        
+        print(self.cameras_extrinsic)
+        
+        self.detect_param_localization = cv2.aruco.DetectorParameters()
+        self.detect_dict_localization = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, self.settings['aruco_dict_localization']))
+        self.aruco_detector_localization = cv2.aruco.ArucoDetector(self.detect_dict_localization, self.detect_param_localization)
+        
+    def localization(self, frame, camera_name):
+        corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.detect_dict_localization, parameters=self.detect_param_localization)
+
+        for i in range(len(corners)):
+            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], self.settings['marker_size_localization'], self.cameras_mtx[camera_name], self.cameras_dist[camera_name])
+            homogeneous_marker_point = np.eye(4)
+            homogeneous_marker_point[:3, :3] = rvec
+            homogeneous_marker_point[:3, 3] = tvec
+            
+            homogeneous_marker_point = self.cameras_extrinsic[camera_name] @ homogeneous_marker_point
+            marker_info = (f"{ids[i]}: {homogeneous_marker_point[:3, 3]}")
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 15
+            thickness = 30
+            color = (0, 0, 255)
+            cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
+
+    
         
 def main():
-    capture = Capture([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    capture.save_video(capture.chessboard_capture)
-
+    localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
+    localization.save_video(localization.localization)
 if __name__ == "__main__":
     main()
