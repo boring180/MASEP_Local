@@ -84,3 +84,9 @@ cam2 has RMS projection error to center: [[ 6.85813719e-04  2.01569616e-03 -2.00
   -6.83175564e-04  2.84537210e-04  8.91216082e-04  1.85892886e-03]], with std: [[0. 0. 0. 0. 0. 0. 0. 0.]
  [0. 0. 0. 0. 0. 0. 0. 0.]
  [0. 0. 0. 0. 0. 0. 0. 0.]], with worst case error: 0.002311240953279342, with best case error: 0.0009898830338853563
+cam0 has 9 points
+cam0 has 9 points
+cam0 has 0 points
+cam0 has 0 points
+cam0 has 0 points
+cam0 has 4 points

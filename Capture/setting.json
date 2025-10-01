@@ -1,7 +1,7 @@
 {
     "cameras": ["cam2, cam1", "cam0"],
     "pattern_type": "charuco",
-    "pattern_size": [8, 11],
+    "pattern_size": [14, 19],
     "pattern_square_size": 0.0217,
     "marker_size": 0.016,
     "chessboard_flags": "CALIB_CB_FAST_CHECK",

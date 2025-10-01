@@ -17,3 +17,7 @@ localization/__pycache__/
 .vscode/
 
 capture/output/
+
+callibration/debug_frames/
+
+**pycache**
