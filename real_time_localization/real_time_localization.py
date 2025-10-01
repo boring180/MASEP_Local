@@ -80,7 +80,7 @@ class Capture:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(filename, fourcc, 24, (self.width, self.height))
 
-        data = {}
+        data = []
         frame_count = 0
         while True:
             frames = []
@@ -102,14 +102,22 @@ class Capture:
             show_frame = self.frame_concatent(show_frames, self.reference_shape)
             out.write(frame)
             cv2.imshow('Frames', show_frame)
-            data[frame_count] = frame_data
+            
+            data.append(frame_data)
             frame_count += 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
+        json_data = []
+        for frame_data in data:
+            frame_json = {}
+            for camera_name, positions in frame_data.items():
+                frame_json[camera_name] = [pos.tolist() for pos in positions]
+            json_data.append(frame_json)
 
         with open(f'output/{timestamp}.json', 'w') as f:
-            json.dump(data, f)
+            json.dump(json_data, f, indent=2)
+            
         out.release()
         cv2.destroyAllWindows()
         
