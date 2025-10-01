@@ -49,7 +49,7 @@ class Capture:
     def charuco_capture(self, frame, camera_name):
         pass
     
-    def save_video(self, capture_function = None):
+    def save_video(self, capture_function = None, save_preview = False):
         if capture_function is None:
             capture_function = self.default_capture
             
@@ -88,7 +88,10 @@ class Capture:
                 camera_name = self.settings['cameras'][i]
                 ret, frame = self.cameras[i].read()
                 frames.append(frame)
-                shown_frame = frames[i].copy()
+                if not save_preview:
+                    shown_frame = frames[i].copy()
+                else:
+                    shown_frame = frame
                 capture_function(shown_frame, camera_name)
                 show_frames.append(shown_frame)
                 
@@ -120,8 +123,6 @@ class Localization(Capture):
             self.cameras_dist[camera_name] = pickle.load(open(f'{self.settings["camera_parameter_path"]}/dist_{camera_name}.pkl', 'rb'))
             self.cameras_extrinsic[camera_name] = pickle.load(open(f'{self.settings["camera_parameter_path"]}/extrinsic_{camera_name}.pkl', 'rb'))
         
-        print(self.cameras_extrinsic)
-        
         self.detect_param_localization = cv2.aruco.DetectorParameters()
         self.detect_dict_localization = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, self.settings['aruco_dict_localization']))
         self.aruco_detector_localization = cv2.aruco.ArucoDetector(self.detect_dict_localization, self.detect_param_localization)
@@ -136,10 +137,10 @@ class Localization(Capture):
             homogeneous_marker_point[:3, 3] = tvec
             
             homogeneous_marker_point = self.cameras_extrinsic[camera_name] @ homogeneous_marker_point
-            marker_info = (f"{ids[i]}: {homogeneous_marker_point[:3, 3]}")
+            marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.4f} Y: {homogeneous_marker_point[:3, 3][1]:.4f} Z: {homogeneous_marker_point[:3, 3][2]:.4f}")
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 15
-            thickness = 30
+            font_scale = 1
+            thickness = 2
             color = (0, 0, 255)
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
 
@@ -147,6 +148,6 @@ class Localization(Capture):
         
 def main():
     localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    localization.save_video(localization.localization)
+    localization.save_video(localization.localization, save_preview = True)
 if __name__ == "__main__":
     main()
