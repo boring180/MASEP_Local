@@ -69,8 +69,6 @@ class ExtrinsicCalibrationCharuco:
                     continue
                 
                 ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
-                # Change to board to camera transformation
-                tvec = -tvec
                 
                 frame_points[camera_name] = (rvec, tvec, number_of_corners)
                 
@@ -79,7 +77,7 @@ class ExtrinsicCalibrationCharuco:
     def calibrate(self, camera_name, weighted = False):
         if camera_name == self.center_camera:
             self.camera_extrinsic[camera_name] = np.eye(4)
-            pickle.dump(self.camera_extrinsic, open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
+            pickle.dump(self.camera_extrinsic[camera_name], open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
             return
         
         
@@ -131,7 +129,7 @@ class ExtrinsicCalibrationCharuco:
         with open(f'results/extrinsic_calibration.log', 'a') as f:
             f.write(f'{camera_name} transformation matrix: {self.camera_extrinsic[camera_name]}\n')
         
-        pickle.dump(self.camera_extrinsic, open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
+        pickle.dump(self.camera_extrinsic[camera_name], open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
     
     def ransac(self):
         pass
