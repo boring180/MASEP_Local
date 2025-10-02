@@ -32,6 +32,8 @@ class ExtrinsicCalibrationCharuco:
         self.camera_mtx = {}
         self.camera_dist = {}
         self.camera_extrinsic = {}
+        self.camera_object_points = {camera_name: [] for camera_name in settings.cameras}
+        self.camera_image_points = {camera_name: [] for camera_name in settings.cameras}
         
         for camera_name in settings.cameras:
             self.camera_mtx[camera_name] = pickle.load(open(f'results/mtx_{camera_name}.pkl', 'rb'))
@@ -69,10 +71,17 @@ class ExtrinsicCalibrationCharuco:
                     continue
                 
                 ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
+                object_points, image_points = self.board.matchImagePoints(corners, ids)
+                self.camera_object_points[camera_name].append(object_points)
+                self.camera_image_points[camera_name].append(image_points)
                 
                 frame_points[camera_name] = (rvec, tvec, number_of_corners)
                 
             self.camera_points.append(frame_points)
+            
+    def re_calibrate(self):
+        pass
+
             
     def calibrate(self, camera_name, weighted = False):
         if camera_name == self.center_camera:
