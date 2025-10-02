@@ -25,10 +25,7 @@ DICT = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, settings.aruco_dict)
 board = cv2.aruco.CharucoBoard((settings.pattern_size[0], settings.pattern_size[1]), SQUARE_SIZE, MARKER_SIZE, DICT)
 parameters = cv2.aruco.DetectorParameters()
     
-def frame_concatent(frames, reference_shape):
-    for i in range(len(frames)):
-        frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
-    return np.concatenate(frames, axis=1)
+
 
 def chessboard_detection(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

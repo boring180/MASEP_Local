@@ -21,3 +21,5 @@ capture/output/
 callibration/debug_frames/
 
 **pycache**
+
+real_time_localization/output/
