@@ -80,8 +80,43 @@ class ExtrinsicCalibrationCharuco:
             self.camera_points.append(frame_points)
             
     def re_calibrate(self):
-        pass
-
+        image_path = f'../photos/multi_camera'
+        images = glob.glob(f'{image_path}/*.jpg')
+        cameras_image_points = {camera_name: [] for camera_name in self.cameras}
+        cameras_object_points = {camera_name: [] for camera_name in self.cameras}
+        shape = []
+        
+        for image_path in tqdm.tqdm(images):
+            image = cv2.imread(image_path)
+            frames = slicing_frame3_1(image)
+            for i in range(len(frames)):
+                shape = frames[i].shape
+                camera_name = self.cameras[i]
+                gray = cv2.cvtColor(frames[i], cv2.COLOR_BGR2GRAY)
+                corners, ids, rejected = self.detector.detectMarkers(gray)
+                if ids is None:
+                    continue
+                frame_objp, frame_imgp = self.board.matchImagePoints(corners, ids)
+                cameras_image_points[camera_name].append(frame_imgp)
+                cameras_object_points[camera_name].append(frame_objp)
+                
+        for camera_name in self.cameras:
+            imgpoints = np.array(cameras_image_points[camera_name])
+            objpoints = np.array(cameras_object_points[camera_name])
+            print(objpoints.shape, imgpoints.shape)
+            previous_mtx = self.camera_mtx[camera_name]
+            previous_dist = self.camera_dist[camera_name]
+            
+            termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+            flags = None
+            ret, mtx, dist, rvecs, tvecs, _, _, error = cv2.calibrateCameraExtended(objpoints, imgpoints, shape[::-1], previous_mtx, previous_dist, flags=flags, criteria=termination_criteria)
+            error = np.mean(error)
+            pickle.dump(mtx, open(f'results/recalibrate_mtx_{camera_name}.pkl', 'wb'))
+            pickle.dump(dist, open(f'results/recalibrate_dist_{camera_name}.pkl', 'wb'))
+            
+            print(f'{camera_name} has reprojection error: {error}')
+            with open(f'results/charuco_intrinsic_recalibration.log', 'a') as f:
+                f.write(f'{camera_name} has reprojection error: {error}\n')
             
     def calibrate(self, camera_name, weighted = False):
         if camera_name == self.center_camera:
@@ -222,6 +257,7 @@ def main():
     extrinsic_calibration_charuco.calibrate('cam1', weighted=True)
     extrinsic_calibration_charuco.calibrate('cam2', weighted=True)
     extrinsic_calibration_charuco.evaluate()
+    extrinsic_calibration_charuco.re_calibrate()
 
 if __name__ == '__main__':
     main()
