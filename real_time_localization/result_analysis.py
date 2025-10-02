@@ -109,7 +109,7 @@ class ResultAnalysis:
         ax.legend(self.settings['cameras'])
         
 def main():
-    result_analysis = ResultAnalysis('output/20251001_183755.json')
+    result_analysis = ResultAnalysis('output/20251001_183755_reproduce.json')
     result_analysis.calculate_inter_camera_difference('cam0')
     result_analysis.calculate_inter_camera_difference('cam1')
     result_analysis.calculate_inter_camera_difference('cam2')

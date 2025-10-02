@@ -4,9 +4,11 @@ import numpy as np
 import os
 import pickle
 from datetime import datetime
+import tqdm
+
 
 class Capture:
-    def __init__(self, cameras):
+    def __init__(self, cameras = None):
         try:
             with open('setting.json', 'r') as f:
                 self.settings = json.load(f)
@@ -14,15 +16,26 @@ class Capture:
             raise Exception(f"Error loading settings from setting.json")
         
         self.cameras = cameras
-        self.reference_shape = self.cameras[0].read()[1].shape[:2]
+        if cameras is not None:
+            self.reference_shape = self.cameras[0].read()[1].shape[:2]
+        else:
+            self.reference_shape = None
         
 
     def __del__(self):
-        for i in range(len(self.cameras)):
-            self.cameras[i].release()
+        if self.cameras is not None:
+            for i in range(len(self.cameras)):
+                self.cameras[i].release()
             
     def __str__(self):
         return json.dumps(self.settings, indent=4)
+    
+    def open_cameras(self, cameras):
+        self.cameras = cameras
+        if cameras is not None:
+            self.reference_shape = self.cameras[0].read()[1].shape[:2]
+        else:
+            self.reference_shape = None
             
     def default_capture(self, frame, camera_name):
         return frame
@@ -34,6 +47,7 @@ class Capture:
         internal_corners_Y = row_number - 1
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         ret, corners = cv2.findChessboardCorners(gray, (internal_corners_Y, internal_corners_X), None, getattr(cv2, self.settings['chessboard_flags']))
+        frame_data = []
         if ret:
             text = "Detected"
             font = cv2.FONT_HERSHEY_SIMPLEX
@@ -45,10 +59,48 @@ class Capture:
             center_y = frame.shape[0] // 2
             org = (center_x - text_width // 2, center_y + text_height // 2)
             cv2.putText(frame, text, org, font, font_scale, color, thickness, cv2.LINE_AA)
-        return corners
+            frame_data.append(text)
+        return frame_data
         
     def charuco_capture(self, frame, camera_name):
         pass
+    
+    def reproduce_capture(self, capture_function, video_path):
+        cap = cv2.VideoCapture(video_path)
+        self.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.reference_shape = (self.height, self.width//len(self.settings['cameras']))
+        out = cv2.VideoWriter(f"output/{video_path.split('/')[-1].split('.')[0]}_reproduce.mp4", cv2.VideoWriter_fourcc(*'mp4v'), 24, (self.width, self.height))
+        data = []
+        
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        for _ in tqdm.tqdm(range(total_frames)):
+            ret, frame = cap.read()
+            if not ret:
+                break
+            
+            frame_data = {}
+            frames = self.frame_slicing(frame)
+            for i in range(len(self.settings['cameras'])):
+                camera_name = self.settings['cameras'][i]
+                frame_data[camera_name] = capture_function(frames[i], camera_name)
+            data.append(frame_data)
+            
+            out.write(self.frame_concatent(frames, self.reference_shape))
+
+        json_data = []
+        for frame_data in data:
+            frame_json = {}
+            for camera_name, positions in frame_data.items():
+                frame_json[camera_name] = [pos.tolist() for pos in positions]
+            json_data.append(frame_json)
+
+        with open(f"output/{video_path.split('/')[-1].split('.')[0]}_reproduce.json", 'w') as f:
+            json.dump(json_data, f, indent=2)
+            
+        out.release()
+        cap.release()
     
     def save_video(self, capture_function = None, save_preview = False):
         if capture_function is None:
@@ -81,7 +133,6 @@ class Capture:
         out = cv2.VideoWriter(filename, fourcc, 24, (self.width, self.height))
 
         data = []
-        frame_count = 0
         while True:
             frames = []
             show_frames = []
@@ -104,7 +155,6 @@ class Capture:
             cv2.imshow('Frames', show_frame)
             
             data.append(frame_data)
-            frame_count += 1
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -126,9 +176,17 @@ class Capture:
             frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
         return np.concatenate(frames, axis=1)
     
+    def frame_slicing(self, frame):
+        frames = []
+        width = frame.shape[1] // len(self.settings['cameras'])
+        height = frame.shape[0]
+        for i in range(len(self.settings['cameras'])):
+            frames.append(frame[:, i * width:(i + 1) * width])
+        return frames
+    
     
 class Localization(Capture):
-    def __init__(self, cameras):
+    def __init__(self, cameras = None):
         super().__init__(cameras)
         self.cameras_mtx = {}
         self.cameras_dist = {}
@@ -165,7 +223,8 @@ class Localization(Capture):
     
         
 def main():
-    localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    localization.save_video(localization.localization, save_preview = True)
+    # localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
+    localization = Localization()
+    localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
 if __name__ == "__main__":
     main()
