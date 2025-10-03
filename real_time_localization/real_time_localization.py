@@ -202,7 +202,7 @@ class Localization(Capture):
         
     def localization(self, frame, camera_name):
         corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.detect_dict_localization, parameters=self.detect_param_localization)
-        frame_data = []
+        frame_data = {}
         
         for i in range(len(corners)):
             rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], self.settings['marker_size_localization'], self.cameras_mtx[camera_name], self.cameras_dist[camera_name])
@@ -211,10 +211,10 @@ class Localization(Capture):
             homogeneous_marker_point[:3, 3] = tvec
             
             homogeneous_marker_point = self.cameras_extrinsic[camera_name] @ homogeneous_marker_point
-            marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.4f} Y: {homogeneous_marker_point[:3, 3][1]:.4f} Z: {homogeneous_marker_point[:3, 3][2]:.4f}")
-            frame_data.append(homogeneous_marker_point[:3, 3])
+            marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.2f} Y: {homogeneous_marker_point[:3, 3][1]:.2f} Z: {homogeneous_marker_point[:3, 3][2]:.2f}")
+            frame_data[ids[i][0]] = homogeneous_marker_point[:3, 3]
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 1
+            font_scale = 0.5
             thickness = 2
             color = (0, 0, 255)
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
@@ -223,8 +223,10 @@ class Localization(Capture):
     
         
 def main():
-    # localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    localization = Localization()
-    localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
+    localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
+    localization.save_video(localization.localization, save_preview=False)
+    
+    # localization = Localization()
+    # localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
 if __name__ == "__main__":
     main()
