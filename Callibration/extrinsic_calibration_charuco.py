@@ -86,24 +86,35 @@ class ExtrinsicCalibrationCharuco:
         cameras_object_points = {camera_name: [] for camera_name in self.cameras}
         shape = []
         
+        frame_number = 0
+        
         for image_path in tqdm.tqdm(images):
+            frame_number += 1
+            if frame_number % 5 != 0:
+                continue
+            
             image = cv2.imread(image_path)
             frames = slicing_frame3_1(image)
             for i in range(len(frames)):
-                shape = frames[i].shape
                 camera_name = self.cameras[i]
                 gray = cv2.cvtColor(frames[i], cv2.COLOR_BGR2GRAY)
+                shape = gray.shape
                 corners, ids, rejected = self.detector.detectMarkers(gray)
                 if ids is None:
                     continue
-                frame_objp, frame_imgp = self.board.matchImagePoints(corners, ids)
+                ret, charuco_corners, charuco_ids = cv2.aruco.interpolateCornersCharuco(corners, ids, gray, self.board)
+                if not ret:
+                    continue
+                frame_objp, frame_imgp = self.board.matchImagePoints(charuco_corners, charuco_ids)
+                if len(frame_objp) < 4 or len(frame_imgp) < 4:
+                    continue
                 cameras_image_points[camera_name].append(frame_imgp)
                 cameras_object_points[camera_name].append(frame_objp)
+
                 
         for camera_name in self.cameras:
-            imgpoints = np.array(cameras_image_points[camera_name])
-            objpoints = np.array(cameras_object_points[camera_name])
-            print(objpoints.shape, imgpoints.shape)
+            imgpoints = cameras_image_points[camera_name]
+            objpoints = cameras_object_points[camera_name]
             previous_mtx = self.camera_mtx[camera_name]
             previous_dist = self.camera_dist[camera_name]
             
@@ -252,11 +263,12 @@ class ExtrinsicCalibrationCharuco:
 ### ----------------------------- Main function ----------------------------- ###
 def main():
     extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco(settings)
-    extrinsic_calibration_charuco.get_camera_points()
-    extrinsic_calibration_charuco.calibrate('cam0', weighted=True)
-    extrinsic_calibration_charuco.calibrate('cam1', weighted=True)
-    extrinsic_calibration_charuco.calibrate('cam2', weighted=True)
-    extrinsic_calibration_charuco.evaluate()
+    # extrinsic_calibration_charuco.get_camera_points()
+    # extrinsic_calibration_charuco.calibrate('cam0', weighted=True)
+    # extrinsic_calibration_charuco.calibrate('cam1', weighted=True)
+    # extrinsic_calibration_charuco.calibrate('cam2', weighted=True)
+    # extrinsic_calibration_charuco.evaluate()
+    
     extrinsic_calibration_charuco.re_calibrate()
 
 if __name__ == '__main__':
