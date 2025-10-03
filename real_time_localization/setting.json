@@ -7,6 +7,6 @@
     "aruco_dict_capture": "DICT_4X4_100",
     "marker_size_capture": 0.016,
     "aruco_dict_localization": "DICT_5X5_50",
-    "marker_size_localization": 0.1,
+    "marker_size_localization": 0.025,
     "camera_parameter_path": "../callibration/results"
 }
