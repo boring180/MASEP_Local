@@ -214,7 +214,7 @@ class Localization(Capture):
             marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.2f} Y: {homogeneous_marker_point[:3, 3][1]:.2f} Z: {homogeneous_marker_point[:3, 3][2]:.2f}")
             frame_data[ids[i][0]] = homogeneous_marker_point[:3, 3]
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.5
+            font_scale = 1
             thickness = 2
             color = (0, 0, 255)
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
