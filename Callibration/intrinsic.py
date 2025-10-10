@@ -56,6 +56,31 @@ def camera_intrinsic_calibration(settings):
             f.write(f'{camera_name} has reprojection error: {error}\n')
     return
 
+class IntrinsicCalibration:
+    def __init__(self, settings):
+        self.settings = settings
+    
+    def get_points(self):
+        pass
+    
+    def calibrate(self):
+        pass
+    
+    def re_calibrate(self):
+        pass
+    
+    def evaluate(self):
+        pass
+    
+    def visualize(self):
+        pass
+    
+    def save(self):
+        pass
+    
+    def load(self):
+        pass
+
     
 def main():
     os.makedirs('results', exist_ok=True)

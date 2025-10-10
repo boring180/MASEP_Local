@@ -63,6 +63,10 @@ class ExtrinsicCalibrationCharuco:
                     number_of_corners = len(corners)
                 if not ret:
                     number_of_corners = 0
+                    
+                object_points, image_points = self.board.matchImagePoints(corners, ids)
+                self.camera_object_points[camera_name].append(object_points)
+                self.camera_image_points[camera_name].append(image_points)
 
                 # if ret:
                 #     name = f"{image_path.split('/')[-1].split('.')[0]}_{camera_name}"
@@ -73,9 +77,6 @@ class ExtrinsicCalibrationCharuco:
                     continue
                 
                 ret, rvec, tvec = cv2.aruco.estimatePoseCharucoBoard(corners, ids, self.board, self.camera_mtx[camera_name], self.camera_dist[camera_name], None, None, useExtrinsicGuess=False)
-                object_points, image_points = self.board.matchImagePoints(corners, ids)
-                self.camera_object_points[camera_name].append(object_points)
-                self.camera_image_points[camera_name].append(image_points)
                 
                 frame_points[camera_name] = (rvec, tvec, number_of_corners)
                 
@@ -100,27 +101,8 @@ class ExtrinsicCalibrationCharuco:
             print(f'{camera_name} has reprojection error: {error}')
             with open(f'results/charuco_intrinsic_recalibration.log', 'a') as f:
                 f.write(f'{camera_name} has reprojection error: {error}\n')
-                
-    def re_calibrate_and_extrinsic(self):
-        for camera_name in self.cameras:
-            imgpoints = self.camera_image_points[camera_name]
-            objpoints = self.camera_object_points[camera_name]
-            previous_mtx = self.camera_mtx[camera_name]
-            previous_dist = self.camera_dist[camera_name]
-            shape = self.shape
             
-            termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-            flags = None
-            ret, mtx, dist, rvecs, tvecs, _, _, error = cv2.calibrateCameraExtended(objpoints, imgpoints, shape[::-1], previous_mtx, previous_dist, flags=flags, criteria=termination_criteria)
-            error = np.mean(error)
-            pickle.dump(mtx, open(f'results/recalibrate_mtx_{camera_name}.pkl', 'wb'))
-            pickle.dump(dist, open(f'results/recalibrate_dist_{camera_name}.pkl', 'wb'))
-            
-            print(f'{camera_name} has reprojection error: {error}')
-            with open(f'results/charuco_intrinsic_recalibration.log', 'a') as f:
-                f.write(f'{camera_name} has reprojection error: {error}\n')
-            
-    def calibrate(self, camera_name, weighted = False):
+    def calibrate_extrinsic(self, camera_name, weighted = False):
         if camera_name == self.center_camera:
             self.camera_extrinsic[camera_name] = np.eye(4)
             pickle.dump(self.camera_extrinsic[camera_name], open(f'results/extrinsic_{camera_name}.pkl', 'wb'))
@@ -255,9 +237,9 @@ class ExtrinsicCalibrationCharuco:
 def main():
     extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco(settings)
     # extrinsic_calibration_charuco.get_camera_points()
-    # extrinsic_calibration_charuco.calibrate('cam0', weighted=True)
-    # extrinsic_calibration_charuco.calibrate('cam1', weighted=True)
-    # extrinsic_calibration_charuco.calibrate('cam2', weighted=True)
+    # extrinsic_calibration_charuco.calibrate_extrinsic('cam0', weighted=True)
+    # extrinsic_calibration_charuco.calibrate_extrinsic('cam1', weighted=True)
+    # extrinsic_calibration_charuco.calibrate_extrinsic('cam2', weighted=True)
     # extrinsic_calibration_charuco.evaluate()
     
     extrinsic_calibration_charuco.re_calibrate()
