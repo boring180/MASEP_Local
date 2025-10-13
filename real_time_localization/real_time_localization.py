@@ -220,11 +220,25 @@ class Localization(Capture):
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
             
         return frame_data
-    
+
+    def detection(self, frame, camera_name):
+        corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.detect_dict_localization, parameters=self.detect_param_localization)
+        frame_data = {}
+        
+        for i in range(len(corners)):
+            marker_info = (f"ID: {ids[i]}")
+            frame_data[ids[i][0]] = corners[i]
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1
+            thickness = 2
+            color = (0, 0, 255)
+            cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
+        
+        return frame_data
         
 def main():
-    localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    localization.save_video(localization.localization, save_preview=False)
+    localization = Localization([cv2.VideoCapture(0)])
+    localization.save_video(localization.detection, save_preview=False)
     
     # localization = Localization()
     # localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
