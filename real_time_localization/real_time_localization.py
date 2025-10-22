@@ -38,7 +38,8 @@ class Capture:
             self.reference_shape = None
             
     def default_capture(self, frame, camera_name):
-        return frame
+        frame_data = {}
+        return frame_data
     
     def chessboard_capture(self, frame, camera_name):
         row_number = self.settings['pattern_size'][0]
@@ -109,8 +110,8 @@ class Capture:
         frames = []
             
         for i in range(len(self.cameras)):
-            self.cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            self.cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+            self.cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if not self.cameras[i].isOpened():
                 print(f"Error: Could not open camera {i}")
                 return
@@ -237,7 +238,7 @@ class Localization(Capture):
         return frame_data
         
 def main():
-    localization = Localization([cv2.VideoCapture(0)])
+    localization = Localization([cv2.VideoCapture(3), cv2.VideoCapture(1), cv2.VideoCapture(2)])
     localization.save_video(localization.detection, save_preview=False)
     
     # localization = Localization()
