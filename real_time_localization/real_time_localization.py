@@ -38,7 +38,8 @@ class Capture:
             self.reference_shape = None
             
     def default_capture(self, frame, camera_name):
-        return frame
+        frame_data = {}
+        return frame_data
     
     def chessboard_capture(self, frame, camera_name):
         row_number = self.settings['pattern_size'][0]
@@ -109,8 +110,8 @@ class Capture:
         frames = []
             
         for i in range(len(self.cameras)):
-            self.cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-            self.cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 960)
+            self.cameras[i].set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+            self.cameras[i].set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
             if not self.cameras[i].isOpened():
                 print(f"Error: Could not open camera {i}")
                 return
@@ -214,17 +215,31 @@ class Localization(Capture):
             marker_info = (f"ID: {ids[i]} X: {homogeneous_marker_point[:3, 3][0]:.2f} Y: {homogeneous_marker_point[:3, 3][1]:.2f} Z: {homogeneous_marker_point[:3, 3][2]:.2f}")
             frame_data[ids[i][0]] = homogeneous_marker_point[:3, 3]
             font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.5
+            font_scale = 1
             thickness = 2
             color = (0, 0, 255)
             cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
             
         return frame_data
-    
+
+    def detection(self, frame, camera_name):
+        corners, ids, rejected = cv2.aruco.detectMarkers(frame, self.detect_dict_localization, parameters=self.detect_param_localization)
+        frame_data = {}
+        
+        for i in range(len(corners)):
+            marker_info = (f"ID: {ids[i]}")
+            frame_data[ids[i][0]] = corners[i]
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 1
+            thickness = 2
+            color = (0, 0, 255)
+            cv2.putText(frame, marker_info, (int(corners[i][0][0][0]), int(corners[i][0][0][1])), font, font_scale, color, thickness, cv2.LINE_AA)
+        
+        return frame_data
         
 def main():
-    localization = Localization([cv2.VideoCapture(1), cv2.VideoCapture(3), cv2.VideoCapture(2)])
-    localization.save_video(localization.localization, save_preview=False)
+    localization = Localization([cv2.VideoCapture(3), cv2.VideoCapture(1), cv2.VideoCapture(2)])
+    localization.save_video(localization.detection, save_preview=False)
     
     # localization = Localization()
     # localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
