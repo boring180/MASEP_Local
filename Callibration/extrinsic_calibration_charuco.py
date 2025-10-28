@@ -263,8 +263,8 @@ class ExtrinsicCalibrationCharuco:
 ### ----------------------------- Main function ----------------------------- ###
 def main():
     extrinsic_calibration_charuco = ExtrinsicCalibrationCharuco()
-    # extrinsic_calibration_charuco.get_camera_points()
-    # extrinsic_calibration_charuco.save_points()
+    extrinsic_calibration_charuco.get_camera_points()
+    extrinsic_calibration_charuco.save_points()
     extrinsic_calibration_charuco.load_points()
     extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='cam0')
     extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='cam1')

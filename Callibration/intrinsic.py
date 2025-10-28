@@ -124,8 +124,8 @@ def main():
     os.makedirs('results', exist_ok=True)
     
     intrinsic = IntrinsicCalibration()
-    # intrinsic.get_points()
-    # intrinsic.save_points()
+    intrinsic.get_points()
+    intrinsic.save_points()
     intrinsic.load_points()
     intrinsic.calibrate_intrinsic()
     

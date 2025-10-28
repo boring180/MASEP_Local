@@ -1,5 +1,5 @@
 {
-    "cameras": ["cam2", "cam1", "cam0"],
+    "cameras": ["cam0", "cam1", "cam2"],
     "center_camera": "cam1",
     "internal_callibration_type": "single",
     "pattern_internal": "chessboard",
@@ -7,9 +7,9 @@
     "pattern_size_internal": [8, 11],
     "pattern_size_external": [8, 11],
     "pattern_square_size_internal": 0.023,
-    "marker_size_internal": 0.01,
-    "pattern_square_size_external": 0.0217,
-    "marker_size_external": 0.016,
+    "marker_size_internal": 0.017,
+    "pattern_square_size_external": 0.023,
+    "marker_size_external": 0.017,
     "aruco_dict_internal": "DICT_4X4_100",
-    "aruco_dict_external": "DICT_4X4_100"
+    "aruco_dict_external": "DICT_5X5_100"
 }
