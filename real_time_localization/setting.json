@@ -1,7 +1,7 @@
 {
     "cameras": ["cam0", "cam1", "cam2"],
     "center_camera": "cam1",
-    "pattern_size": [8, 11],
+    "pattern_size": [11, 8],
     "pattern_square_size": 0.023,
     "chessboard_flags": "CALIB_CB_FAST_CHECK",
     "aruco_dict_capture": "DICT_5X5_50",

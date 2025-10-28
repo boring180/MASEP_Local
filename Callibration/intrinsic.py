@@ -50,7 +50,7 @@ class IntrinsicCalibration:
             if single_camera:
                 frames = [gray]
             else:
-                frames = slicing_frame3_1(gray)
+                frames = self.slicing_frame3_1(gray)
             
             for i in range(len(frames)):
                 frame = frames[i]
@@ -112,6 +112,13 @@ class IntrinsicCalibration:
 
     def visualize(self):
         pass
+
+    ## ----------------------------- Helpers ----------------------------- ##
+    def slicing_frame3_1(self, frame):
+        width = frame.shape[1] // 3
+        height = frame.shape[0]
+        frames = [frame[:, 0:width], frame[:, width:width*2], frame[:, width*2:width*3]]
+        return frames
 
 def main():
     os.makedirs('results', exist_ok=True)
