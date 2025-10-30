@@ -5,8 +5,8 @@
     "pattern_square_size": 0.023,
     "chessboard_flags": "CALIB_CB_FAST_CHECK",
     "aruco_dict_capture": "DICT_5X5_50",
-    "marker_size_capture": 0.017,
+    "marker_size_capture": 0.028,
     "aruco_dict_localization": "DICT_5X5_50",
-    "marker_size_localization": 0.148,
+    "marker_size_localization": 0.028,
     "camera_parameter_path": "../callibration/results"
 }

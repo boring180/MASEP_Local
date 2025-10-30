@@ -240,7 +240,7 @@ class Localization(Capture):
 def main():
     localization = Localization([cv2.VideoCapture(3), cv2.VideoCapture(1), cv2.VideoCapture(2)])
     # localization.save_video(localization.chessboard_capture, save_preview=False)
-    localization.save_video(localization.detection, save_preview=False)
+    localization.save_video(localization.localization, save_preview=True)
     
     # localization = Localization()
     # localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')
