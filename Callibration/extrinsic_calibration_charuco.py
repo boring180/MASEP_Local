@@ -13,7 +13,6 @@ from scipy.spatial.transform import Rotation as R
 random.seed(time.time())
 
 sys.path.append(os.path.dirname(os.path.abspath('.')))
-from utils.frame_slicing import slicing_frame3_1, slicing_frame3_2
 
 class ExtrinsicCalibrationCharuco:
     ## ----------------------------- Initialize ----------------------------- ##
@@ -52,7 +51,7 @@ class ExtrinsicCalibrationCharuco:
             frame_rets = {}
             frame_points = {}
             image = cv2.imread(image_path)
-            frames = slicing_frame3_1(image)
+            frames = self.slicing_frame3_1(image)
             for i in range(len(frames)):
                 camera_name = self.settings['cameras'][i]
                 gray = cv2.cvtColor(frames[i], cv2.COLOR_BGR2GRAY)
@@ -258,6 +257,14 @@ class ExtrinsicCalibrationCharuco:
             cv2.circle(gray, (int(corners[i][0][0]), int(corners[i][0][1])), 5, (0, 0, 255), -1)
         os.makedirs('debug_frames', exist_ok=True)
         cv2.imwrite(f'debug_frames/{name}.jpg', gray)
+
+    def slicing_frame3_1(self, frame):
+        frames = []
+        width = frame.shape[1] 
+        height = frame.shape[0] // len(self.settings['cameras'])
+        for i in range(len(self.settings['cameras'])):
+            frames.append(frame[i * height:(i + 1) * height, :])
+        return frames
         
 
 ### ----------------------------- Main function ----------------------------- ###
@@ -266,9 +273,9 @@ def main():
     extrinsic_calibration_charuco.get_camera_points()
     extrinsic_calibration_charuco.save_points()
     extrinsic_calibration_charuco.load_points()
-    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='cam0')
-    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='cam1')
-    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='cam2')
+    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera0')
+    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera1')
+    extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera2')
     extrinsic_calibration_charuco.evaluate()
 
 if __name__ == '__main__':

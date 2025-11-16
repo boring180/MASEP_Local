@@ -1,12 +1,12 @@
 {
-    "cameras": ["cam0", "cam1", "cam2"],
-    "center_camera": "cam1",
+    "cameras": ["camera2", "camera1", "camera0"],
+    "center_camera": "camera1",
     "pattern_size": [11, 8],
     "pattern_square_size": 0.023,
     "chessboard_flags": "CALIB_CB_FAST_CHECK",
     "aruco_dict_capture": "DICT_5X5_50",
     "marker_size_capture": 0.028,
-    "aruco_dict_localization": "DICT_4X4_100",
+    "aruco_dict_localization": "DICT_5X5_100",
     "marker_size_localization": 0.028,
     "camera_parameter_path": "../callibration/results"
 }

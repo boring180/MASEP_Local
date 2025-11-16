@@ -94,7 +94,22 @@ class Capture:
         for frame_data in data:
             frame_json = {}
             for camera_name, positions in frame_data.items():
-                frame_json[camera_name] = [pos.tolist() for pos in positions]
+                if isinstance(positions, dict):
+                    # xyz-id-only schema
+                    items = []
+                    for marker_id, coord in positions.items():
+                        arr = np.array(coord).reshape(-1)
+                        if arr.size >= 3:
+                            items.append({
+                                "id": int(marker_id),
+                                "x": float(arr[0]),
+                                "y": float(arr[1]),
+                                "z": float(arr[2]),
+                            })
+                    frame_json[camera_name] = items
+                else:
+                    # Unsupported for xyz-id-only schema; write empty list
+                    frame_json[camera_name] = []
             json_data.append(frame_json)
 
         with open(f"output/{video_path.split('/')[-1].split('.')[0]}_reproduce.json", 'w') as f:
@@ -163,7 +178,22 @@ class Capture:
         for frame_data in data:
             frame_json = {}
             for camera_name, positions in frame_data.items():
-                frame_json[camera_name] = [pos.tolist() for pos in positions]
+                if isinstance(positions, dict):
+                    # xyz-id-only schema
+                    items = []
+                    for marker_id, coord in positions.items():
+                        arr = np.array(coord).reshape(-1)
+                        if arr.size >= 3:
+                            items.append({
+                                "id": int(marker_id),
+                                "x": float(arr[0]),
+                                "y": float(arr[1]),
+                                "z": float(arr[2]),
+                            })
+                    frame_json[camera_name] = items
+                else:
+                    # Unsupported for xyz-id-only schema; write empty list
+                    frame_json[camera_name] = []
             json_data.append(frame_json)
 
         with open(f'output/{timestamp}.json', 'w') as f:
@@ -175,14 +205,14 @@ class Capture:
     def frame_concatent(self, frames, reference_shape):
         for i in range(len(frames)):
             frames[i] = cv2.resize(frames[i], (reference_shape[1], reference_shape[0]))
-        return np.concatenate(frames, axis=1)
+        return np.concatenate(frames, axis=0)
     
     def frame_slicing(self, frame):
         frames = []
-        width = frame.shape[1] // len(self.settings['cameras'])
-        height = frame.shape[0]
+        width = frame.shape[1] 
+        height = frame.shape[0] // len(self.settings['cameras'])
         for i in range(len(self.settings['cameras'])):
-            frames.append(frame[:, i * width:(i + 1) * width])
+            frames.append(frame[i * height:(i + 1) * height, :])
         return frames
     
     
@@ -238,9 +268,11 @@ class Localization(Capture):
         return frame_data
         
 def main():
-    localization = Localization([cv2.VideoCapture(3), cv2.VideoCapture(1), cv2.VideoCapture(2)])
-    localization.save_video(localization.chessboard_capture, save_preview=False)
-    # localization.save_video(localization.detection, save_preview=True)
+    localization = Localization([cv2.VideoCapture(2), cv2.VideoCapture(1), cv2.VideoCapture(0)])
+
+    # localization.save_video(localization.chessboard_capture, save_preview=False)
+    # localization.save_video(localization.detection, save_preview=False)
+    localization.save_video(localization.localization, save_preview=True)
     
     # localization = Localization()
     # localization.reproduce_capture(localization.localization, 'output/20251001_183755.mp4')

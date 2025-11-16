@@ -1,0 +1,6 @@
+Difference between camera0 and camera1 mean: [-0.01462953  0.02799628  0.03804143]
+Difference between camera0 and camera1 std: [0.00491939 0.00686851 0.01797711]
+Difference between camera1 and camera1 mean: [0. 0. 0.]
+Difference between camera1 and camera1 std: [0. 0. 0.]
+Difference between camera2 and camera1 mean: [ 0.00698919  0.00509484 -0.03454999]
+Difference between camera2 and camera1 std: [0.00883128 0.01375605 0.02028878]

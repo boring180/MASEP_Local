@@ -25,17 +25,23 @@ class ResultAnalysis:
         files = os.listdir('result/')
         for file in files:
             os.remove(f'result/{file}')
+
+    def extract_position(self, camera_name1, camera_name2 = None):
+        camera1_coordinates = []
+        camera2_coordinates = []
+        for frame_data in self.data:
+            if len(frame_data[camera_name1]) > 0 and (camera_name2 is None or len(frame_data[camera_name2]) > 0):
+                camera1_coordinates.append(frame_data[camera_name1][0]['position'])
+                if camera_name2 is not None:
+                    camera2_coordinates.append(frame_data[camera_name2][0]['position'])
+                
+        camera1_coordinates = np.array(camera1_coordinates)
+        camera2_coordinates = np.array(camera2_coordinates)
+        return camera1_coordinates, camera2_coordinates
             
     def calculate_inter_camera_difference(self, camera_name):
-        camera_coordinates = []
-        center_camera_coordinates = []
-        for frame_data in self.data:
-            if len(frame_data[camera_name]) > 0 and len(frame_data[self.settings['center_camera']]) > 0:
-                camera_coordinates.append(frame_data[camera_name])
-                center_camera_coordinates.append(frame_data[self.settings['center_camera']])
+        camera_coordinates, center_camera_coordinates = self.extract_position(camera_name, self.settings['center_camera'])
                 
-        camera_coordinates = np.array(camera_coordinates)[:, 0, :]
-        center_camera_coordinates = np.array(center_camera_coordinates)[:, 0, :]
         difference = camera_coordinates - center_camera_coordinates
         difference_mean = np.mean(difference, axis=0)
         difference_std = np.std(difference, axis=0)
@@ -47,12 +53,7 @@ class ResultAnalysis:
             f.write(f'Difference between {camera_name} and {self.settings["center_camera"]} std: {difference_std}\n')
         
     def visualize_points(self, camera_name):
-        camera_coordinates = []
-        for frame_data in self.data:
-            if len(frame_data[camera_name]) > 0:
-                camera_coordinates.append(frame_data[camera_name])
-                
-        camera_coordinates = np.array(camera_coordinates)[:, 0, :]
+        camera_coordinates, _ = self.extract_position(camera_name)
         
         fig = plt.figure(figsize=(10, 10))
         self.draw_points(fig, 1, camera_name, camera_coordinates, 0)
@@ -64,13 +65,9 @@ class ResultAnalysis:
     def visualize_points_multi_cameras(self):
         fig = plt.figure(figsize=(10, 10))
         camera_coordinates = {f'{camera_name}': [] for camera_name in self.settings['cameras']}
-        for frame_data in self.data:
-            for camera_name in self.settings['cameras']:
-                if len(frame_data[camera_name]) > 0:
-                    camera_coordinates[camera_name].append(frame_data[camera_name])
-        
+
         for camera_name in self.settings['cameras']:
-            camera_coordinates[camera_name] = np.array(camera_coordinates[camera_name])[:, 0, :]
+            camera_coordinates[camera_name], _ = self.extract_position(camera_name)
         
         self.draw_points_multi_cameras(fig, 1, camera_coordinates, 0)
         self.draw_points_multi_cameras(fig, 2, camera_coordinates, 1)
@@ -109,13 +106,13 @@ class ResultAnalysis:
         ax.legend(self.settings['cameras'])
         
 def main():
-    result_analysis = ResultAnalysis('output/20251001_183755_reproduce.json')
-    result_analysis.calculate_inter_camera_difference('cam0')
-    result_analysis.calculate_inter_camera_difference('cam1')
-    result_analysis.calculate_inter_camera_difference('cam2')
-    result_analysis.visualize_points('cam0')
-    result_analysis.visualize_points('cam1')
-    result_analysis.visualize_points('cam2')
+    result_analysis = ResultAnalysis('output/20251116_160147.json')
+    result_analysis.calculate_inter_camera_difference('camera0')
+    result_analysis.calculate_inter_camera_difference('camera1')
+    result_analysis.calculate_inter_camera_difference('camera2')
+    result_analysis.visualize_points('camera0')
+    result_analysis.visualize_points('camera1')
+    result_analysis.visualize_points('camera2')
     result_analysis.visualize_points_multi_cameras()
     
 if __name__ == "__main__":
