@@ -1,6 +1,6 @@
 {
-    "cameras": ["camera2", "camera1", "camera0"],
-    "center_camera": "camera1",
+    "cameras": ["cam2", "cam1", "cam0"],
+    "center_camera": "cam1",
     "internal_callibration_type": "single",
     "pattern_internal": "chessboard",
     "pattern_external": "charuco",
