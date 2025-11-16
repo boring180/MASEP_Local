@@ -6,7 +6,7 @@
     "chessboard_flags": "CALIB_CB_FAST_CHECK",
     "aruco_dict_capture": "DICT_5X5_50",
     "marker_size_capture": 0.028,
-    "aruco_dict_localization": "DICT_5X5_50",
+    "aruco_dict_localization": "DICT_4X4_100",
     "marker_size_localization": 0.028,
     "camera_parameter_path": "../callibration/results"
 }
