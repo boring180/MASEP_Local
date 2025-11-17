@@ -111,29 +111,22 @@ class ExtrinsicCalibrationCharuco:
         self.shape = pickle.load(open(f'results/extrinsic_shape.pkl', 'rb'))
 
     ## ----------------------------- Re-calibrate ----------------------------- ##
-    def re_calibrate(self, camera_name):
+    def re_calibrate(self, camera_name, intrinsic_mtx = None, intrinsic_dist = None):
         obj_data = self.camera_object_points[camera_name]
         img_data = self.camera_image_points[camera_name]
 
-        if isinstance(obj_data, np.ndarray):
-            # Loaded format: single concatenated array, wrap in list for OpenCV
-            objpoints = [obj_data.astype(np.float32)]
-            imgpoints = [img_data.astype(np.float32)]
-        else:
-            # New format: already a list of arrays
-            objpoints = [arr.astype(np.float32) for arr in obj_data]
-            imgpoints = [arr.astype(np.float32) for arr in img_data]
+        objpoints = [arr.astype(np.float32) for arr in obj_data]
+        imgpoints = [arr.astype(np.float32) for arr in img_data]
 
         shape = self.shape
         termination_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-        initial_camera_matrix = np.eye(3, dtype=np.float32)
-        initial_dist_coeffs = np.zeros((1, 5), dtype=np.float32)
+        if intrinsic_mtx is None or intrinsic_dist is None:
+            flags = None
+        else:
+            flags = cv2.CALIB_USE_INTRINSIC_GUESS
 
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, shape[::-1],
-                                                            initial_camera_matrix, initial_dist_coeffs,
-                                                            flags=cv2.CALIB_USE_INTRINSIC_GUESS,
-                                                            criteria=termination_criteria)
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, shape[::-1], intrinsic_mtx, intrinsic_dist, flags=flags, criteria=termination_criteria)
         pickle.dump(mtx, open(f'results/recalibrate_mtx_{camera_name}.pkl', 'wb'))
         pickle.dump(dist, open(f'results/recalibrate_dist_{camera_name}.pkl', 'wb'))
             
@@ -141,6 +134,9 @@ class ExtrinsicCalibrationCharuco:
         num_points = 0
         for i in range(len(imgpoints)):
             imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+            if not np.isfinite(imgpoints2).all():
+                print(f'{camera_name} has infinite reprojection error')
+                continue
             error = cv2.norm(imgpoints[i], imgpoints2[:, 0, :], cv2.NORM_L2)
             num_points += len(imgpoints[i])
             mean_error += error
@@ -298,9 +294,9 @@ def main():
     # extrinsic_calibration_charuco.get_camera_points()
     # extrinsic_calibration_charuco.save_points()
     extrinsic_calibration_charuco.load_points()
-    extrinsic_calibration_charuco.re_calibrate('cam0')
-    extrinsic_calibration_charuco.re_calibrate('cam1')
-    extrinsic_calibration_charuco.re_calibrate('cam2')
+    extrinsic_calibration_charuco.re_calibrate('cam0', intrinsic_mtx=pickle.load(open(f'results/mtx_cam0.pkl', 'rb')), intrinsic_dist=pickle.load(open(f'results/dist_cam0.pkl', 'rb')))
+    extrinsic_calibration_charuco.re_calibrate('cam1', intrinsic_mtx=pickle.load(open(f'results/mtx_cam1.pkl', 'rb')), intrinsic_dist=pickle.load(open(f'results/dist_cam1.pkl', 'rb')))
+    extrinsic_calibration_charuco.re_calibrate('cam2', intrinsic_mtx=pickle.load(open(f'results/mtx_cam2.pkl', 'rb')), intrinsic_dist=pickle.load(open(f'results/dist_cam2.pkl', 'rb')))
     # extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera0')
     # extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera1')
     # extrinsic_calibration_charuco.calibrate_extrinsic(camera_name='camera2')
