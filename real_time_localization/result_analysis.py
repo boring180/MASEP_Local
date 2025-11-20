@@ -27,14 +27,20 @@ class ResultAnalysis:
         for file in files:
             os.remove(f'result/{file}')
 
+    def get_coordinates(self, detection):
+        if 'position' in detection:
+            return detection['position']
+        else:
+            return [detection['x'], detection['y'], detection['z']]
+
     def extract_position(self, camera_name1, camera_name2 = None):
         camera1_coordinates = []
         camera2_coordinates = []
         for frame_data in self.data:
             if len(frame_data[camera_name1]) > 0 and (camera_name2 is None or len(frame_data[camera_name2]) > 0):
-                camera1_coordinates.append([frame_data[camera_name1][0]['x'], frame_data[camera_name1][0]['y'], frame_data[camera_name1][0]['z']])
+                camera1_coordinates.append(self.get_coordinates(frame_data[camera_name1][0]))
                 if camera_name2 is not None:
-                    camera2_coordinates.append([frame_data[camera_name2][0]['x'], frame_data[camera_name2][0]['y'], frame_data[camera_name2][0]['z']])
+                    camera2_coordinates.append(self.get_coordinates(frame_data[camera_name2][0]))
                 
         camera1_coordinates = np.array(camera1_coordinates)
         camera2_coordinates = np.array(camera2_coordinates)
@@ -162,7 +168,7 @@ class ResultAnalysis:
             for cam_idx, camera_name in enumerate(self.settings['cameras']):
                 if camera_name in frame_data and len(frame_data[camera_name]) > 0:
                     pos = frame_data[camera_name][0]
-                    point = [pos['x'], pos['y'], pos['z']]
+                    point = self.get_coordinates(pos)
                     
                     history[camera_name].append(point)
                     if len(history[camera_name]) > 100:
@@ -230,12 +236,9 @@ class ResultAnalysis:
 
 def main():
     result_analysis = ResultAnalysis('output/20251116_160147.json')
-    result_analysis.calculate_inter_camera_difference('cam0')
-    result_analysis.calculate_inter_camera_difference('cam1')
-    result_analysis.calculate_inter_camera_difference('cam2')
-    result_analysis.visualize_points('cam0')
-    result_analysis.visualize_points('cam1')
-    result_analysis.visualize_points('cam2')
+    for camera_name in result_analysis.settings['cameras']:
+        result_analysis.calculate_inter_camera_difference(camera_name)
+        result_analysis.visualize_points(camera_name)
     result_analysis.visualize_points_multi_cameras()
     result_analysis.animate_results()
     
