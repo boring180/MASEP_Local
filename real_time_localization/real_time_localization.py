@@ -269,7 +269,7 @@ class Localization(Capture):
         
 def main():
     # localization = Localization([cv2.VideoCapture(0)])
-    localization = Localization([cv2.VideoCapture(2), cv2.VideoCapture(1), cv2.VideoCapture(0)])
+    # localization = Localization([cv2.VideoCapture(2), cv2.VideoCapture(1), cv2.VideoCapture(0)])
 
     # localization.save_video(localization.chessboard_capture, save_preview=False)
     # localization.save_video(localization.detection, save_preview=False)
@@ -280,5 +280,9 @@ def main():
 
     # localization = Localization([cv2.VideoCapture(1)])
     # localization.save_video(localization.detection, save_preview=True)
+
+    localization = Localization([cv2.VideoCapture(0)])
+    localization.save_video(localization.detection, save_preview=False)
+
 if __name__ == "__main__":
     main()
