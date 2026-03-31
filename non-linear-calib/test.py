@@ -19,7 +19,6 @@ def main():
     )
     print(f"OpenCV K: {opencv_result['K']}")
     print(f"OpenCV dist: {opencv_result['dist']}")
-    return
     pytorch_distortion_fit_result.ordinary_polynomial_distortion()
     # pytorch_distortion_fit_result.mlp_distortion()
     pytorch_distortion_fit_result.fit()
@@ -30,7 +29,7 @@ def main():
     print(f"PyTorch distortion fit reprojection error: {pytorch_distortion_fit_result.reprojection_error()}")
     pytorch_distortion_fit_result.plot_loss(opencv_rmse=opencv_result['rmse_px'])
     pytorch_distortion_fit_result.plot_distortion_field()
-    pytorch_distortion_fit_result.plot_per_view_reprojection_error()
+    pytorch_distortion_fit_result.plot_reprojection_error_distribution()
 
 if __name__ == "__main__":
     main()

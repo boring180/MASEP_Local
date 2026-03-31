@@ -14,7 +14,8 @@ def opencv_full_calib(objpoints, imgpoints, image_size):
             objp_list.append(np.asarray(o, np.float32))
             imgp_list.append(np.asarray(i, np.float32))
 
-    flags = cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6
+    # flags = cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6
+    flags = 0
     rms_opencv, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
         objp_list, imgp_list, image_size, None, None, flags=flags
     )
@@ -225,45 +226,49 @@ class pytorch_distortion_fit():
         plt.close(fig)
         print(f"Distortion field saved to {save_path}")
 
-    def plot_per_view_reprojection_error(self, save_path="per_view_reprojection_error.png"):
+    def plot_reprojection_error_distribution(self, save_path="reprojection_error_distribution.png"):
         import matplotlib.pyplot as plt
+        from scipy.stats import gaussian_kde
 
-        per_view_errors = []
+        all_sq_dists = []
         for imgp, reproj in zip(self.undistort_imgp_list, self.reprojected_imgp):
             d = reproj.astype(np.float64) - imgp.reshape(-1, 2).astype(np.float64)
-            point_errors = np.sqrt((d * d).sum(axis=1))
-            per_view_errors.append(point_errors)
+            sq_dist = np.sum(d ** 2, axis=1)
+            all_sq_dists.append(sq_dist)
+        all_sq_dists = np.concatenate(all_sq_dists)
 
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 8))
+        p95 = np.percentile(all_sq_dists, 95)
+        clipped = all_sq_dists[all_sq_dists <= p95]
+        n_outliers = len(all_sq_dists) - len(clipped)
 
-        bp = ax1.boxplot(per_view_errors, vert=True, patch_artist=True,
-                         boxprops=dict(facecolor="skyblue", alpha=0.7),
-                         medianprops=dict(color="red", linewidth=1.5))
-        ax1.set_xlabel("View Index")
-        ax1.set_ylabel("Reprojection Error (px)")
-        ax1.set_title("Per-View Reprojection Error Distribution")
-        ax1.grid(True, alpha=0.3, axis="y")
+        kde = gaussian_kde(clipped)
+        x = np.linspace(0, p95, 500)
+        density = kde(x)
 
-        means = [e.mean() for e in per_view_errors]
-        mins = [e.min() for e in per_view_errors]
-        maxs = [e.max() for e in per_view_errors]
-        views = np.arange(1, len(per_view_errors) + 1)
-
-        ax2.bar(views, means, color="steelblue", alpha=0.7, label="Mean")
-        ax2.errorbar(views, means,
-                     yerr=[np.array(means) - np.array(mins),
-                           np.array(maxs) - np.array(means)],
-                     fmt="none", ecolor="black", capsize=3, label="Min / Max")
-        ax2.set_xlabel("View Index")
-        ax2.set_ylabel("Reprojection Error (px)")
-        ax2.set_title("Per-View Mean Reprojection Error with Range")
-        ax2.legend()
-        ax2.grid(True, alpha=0.3, axis="y")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.fill_between(x, density, alpha=0.3, color="steelblue")
+        ax.plot(x, density, color="steelblue", linewidth=2)
+        ax.axvline(np.mean(all_sq_dists), color="red", linestyle="--", linewidth=1.5,
+                   label=f"Mean = {np.mean(all_sq_dists):.4f} px²")
+        ax.axvline(np.median(all_sq_dists), color="orange", linestyle="--", linewidth=1.5,
+                   label=f"Median = {np.median(all_sq_dists):.4f} px²")
+        ax.set_xlim(0, p95 * 1.05)
+        ax.set_xlabel("Squared Reprojection Distance (px²)")
+        ax.set_ylabel("Probability Density")
+        ax.set_title(f"PDF of Per-Point Squared Reprojection Error "
+                     f"(95th percentile, {n_outliers} outliers clipped)")
+        ax.legend()
+        ax.grid(True, alpha=0.3, axis="y")
 
         plt.tight_layout()
         plt.savefig(save_path, dpi=150)
         plt.close(fig)
-        print(f"Per-view reprojection error plot saved to {save_path}")
+        print(f"Reprojection error distribution saved to {save_path}")
+        print(f"  Total points: {len(all_sq_dists)}, "
+              f"Mean: {np.mean(all_sq_dists):.4f} px², "
+              f"Median: {np.median(all_sq_dists):.4f} px², "
+              f"95th pct: {p95:.4f} px², "
+              f"Max: {np.max(all_sq_dists):.4f} px²")
 
     def ordinary_polynomial_distortion(self):
         class OrdinaryPolynomialDistortion(nn.Module):
