@@ -1,25 +1,22 @@
+# Data / media
 video/
-*.DS_Store
-utils/__pycache__/
-Callibration/screen_shots/
-Callibration/reprojection/
-*.DS_Store
 photos/
-Callibration/__pycache__/
-captures/
 history_video_and_photos/
-.idea
-captures/output/
 tracking_video/
+captures/
 
-localization/__pycache__/
+# Output artifacts
+localization/output/
+localization/result/
+localization/param/
+intrinsic/*.npz
+intrinsic/*.png
+extrinsic/*.npz
 
+# IDE / OS
 .vscode/
+.idea
+*.DS_Store
 
-capture/output/
-
-callibration/debug_frames/
-
-**pycache**
-
-real_time_localization/output/
+# Python caches
+**/__pycache__/
