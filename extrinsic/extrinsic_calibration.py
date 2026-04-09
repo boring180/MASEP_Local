@@ -28,6 +28,7 @@ class ExtrinsicCalibration:
         self.camera_mtx = {}
         self.camera_dist = {}
         self.camera_extrinsic = {}
+        self.camera_undistorted_img_points = {}
 
         print(f"Loaded {npz_path}")
         for cam in self.camera_names:
@@ -46,24 +47,34 @@ class ExtrinsicCalibration:
             else:
                 print(f"  WARNING: intrinsics not found for {cam}")
 
-    def _estimate_poses(self):
-        """Estimate board pose per camera per frame via solvePnP."""
+    def _estimate_poses(self, use_undistorted=False):
+        """Estimate board pose per camera per frame via solvePnP.
+
+        If use_undistorted=True, uses pre-computed undistorted image points
+        (from camera_undistorted_img_points) with zero distortion coefficients.
+        """
         frame_poses = [{} for _ in range(self.total_frames)]
         for cam in self.camera_names:
             if cam not in self.camera_mtx:
                 continue
-            mtx, dist = self.camera_mtx[cam], self.camera_dist[cam]
+            mtx = self.camera_mtx[cam]
+            if use_undistorted and cam in self.camera_undistorted_img_points:
+                img_pts = self.camera_undistorted_img_points[cam]
+                dist = np.zeros(5)
+            else:
+                img_pts = self.camera_img_points[cam]
+                dist = self.camera_dist[cam]
             for di, fi in enumerate(self.camera_frame_indices[cam]):
                 obj = self.camera_obj_points[cam][di].astype(np.float32)
-                img = self.camera_img_points[cam][di].astype(np.float32)
+                img = img_pts[di].astype(np.float32)
                 ret, rvec, tvec = cv2.solvePnP(obj, img, mtx, dist)
                 if ret:
                     frame_poses[fi][cam] = (rvec, tvec, len(obj))
         return frame_poses
 
-    def calibrate_extrinsic(self, center_camera, target_camera, weighted=False):
+    def calibrate_extrinsic(self, center_camera, target_camera, weighted=False, use_undistorted=False):
         """Compute transformation from *target_camera* to *center_camera*."""
-        frame_poses = self._estimate_poses()
+        frame_poses = self._estimate_poses(use_undistorted=use_undistorted)
         cam_Ts, ctr_Ts, ws = [], [], []
         for fp in frame_poses:
             if target_camera in fp and center_camera in fp:
@@ -87,11 +98,11 @@ class ExtrinsicCalibration:
         self.camera_extrinsic[target_camera] = T
         return T
 
-    def calibrate_all(self, center_camera, weighted=False, save_dir=None):
+    def calibrate_all(self, center_camera, weighted=False, save_dir=None, use_undistorted=False):
         self.camera_extrinsic[center_camera] = np.eye(4)
         for cam in self.camera_names:
             if cam != center_camera:
-                self.calibrate_extrinsic(center_camera, cam, weighted=weighted)
+                self.calibrate_extrinsic(center_camera, cam, weighted=weighted, use_undistorted=use_undistorted)
         if save_dir:
             self.save_extrinsics(save_dir)
 

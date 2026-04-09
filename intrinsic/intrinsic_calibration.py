@@ -117,31 +117,65 @@ class pytorch_distortion_fit():
             if epoch % 100 == 0:
                 print(f"Epoch {epoch} loss: {loss.item()}, {self.model}")
 
-    def _compute_undistort_image_points(self):
+    def compute_undistort_image_points(self, imgp_list=None):
+        """Undistort image points by iteratively inverting the distortion model.
+
+        The model maps undistorted_normalized → distorted_normalized. This function
+        inverts that mapping: given distorted image points, finds the undistorted
+        image points such that model(undistorted) ≈ distorted.
+
+        Args:
+            imgp_list: List of distorted image point arrays. If None, uses self.imgp_list.
+
+        Returns:
+            List of undistorted image point arrays, each shaped (N_i, 1, 2).
+        """
+        if imgp_list is None:
+            imgp_list = self.imgp_list
+
         self.model.eval()
-        normalized, imgp = self._compute_normalized_coords(self.imgp_list)
-        x_n_tensor = torch.tensor(normalized[:, 0], dtype=torch.float32, device=self.device)
-        y_n_tensor = torch.tensor(normalized[:, 1], dtype=torch.float32, device=self.device)
-        with torch.no_grad():
-            pred_x, pred_y = self.model(x_n_tensor, y_n_tensor)
         fx, fy = self.mtx[0, 0], self.mtx[1, 1]
         cx, cy = self.mtx[0, 2], self.mtx[1, 2]
-        u = pred_x.cpu().numpy() * fx + cx
-        v = pred_y.cpu().numpy() * fy + cy
-        all_pts = np.stack([u, v], axis=1).astype(np.float32)
-        self.undistort_imgp_list = []
+
+        all_pts, lengths = [], []
+        for imgp in imgp_list:
+            pts = imgp.reshape(-1, 2).astype(np.float64)
+            all_pts.append(pts)
+            lengths.append(len(pts))
+        all_pts = np.concatenate(all_pts, axis=0)
+
+        x_d = (all_pts[:, 0] - cx) / fx
+        y_d = (all_pts[:, 1] - cy) / fy
+
+        x_u, y_u = x_d.copy(), y_d.copy()
+        with torch.no_grad():
+            for _ in range(20):
+                x_t = torch.tensor(x_u, dtype=torch.float32, device=self.device)
+                y_t = torch.tensor(y_u, dtype=torch.float32, device=self.device)
+                px, py = self.model(x_t, y_t)
+                x_u += x_d - px.cpu().numpy()
+                y_u += y_d - py.cpu().numpy()
+
+        u = x_u * fx + cx
+        v = y_u * fy + cy
+        all_undist = np.stack([u, v], axis=1).astype(np.float32)
+
+        result = []
         offset = 0
-        for imgp in self.imgp_list:
-            n_pts = imgp.reshape(-1, 2).shape[0]
-            self.undistort_imgp_list.append(all_pts[offset:offset + n_pts].reshape(-1, 1, 2))
-            offset += n_pts
+        for n in lengths:
+            result.append(all_undist[offset:offset + n].reshape(-1, 1, 2))
+            offset += n
+
+        if imgp_list is self.imgp_list:
+            self.undistort_imgp_list = result
+        return result
 
     def fit(self):
         for i in range(self.iteration_of_training):
             self._calibrate_K_matrix()
             self._reproject_image_points()
             self._fit_pytorch_distortion()
-            self._compute_undistort_image_points()
+            self.compute_undistort_image_points()
             print(f"Iteration {i}")
             print(f"Reprojection error: {self.reprojection_error()}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
