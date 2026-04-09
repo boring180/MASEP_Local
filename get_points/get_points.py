@@ -2,7 +2,6 @@
 
 import cv2
 import numpy as np
-import os
 from pathlib import Path
 import tqdm
 
@@ -78,17 +77,17 @@ def process_videos(
         board_size=(charuco_squares_x, charuco_squares_y),
         square_size=square_size, marker_size=marker_size)
 
+    # Accumulate across all videos
+    intrinsic = {c: {"obj": [], "img": []} for c in CAMERA_NAMES}
+    extrinsic = {c: {"obj": [], "img": []} for c in CAMERA_NAMES}
+    img_size = None
+    global_idx = 0
+
     for video_file in video_files:
         print(f"Processing {video_file.name} ...")
         cap = cv2.VideoCapture(str(video_file))
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         stem = video_file.stem
-
-        # Per-camera intrinsic points
-        intrinsic = {c: {"obj": [], "img": []} for c in CAMERA_NAMES}
-        # Extrinsic synced points
-        extrinsic = {c: {"obj": [], "img": []} for c in CAMERA_NAMES}
-        img_size = None
         frame_idx = 0
 
         for _ in tqdm.tqdm(range(total_frames), desc=stem):
@@ -104,7 +103,6 @@ def process_videos(
             if img_size is None:
                 img_size = (subs[0].shape[1], subs[0].shape[0])
 
-            # Detect in each camera
             detections = {}
             for ci, cam in enumerate(CAMERA_NAMES):
                 gray = cv2.cvtColor(subs[ci], cv2.COLOR_BGR2GRAY)
@@ -112,15 +110,12 @@ def process_videos(
                 if obj is not None:
                     detections[cam] = (obj, img, ci)
 
-            # Save intrinsic points and single-camera photos
             for cam, (obj, img, ci) in detections.items():
                 intrinsic[cam]["obj"].append(obj)
                 intrinsic[cam]["img"].append(img)
                 _draw_corners(subs[ci], img)
-                photo_path = single_photo_dir / f"{stem}_{frame_idx}_{cam}.jpg"
-                cv2.imwrite(str(photo_path), subs[ci])
+                cv2.imwrite(str(single_photo_dir / f"{global_idx}_{cam}.jpg"), subs[ci])
 
-            # Save extrinsic points and multi-camera photo when >=2 cameras detect
             if len(detections) >= 2:
                 for cam in CAMERA_NAMES:
                     if cam in detections:
@@ -130,38 +125,35 @@ def process_videos(
                     else:
                         extrinsic[cam]["obj"].append(None)
                         extrinsic[cam]["img"].append(None)
-                combined = np.vstack(subs)
-                cv2.imwrite(str(multi_photo_dir / f"{stem}_{frame_idx}.jpg"), combined)
+                cv2.imwrite(str(multi_photo_dir / f"{global_idx}.jpg"), np.vstack(subs))
 
             frame_idx += 1
+            global_idx += 1
 
         cap.release()
 
-        # Save intrinsic point files (one per camera)
-        for cam in CAMERA_NAMES:
-            n = len(intrinsic[cam]["obj"])
-            print(f"  {cam} intrinsic: {n} frames")
-            if n > 0:
-                np.savez(str(points_dir / f"{stem}_{cam}.npz"),
-                         obj_points=np.array(intrinsic[cam]["obj"], dtype=object),
-                         img_points=np.array(intrinsic[cam]["img"], dtype=object),
-                         img_size=np.array(img_size), **board_params)
+    # Save one npz per camera (intrinsic)
+    for cam in CAMERA_NAMES:
+        n = len(intrinsic[cam]["obj"])
+        print(f"  {cam} intrinsic: {n} frames")
+        if n > 0:
+            np.savez(str(points_dir / f"{cam}.npz"),
+                     obj_points=np.array(intrinsic[cam]["obj"], dtype=object),
+                     img_points=np.array(intrinsic[cam]["img"], dtype=object),
+                     img_size=np.array(img_size), **board_params)
 
-        # Save extrinsic point file
-        n_ext = len(extrinsic[CAMERA_NAMES[0]]["obj"])
-        print(f"  extrinsic: {n_ext} synced frames")
-        if n_ext > 0:
-            ext_save = dict(camera_names=np.array(CAMERA_NAMES),
-                            img_size=np.array(img_size), **board_params)
-            for cam in CAMERA_NAMES:
-                ext_save[f"{cam}_obj_points"] = np.array(extrinsic[cam]["obj"], dtype=object)
-                ext_save[f"{cam}_img_points"] = np.array(extrinsic[cam]["img"], dtype=object)
-            np.savez(str(points_dir / f"{stem}_extrinsic.npz"), **ext_save)
+    # Save one extrinsic npz
+    n_ext = len(extrinsic[CAMERA_NAMES[0]]["obj"])
+    print(f"  extrinsic: {n_ext} synced frames")
+    if n_ext > 0:
+        ext_save = dict(camera_names=np.array(CAMERA_NAMES),
+                        img_size=np.array(img_size), **board_params)
+        for cam in CAMERA_NAMES:
+            ext_save[f"{cam}_obj_points"] = np.array(extrinsic[cam]["obj"], dtype=object)
+            ext_save[f"{cam}_img_points"] = np.array(extrinsic[cam]["img"], dtype=object)
+        np.savez(str(points_dir / "extrinsic.npz"), **ext_save)
 
 
 if __name__ == "__main__":
-    process_videos(
-        video_folder="../video/charuco_air",
-        points_folder="../points/air",
-        photos_folder="../photos/air",
-    )
+    process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air")
+    process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water")
