@@ -39,76 +39,104 @@ def opencv_full_calib(objpoints, imgpoints, image_size):
 
 
 class pytorch_distortion_fit():
-    def __init__(self, objpoints, imgpoints, image_size, device='cpu', iteration_of_training=10, epoch_per_iteration=1000):
+    def __init__(self, objpoints, imgpoints, image_size, device='cpu', epochs=10000, val_ratio=0.2):
         self.image_size = image_size
-            # The filtered lists are used for the calibration
         self.objp_list, self.imgp_list = [], []
-        self.undistort_imgp_list = []
         for o, i in zip(objpoints, imgpoints):
             if len(i) >= 6:
                 self.objp_list.append(np.asarray(o, np.float32))
                 self.imgp_list.append(np.asarray(i, np.float32))
-                self.undistort_imgp_list.append(np.asarray(i, np.float32))
 
-        self.iteration_of_training = iteration_of_training
-        self.epoch_per_iteration = epoch_per_iteration
+        self.epochs = epochs
         self.device = device
+        self.val_ratio = val_ratio
         self.loss_history = []
+        self.val_loss_history = []
 
     def __str__(self):
-        camera_matrix_msg = f"Camera Matrix: {self.mtx}"
-        distortion_model_msg = f"Distortion Model: {self.model}"
-        return f"{camera_matrix_msg}\n{distortion_model_msg}"
+        return f"K:\n{self.mtx}\nDistortion: {self.model}"
 
-    def _calibrate_K_matrix(self):
-        flags = cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6
-        _, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(self.objp_list, self.undistort_imgp_list, self.image_size, None, None, flags=flags)
+    def _calibrate_K(self, imgp_list):
+        """Calibrate K with zero distortion assumption."""
+        flags = (cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 |
+                 cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6)
+        _, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(
+            self.objp_list, imgp_list, self.image_size, None, None, flags=flags)
 
-    def _reproject_image_points(self):
+    def _reproject(self):
+        """Reproject object points using K — these are the undistorted ground truth."""
         self.reprojected_imgp = []
         for objp, rvec, tvec in zip(self.objp_list, self.rvecs, self.tvecs):
             proj, _ = cv2.projectPoints(objp, rvec, tvec, self.mtx, self.dist)
             self.reprojected_imgp.append(proj.reshape(-1, 2))
 
-    def reprojection_error(self):
-        sse = 0
-        n = 0
-        for imgp, reproj in zip(self.undistort_imgp_list, self.reprojected_imgp):
-            d = reproj.astype(np.float64) - imgp.reshape(-1, 2).astype(np.float64)
-            sse += float((d * d).sum())
-            n += d.size // 2
-        return float(np.sqrt(sse / n))
+    def _normalize(self, imgp_list):
+        """Apply K_inv to pixel points → normalized coords."""
+        cat = np.concatenate([p.reshape(-1, 1, 2) for p in imgp_list], axis=0).astype(np.float32)
+        return cv2.undistortPoints(cat, self.mtx, self.dist).reshape(-1, 2)
 
-    def _fit_pytorch_distortion(self):
-        self.model.train()
+    def _fit_distortion(self):
+        """Train distortion model: distorted_normalized → reprojected_normalized.
+
+        Uses 80/20 train/val split on points. Keeps best model by val loss.
+        """
+        # Input: distorted normalized (K_inv on original observed points)
+        distorted_n = self._normalize(self.imgp_list)
+        # Target: reprojected normalized (K_inv on reprojected points = ground truth)
+        target_n = self._normalize(self.reprojected_imgp)
+
+        # Train/val split
+        n = len(distorted_n)
+        perm = np.random.permutation(n)
+        n_train = int(n * (1 - self.val_ratio))
+        train_idx, val_idx = perm[:n_train], perm[n_train:]
+
+        x_train = torch.tensor(distorted_n[train_idx, 0], dtype=torch.float32, device=self.device)
+        y_train = torch.tensor(distorted_n[train_idx, 1], dtype=torch.float32, device=self.device)
+        tx_train = torch.tensor(target_n[train_idx, 0], dtype=torch.float32, device=self.device)
+        ty_train = torch.tensor(target_n[train_idx, 1], dtype=torch.float32, device=self.device)
+
+        x_val = torch.tensor(distorted_n[val_idx, 0], dtype=torch.float32, device=self.device)
+        y_val = torch.tensor(distorted_n[val_idx, 1], dtype=torch.float32, device=self.device)
+        tx_val = torch.tensor(target_n[val_idx, 0], dtype=torch.float32, device=self.device)
+        ty_val = torch.tensor(target_n[val_idx, 1], dtype=torch.float32, device=self.device)
+
         optimizer = optim.Adam(self.model.parameters(), lr=0.01)
         criterion = nn.MSELoss()
+        best_val_loss = float('inf')
+        best_state = None
 
-        # Input: distorted normalized coords (K_inv on original distorted points)
-        imgp_cat = np.concatenate([p.reshape(-1, 1, 2) for p in self.imgp_list], axis=0).astype(np.float32)
-        distorted = cv2.undistortPoints(imgp_cat, self.mtx, self.dist).reshape(-1, 2)
-        x_d = torch.tensor(distorted[:, 0], dtype=torch.float32, device=self.device)
-        y_d = torch.tensor(distorted[:, 1], dtype=torch.float32, device=self.device)
-
-        # Target: undistorted normalized coords (K_inv on current undistorted points)
-        undist_cat = np.concatenate([p.reshape(-1, 1, 2) for p in self.undistort_imgp_list], axis=0).astype(np.float32)
-        undistorted = cv2.undistortPoints(undist_cat, self.mtx, self.dist).reshape(-1, 2)
-        target_x = torch.tensor(undistorted[:, 0], dtype=torch.float32, device=self.device)
-        target_y = torch.tensor(undistorted[:, 1], dtype=torch.float32, device=self.device)
-
-        for epoch in range(self.epoch_per_iteration):
+        for epoch in range(self.epochs):
+            # Train
+            self.model.train()
             optimizer.zero_grad()
-            pred_x, pred_y = self.model(x_d, y_d)
-            loss = criterion(pred_x, target_x) + criterion(pred_y, target_y)
+            px, py = self.model(x_train, y_train)
+            loss = criterion(px, tx_train) + criterion(py, ty_train)
             loss.backward()
             optimizer.step()
             self.loss_history.append(loss.item())
 
-            # if epoch % 100 == 0:
-                # print(f"  epoch {epoch}: loss={loss.item():.6f}")
+            # Validate
+            self.model.eval()
+            with torch.no_grad():
+                vx, vy = self.model(x_val, y_val)
+                val_loss = criterion(vx, tx_val) + criterion(vy, ty_val)
+            self.val_loss_history.append(val_loss.item())
 
-    def compute_undistort_image_points(self, imgp_list=None):
-        """Undistort image points via forward pass: distorted_normalized → undistorted_normalized."""
+            if val_loss.item() < best_val_loss:
+                best_val_loss = val_loss.item()
+                best_state = {k: v.clone() for k, v in self.model.state_dict().items()}
+
+            if epoch % 2000 == 0:
+                print(f"  epoch {epoch}: train={loss.item():.6f} val={val_loss.item():.6f}")
+
+        # Restore best model
+        self.model.load_state_dict(best_state)
+        self.model.eval()
+        print(f"  best val loss: {best_val_loss:.6f}")
+
+    def undistort_points(self, imgp_list=None):
+        """Undistort image points via forward pass: distorted_normalized → undistorted_normalized → pixels."""
         if imgp_list is None:
             imgp_list = self.imgp_list
 
@@ -116,13 +144,8 @@ class pytorch_distortion_fit():
         fx, fy = self.mtx[0, 0], self.mtx[1, 1]
         cx, cy = self.mtx[0, 2], self.mtx[1, 2]
 
-        all_pts, lengths = [], []
-        for imgp in imgp_list:
-            all_pts.append(imgp.reshape(-1, 2))
-            lengths.append(len(imgp.reshape(-1, 2)))
-
-        cat = np.concatenate([p.reshape(-1, 1, 2) for p in all_pts], axis=0).astype(np.float32)
-        distorted = cv2.undistortPoints(cat, self.mtx, self.dist).reshape(-1, 2)
+        lengths = [len(p.reshape(-1, 2)) for p in imgp_list]
+        distorted = self._normalize(imgp_list)
 
         with torch.no_grad():
             x_t = torch.tensor(distorted[:, 0], dtype=torch.float32, device=self.device)
@@ -136,20 +159,37 @@ class pytorch_distortion_fit():
         result = []
         offset = 0
         for n in lengths:
-            result.append(all_undist[offset:offset + n].reshape(-1, 1, 2))
+            result.append(all_undist[offset:offset + n])
             offset += n
-
-        if imgp_list is self.imgp_list:
-            self.undistort_imgp_list = result
         return result
 
+    def reprojection_error(self):
+        undist = self.undistort_points()
+        sse = n = 0
+        for ud, reproj in zip(undist, self.reprojected_imgp):
+            d = reproj.astype(np.float64) - ud.reshape(-1, 2).astype(np.float64)
+            sse += float((d * d).sum())
+            n += d.size // 2
+        return float(np.sqrt(sse / n))
+
     def fit(self):
-        for i in range(self.iteration_of_training):
-            self._calibrate_K_matrix()
-            self._reproject_image_points()
-            self._fit_pytorch_distortion()
-            self.compute_undistort_image_points()
-            print(f"Iter {i}/{self.iteration_of_training} RMSE={self.reprojection_error():.6f}")
+        """Pipeline: K(no dist) → reproject → train distortion → undistort → recalibrate K."""
+        # Step 1: Calibrate K assuming no distortion
+        print("Step 1: Calibrate K (no distortion)")
+        self._calibrate_K(self.imgp_list)
+        self._reproject()
+
+        # Step 2: Train distortion model (distorted → reprojected)
+        print("Step 2: Train distortion model")
+        self._fit_distortion()
+
+        # Step 3: Undistort and recalibrate K
+        print("Step 3: Recalibrate K with undistorted points")
+        undistorted = self.undistort_points()
+        self._calibrate_K(undistorted)
+        self._reproject()
+
+        print(f"Final RMSE: {self.reprojection_error():.6f}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
 
     def plot_loss(self, save_path="loss_plot.png", opencv_rmse=None):
@@ -287,13 +327,11 @@ class pytorch_distortion_fit():
                 self.p2 = nn.Parameter(torch.tensor(0.0))
 
             def forward(self, x, y):
-                r_squared = x**2 + y**2
-                x = x * ( 1 + self.k1 * r_squared + self.k2 * r_squared ** 2 + self.k3 * r_squared ** 3)
-                y = y * ( 1 + self.k1 * r_squared + self.k2 * r_squared ** 2 + self.k3 * r_squared ** 3)
-
-                x = x + 2 * self.p1 * x * y + self.p2 * (r_squared + 2 * x**2)
-                y = y + 2 * self.p1 * x * y + self.p2 * (r_squared + 2 * y**2)
-                return x, y
+                r2 = x**2 + y**2
+                radial = 1 + self.k1 * r2 + self.k2 * r2**2 + self.k3 * r2**3
+                x_out = x * radial + 2 * self.p1 * x * y + self.p2 * (r2 + 2 * x**2)
+                y_out = y * radial + self.p1 * (r2 + 2 * y**2) + 2 * self.p2 * x * y
+                return x_out, y_out
 
             def __str__(self):
                 return f"{self.__class__.__name__}(k1={self.k1.item():.4f}, k2={self.k2.item():.4f}, k3={self.k3.item():.4f}, p1={self.p1.item():.4f}, p2={self.p2.item():.4f})"
@@ -393,8 +431,8 @@ if __name__ == "__main__":
     from pathlib import Path
     import sys
 
-    points_dir = Path("../points/air")
-    output_dir = Path("../calibration/air")
+    points_dir = Path("../points/water")
+    output_dir = Path("../calibration/water")
 
     for npz in sorted(points_dir.glob("cam*.npz")):
         calibrate_camera(str(npz), str(output_dir))
