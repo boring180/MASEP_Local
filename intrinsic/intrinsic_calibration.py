@@ -128,7 +128,7 @@ class pytorch_distortion_fit():
                 best_state = {k: v.clone() for k, v in self.model.state_dict().items()}
 
             if epoch % 2000 == 0:
-                print(f"  epoch {epoch}: train={loss.item():.6f} val={val_loss.item():.6f}")
+                print(f"  epoch {epoch}: train={loss.item()} val={val_loss.item()}")
 
         # Restore best model
         self.model.load_state_dict(best_state)
