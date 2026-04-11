@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(ls /Users/xuborong/Documents/GitHub/MASEP_Local/extrinsic/*.npz)"
-    ]
-  }
-}

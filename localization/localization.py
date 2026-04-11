@@ -1,199 +1,191 @@
-"""
-Multi-camera ArUco marker localization via PnP.
-
-Provides:
-  - Capture : video recording with multi-camera frame handling
-  - Localization(Capture) : ArUco detection + PnP pose → world coordinates
-"""
+"""Multi-camera ChArUco localization via PnP with different intrinsic models."""
 
 import cv2
-import json
 import numpy as np
-import os
 import pickle
-from datetime import datetime
+import torch
 from pathlib import Path
-import tqdm
+import sys
+
+sys.path.append(str(Path(__file__).resolve().parent.parent / "intrinsic"))
+from intrinsic_calibration import pytorch_distortion_fit
 
 
-class Capture:
-    def __init__(self, setting_path="setting.json", cameras=None):
-        with open(setting_path, "r") as f:
-            self.settings = json.load(f)
+CAMERA_NAMES = ["cam2", "cam1", "cam0"]  # top to bottom
 
-        self.cameras = cameras
-        if cameras is not None:
-            self.reference_shape = cameras[0].read()[1].shape[:2]
+
+def load_extrinsics(calib_dir):
+    """Load extrinsic transforms (4x4) for each camera from pickle files."""
+    extrinsics = {}
+    for cam in CAMERA_NAMES:
+        p = Path(calib_dir) / f"extrinsic_{cam}.pkl"
+        if p.exists():
+            with open(p, "rb") as f:
+                extrinsics[cam] = pickle.load(f)
+    return extrinsics
+
+
+def load_opencv_intrinsics(calib_dir):
+    """Load OpenCV K and dist for each camera."""
+    intrinsics = {}
+    for cam in CAMERA_NAMES:
+        p = Path(calib_dir) / f"{cam}_opencv.npz"
+        if p.exists():
+            d = np.load(str(p))
+            intrinsics[cam] = {"K": d["K"], "dist": d["dist"]}
+    return intrinsics
+
+
+def load_pytorch_intrinsics(calib_dir, model_suffix):
+    """Load PyTorch distortion model (.pt) for each camera.
+
+    model_suffix: 'poly' or 'mlp'
+    Returns dict of {cam: pytorch_distortion_fit} with K accessible via .mtx
+    """
+    intrinsics = {}
+    for cam in CAMERA_NAMES:
+        p = Path(calib_dir) / f"{cam}_{model_suffix}.pt"
+        if p.exists():
+            intrinsics[cam] = pytorch_distortion_fit.load(str(p))
+    return intrinsics
+
+
+def make_charuco_detector(squares_x=11, squares_y=8, square_size=0.023,
+                          marker_size=0.017, aruco_dict_name="DICT_5X5_100"):
+    aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, aruco_dict_name))
+    board = cv2.aruco.CharucoBoard(
+        (squares_x, squares_y), square_size, marker_size, aruco_dict)
+    detector = cv2.aruco.CharucoDetector(board)
+    return board, detector
+
+
+def detect_charuco(gray, board, detector, min_corners=6):
+    """Detect ChArUco corners. Returns (obj_points, img_points) or (None, None)."""
+    charuco_corners, charuco_ids, _, _ = detector.detectBoard(gray)
+    if charuco_ids is None or len(charuco_ids) < min_corners:
+        return None, None
+    obj_points, img_points = board.matchImagePoints(charuco_corners, charuco_ids)
+    return obj_points[:, 0, :], img_points[:, 0, :]
+
+
+def solve_pnp_opencv(obj_pts, img_pts, K, dist):
+    """SolvePnP using OpenCV intrinsics (K + dist)."""
+    ret, rvec, tvec = cv2.solvePnP(
+        obj_pts.astype(np.float32), img_pts.astype(np.float32), K, dist)
+    if not ret:
+        return None
+    T = np.eye(4)
+    T[:3, :3], _ = cv2.Rodrigues(rvec)
+    T[:3, 3] = tvec.flatten()
+    return T
+
+
+def solve_pnp_pytorch(obj_pts, img_pts, pt_model):
+    """SolvePnP using PyTorch distortion model: undistort points first, then PnP with dist=0."""
+    undist = pt_model.undistort_points([img_pts])[0]
+    ret, rvec, tvec = cv2.solvePnP(
+        obj_pts.astype(np.float32), undist.astype(np.float32),
+        pt_model.mtx, np.zeros(5))
+    if not ret:
+        return None
+    T = np.eye(4)
+    T[:3, :3], _ = cv2.Rodrigues(rvec)
+    T[:3, 3] = tvec.flatten()
+    return T
+
+
+def detect_frame(sub_frames, board, detector, min_corners=6):
+    """Detect ChArUco corners in each camera sub-frame.
+
+    Returns:
+        dict of {cam: (obj_points, img_points)} for cameras with detections
+    """
+    detections = {}
+    for ci, cam in enumerate(CAMERA_NAMES):
+        gray = cv2.cvtColor(sub_frames[ci], cv2.COLOR_BGR2GRAY)
+        obj_pts, img_pts = detect_charuco(gray, board, detector, min_corners)
+        if obj_pts is not None:
+            detections[cam] = (obj_pts, img_pts)
+    return detections
+
+
+def localize_from_detections(detections, intrinsics_dict, extrinsics,
+                             method="opencv"):
+    """Run PnP on pre-detected points for a given intrinsic method.
+
+    Args:
+        detections: dict of {cam: (obj_points, img_points)} from detect_frame
+        intrinsics_dict: for 'opencv': {cam: {K, dist}}, for 'poly'/'mlp': {cam: pytorch_distortion_fit}
+        method: 'opencv', 'poly', or 'mlp'
+
+    Returns:
+        dict of {cam: 4x4 world pose} for cameras with valid PnP solutions
+    """
+    results = {}
+    for cam, (obj_pts, img_pts) in detections.items():
+        if cam not in intrinsics_dict or cam not in extrinsics:
+            continue
+
+        if method == "opencv":
+            T_cam_board = solve_pnp_opencv(
+                obj_pts, img_pts, intrinsics_dict[cam]["K"], intrinsics_dict[cam]["dist"])
         else:
-            self.reference_shape = None
+            T_cam_board = solve_pnp_pytorch(obj_pts, img_pts, intrinsics_dict[cam])
 
-    def __del__(self):
-        if self.cameras is not None:
-            for cam in self.cameras:
-                cam.release()
+        if T_cam_board is None:
+            continue
 
-    # ---- frame layout helpers ---- #
-    def _slice_frame(self, frame):
-        n = len(self.settings["cameras"])
-        h = frame.shape[0] // n
-        return [frame[i * h : (i + 1) * h, :] for i in range(n)]
+        T_world_board = np.linalg.inv(extrinsics[cam]) @ T_cam_board
+        results[cam] = T_world_board
 
-    def _concat_frames(self, frames):
-        ref = self.reference_shape
-        resized = [cv2.resize(f, (ref[1], ref[0])) for f in frames]
-        return np.concatenate(resized, axis=0)
-
-    # ---- serialise one frame's detections to JSON-friendly dict ---- #
-    @staticmethod
-    def _frame_to_json(frame_data):
-        frame_json = {}
-        for cam_name, detections in frame_data.items():
-            if isinstance(detections, dict):
-                items = []
-                for marker_id, coord in detections.items():
-                    arr = np.array(coord).reshape(-1)
-                    if arr.size >= 3:
-                        items.append({"id": int(marker_id),
-                                      "x": float(arr[0]), "y": float(arr[1]), "z": float(arr[2])})
-                frame_json[cam_name] = items
-            else:
-                frame_json[cam_name] = []
-        return frame_json
-
-    # ---- capture from video file ---- #
-    def reproduce_capture(self, capture_fn, video_path):
-        cap = cv2.VideoCapture(video_path)
-        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.reference_shape = (h // len(self.settings["cameras"]), w)
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-        os.makedirs("output", exist_ok=True)
-        stem = Path(video_path).stem
-        out = cv2.VideoWriter(f"output/{stem}_reproduce.mp4",
-                              cv2.VideoWriter_fourcc(*"mp4v"), 24, (w, h))
-        data = []
-        for _ in tqdm.tqdm(range(total)):
-            ret, frame = cap.read()
-            if not ret:
-                break
-            frames = self._slice_frame(frame)
-            fd = {self.settings["cameras"][i]: capture_fn(frames[i], self.settings["cameras"][i])
-                  for i in range(len(self.settings["cameras"]))}
-            data.append(fd)
-            out.write(self._concat_frames(frames))
-
-        with open(f"output/{stem}_reproduce.json", "w") as f:
-            json.dump([self._frame_to_json(d) for d in data], f, indent=2)
-        out.release()
-        cap.release()
-
-    # ---- live capture ---- #
-    def save_video(self, capture_fn=None, save_preview=False):
-        if capture_fn is None:
-            capture_fn = lambda frame, name: {}
-
-        for cam in self.cameras:
-            cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-            cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-
-        ret, first = self.cameras[0].read()
-        self.reference_shape = first.shape[:2]
-
-        os.makedirs("output", exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        cams = self.settings["cameras"]
-        fname = f"output/{cams[0]}_{timestamp}.mp4" if len(cams) == 1 else f"output/{timestamp}.mp4"
-
-        sample = self._concat_frames([first] * len(self.cameras))
-        out = cv2.VideoWriter(fname, cv2.VideoWriter_fourcc(*"mp4v"), 24,
-                              (sample.shape[1], sample.shape[0]))
-        data = []
-        while True:
-            frames, show_frames, fd = [], [], {}
-            for i, cam in enumerate(self.cameras):
-                ret, frame = cam.read()
-                frames.append(frame)
-                shown = frame.copy() if not save_preview else frame
-                fd[cams[i]] = capture_fn(shown, cams[i])
-                show_frames.append(shown)
-
-            out.write(self._concat_frames(frames))
-            cv2.imshow("Frames", self._concat_frames(show_frames))
-            data.append(fd)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-        with open(f"output/{timestamp}.json", "w") as f:
-            json.dump([self._frame_to_json(d) for d in data], f, indent=2)
-        out.release()
-        cv2.destroyAllWindows()
+    return results
 
 
-class Localization(Capture):
-    """ArUco marker detection + PnP pose estimation using calibrated cameras."""
+def localize_frame(sub_frames, board, detector, intrinsics_dict, extrinsics,
+                    method="opencv", min_corners=6):
+    """Localize charuco board in each camera, return world poses.
 
-    def __init__(self, setting_path="setting.json", cameras=None):
-        super().__init__(setting_path, cameras)
+    Args:
+        sub_frames: list of 3 camera images (top to bottom)
+        intrinsics_dict: for 'opencv': {cam: {K, dist}}, for 'poly'/'mlp': {cam: pytorch_distortion_fit}
+        method: 'opencv', 'poly', or 'mlp'
 
-        param_dir = self.settings["camera_parameter_path"]
-        self.cameras_mtx, self.cameras_dist, self.cameras_extrinsic = {}, {}, {}
-        for cam in self.settings["cameras"]:
-            with open(f"{param_dir}/mtx_{cam}.pkl", "rb") as f:
-                self.cameras_mtx[cam] = pickle.load(f)
-            with open(f"{param_dir}/dist_{cam}.pkl", "rb") as f:
-                self.cameras_dist[cam] = pickle.load(f)
-            with open(f"{param_dir}/extrinsic_{cam}.pkl", "rb") as f:
-                self.cameras_extrinsic[cam] = pickle.load(f)
-
-        dict_name = self.settings["aruco_dict_localization"]
-        aruco_dict = cv2.aruco.getPredefinedDictionary(getattr(cv2.aruco, dict_name))
-        self.aruco_detector = cv2.aruco.ArucoDetector(aruco_dict, cv2.aruco.DetectorParameters())
-
-    def localization(self, frame, camera_name):
-        """Detect ArUco markers and estimate their world position via PnP + extrinsic."""
-        corners, ids, _ = self.aruco_detector.detectMarkers(frame)
-        results = {}
-        if ids is None:
-            return results
-
-        mtx = self.cameras_mtx[camera_name]
-        dist = self.cameras_dist[camera_name]
-        ext = self.cameras_extrinsic[camera_name]
-        marker_len = self.settings["marker_size_localization"]
-
-        for i in range(len(corners)):
-            rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(
-                corners[i], marker_len, mtx, dist
-            )
-            T_marker = np.eye(4)
-            T_marker[:3, :3], _ = cv2.Rodrigues(rvec)
-            T_marker[:3, 3] = tvec.flatten()
-
-            world_T = ext @ T_marker
-            pos = world_T[:3, 3]
-            results[ids[i][0]] = pos
-
-            label = f"ID:{ids[i][0]} X:{pos[0]:.2f} Y:{pos[1]:.2f} Z:{pos[2]:.2f}"
-            org = (int(corners[i][0][0][0]), int(corners[i][0][0][1]))
-            cv2.putText(frame, label, org, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-
-        return results
-
-    def detection(self, frame, camera_name):
-        """Detect ArUco markers (2-D corners only, no pose)."""
-        corners, ids, _ = self.aruco_detector.detectMarkers(frame)
-        results = {}
-        if ids is None:
-            return results
-        for i in range(len(corners)):
-            results[ids[i][0]] = corners[i]
-            org = (int(corners[i][0][0][0]), int(corners[i][0][0][1]))
-            cv2.putText(frame, f"ID:{ids[i][0]}", org,
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-        return results
+    Returns:
+        dict of {cam: 4x4 world pose} for cameras that detected the board
+    """
+    detections = detect_frame(sub_frames, board, detector, min_corners)
+    return localize_from_detections(detections, intrinsics_dict, extrinsics, method)
 
 
-if __name__ == "__main__":
-    loc = Localization(cameras=[cv2.VideoCapture(2), cv2.VideoCapture(1), cv2.VideoCapture(0)])
-    loc.save_video(loc.localization, save_preview=True)
+def detect_video(video_path, board, detector, min_corners=6):
+    """Detect ChArUco corners for all frames in a video.
+
+    Returns:
+        list of dicts, each {cam: (obj_points, img_points)}
+    """
+    cap = cv2.VideoCapture(str(video_path))
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    all_detections = []
+
+    for _ in range(total):
+        ret, frame = cap.read()
+        if not ret:
+            break
+        h = frame.shape[0] // 3
+        subs = [frame[i * h:(i + 1) * h, :] for i in range(3)]
+        all_detections.append(detect_frame(subs, board, detector, min_corners))
+
+    cap.release()
+    return all_detections
+
+
+def process_video(video_path, board, detector, intrinsics_dict, extrinsics,
+                  method="opencv", min_corners=6):
+    """Process a video and return per-frame localization results.
+
+    Returns:
+        list of dicts, each {cam: 4x4 world pose}
+    """
+    all_detections = detect_video(video_path, board, detector, min_corners)
+    return [localize_from_detections(det, intrinsics_dict, extrinsics, method)
+            for det in all_detections]

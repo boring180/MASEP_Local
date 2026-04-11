@@ -189,7 +189,7 @@ class pytorch_distortion_fit():
         self._calibrate_K(undistorted)
         self._reproject()
 
-        print(f"Final RMSE: {self.reprojection_error():.6f}")
+        print(f"Final RMSE: {self.reprojection_error()}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
 
     def plot_loss(self, save_path="loss_plot.png", opencv_rmse=None):

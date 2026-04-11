@@ -20,3 +20,5 @@ extrinsic/*.npz
 
 # Python caches
 **/__pycache__/
+
+.claude/
