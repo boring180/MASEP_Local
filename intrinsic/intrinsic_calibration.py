@@ -173,21 +173,15 @@ class pytorch_distortion_fit():
         return float(np.sqrt(sse / n))
 
     def fit(self):
-        """Pipeline: K(no dist) → reproject → train distortion → undistort → recalibrate K."""
-        # Step 1: Calibrate K assuming no distortion
-        print("Step 1: Calibrate K (no distortion)")
+        """Pipeline: OpenCV calibrate K → train distortion model."""
+        # Step 1: Calibrate K using OpenCV full calibration
+        print("Step 1: Calibrate K (OpenCV)")
         self._calibrate_K(self.imgp_list)
         self._reproject()
 
         # Step 2: Train distortion model (distorted → reprojected)
         print("Step 2: Train distortion model")
         self._fit_distortion()
-
-        # Step 3: Undistort and recalibrate K
-        print("Step 3: Recalibrate K with undistorted points")
-        undistorted = self.undistort_points()
-        self._calibrate_K(undistorted)
-        self._reproject()
 
         print(f"Final RMSE: {self.reprojection_error()}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
@@ -344,11 +338,11 @@ class pytorch_distortion_fit():
                 super().__init__()
                 self.mlp = nn.Sequential(
                     nn.Linear(2, 100),
-                    nn.ReLU(),
+                    nn.Tanh(),
                     nn.Linear(100, 100),
-                    nn.ReLU(),
+                    nn.Tanh(),
                     nn.Linear(100, 25),
-                    nn.ReLU(),
+                    nn.Tanh(),
                     nn.Linear(25, 2),
                 )
             def forward(self, x, y):
