@@ -85,7 +85,7 @@ BoldItalicFont={*-bold-italic}]
 % Cover Page
 \begin{titlepage}
     \centering
-    {\Huge\bfseries Progress Report of Marine Automatic Swarm Experiment Platform Localization System \par}
+    {\Huge\bfseries Final Report of Marine Automatic Swarm Experiment Platform Localization System \par}
     \vspace{1.5cm}
     {\Large YH02a-25 \par}
     \vspace{0.5cm}
@@ -127,14 +127,19 @@ BoldItalicFont={*-bold-italic}]
 \fancyfoot[R]{\thepage}
 
 \newpage
-\TODO{LIST OF FIGURES}
-\TODO{LIST OF TABLES}
+\section*{List of Illustrations}
+\addcontentsline{toc}{section}{List of Illustrations}
+\subsection*{List of Figures}
+\listoffigures
+\newpage
+\subsection*{List of Tables}
+\listoftables
 
 % Abstract
 \newpage
 \section*{Abstract}
 \addcontentsline{toc}{section}{Abstract}
-\TODO
+This report presents a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of Autonomous Underwater Vehicles (AUVs) with a target error margin of $\pm 7\times 10^{-2}$~m. The system employs a multi-camera optical tracking approach using five USB cameras arranged under a water tank with overlapping fields of view, detecting ArUco markers attached to AUVs via OpenCV. Two main contributions are presented: (1) a ChArUco-based extrinsic calibration algorithm that overcomes the limitations of traditional chessboard calibration in underwater environments by utilizing PnP solvers to determine inter-camera transformations from partial board observations, and (2) a nonlinear extrinsic calibration model that separately calibrates the camera intrinsic matrix $K$ and distortion model $D$ using gradient descent, addressing the cross-medium light refraction that invalidates the standard pinhole camera assumption. The system achieves an intrinsic calibration error of $7.1\times 10^{-2}$~m and an extrinsic calibration error of $2.2\times 10^{-2}$~m. A simulation environment with noise modeling validates the Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error. RSSI localization is also explored as an assistive method. The proposed system provides a low-cost, scalable solution for multi-AUV tracking in swarm robotics research.
 
 
 % Introduction
@@ -164,7 +169,7 @@ BoldItalicFont={*-bold-italic}]
         Comparative analysis shows this target provides 10x better accuracy than typical acoustic systems ($0.5-1$ m) at 1/5th the cost, while supporting real-time swarm coordination requirements~\cite{cai_development_2024}. Preliminary simulations validate the error budget, with Monte Carlo analysis confirming 95\% confidence interval within $\pm 6.2\times 10^{-2}$ m under nominal conditions. \\ 
         
         Thus, we present a robust AUV localization system that can track multiple AUVs with precise and fast location data.
-        By solving the problems of underwater localization, we can test marine path planning algorithms in a desk-sized platform. This may include multi-AUV cooperative object transportation~\cite{zhang_decentralized_2020}, reinforcement learning based AUV path planning~\cite{yang_intelligent_2023}. The above experiment demonstrated a solid result in simulation environments, but lacked real-world transfers. With our platform, these algorithms can be evaluated in terms of the real-to-sim gap and their potential for real-world applications. And possibly provide new solutions to the field of marine research using AUVs.
+        By solving the problems of underwater localization, we can test marine path planning algorithms on a desk-sized platform. This may include multi-AUV cooperative object transportation~\cite{zhang_decentralized_2020} and reinforcement learning based AUV path planning~\cite{yang_intelligent_2023}. These experiments have demonstrated solid results in simulation environments but lacked real-world validation. With our platform, these algorithms can be evaluated in terms of the sim-to-real gap and their potential for real-world applications, possibly providing new solutions to the field of marine research using AUVs.
     \subsection{Objectives }
         This project develops a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$ meters. Using multi-camera optical tracking, sensor fusion, and robust calibration, with assistance of Received Signal Strength Indicator (RSSI) localization, the system supports scalable, low-cost underwater experiments for swarm robotics research.
         % \yh{to make the objective (abstract) more attractive}
@@ -219,7 +224,7 @@ BoldItalicFont={*-bold-italic}]
             An extrinsic parameter stands for the homogeneous transformation matrix between cameras. The rotation and translation of different cameras with respect to the world coordinate system. It is crucial to calibrate extrinsic parameters to ensure a smooth transition of localization between different cameras. In our experiment, we will use stereo camera calibration to determine the extrinsic parameters of the outer cameras relative to the center camera. To evaluate the effectiveness of the extrinsic calibration results, we adapt the re-project error calculation from intrinsic camera calibration and evaluate it between cameras.\\\\
             For RSSI calibration, the received signal strength (in dBm) is mapped with the distance between the RSSI sensor and the target device to ensure precise multilateration calculation of the coordinates.
         \paragraph{Localization}
-            Localization of AUVs will be mainly based on optics localization. By detecting the ArUco markers~\cite{garrido-jurado_automatic_2014}, the algorithm can calculate the rotation and translation of the marker using PnP solvers. We moved the marker in a straight line and checked the variance of the detection, meanwhile recording the exact locations of the marker as ground truth to evaluate the localization results. RSSI localization acts as an assistance. By receiving the signal strength from the AUVs and more than 4 other devices emitting Wi-Fi signals using a signal sensor, the algorithm can estimate the coordinates of the AUVs by matching the results of fingerprinting. Through various trials of recalibrating the camera array and RSSI sensor, we can achieve a localization error of less than $7\times 10^{-2}$m, allowing us to apply the camera array under the water tank and the sensor at a corner of the top of the water tank to localize the AUVs.
+            Localization of AUVs is primarily based on optical localization. By detecting ArUco markers~\cite{garrido-jurado_automatic_2014}, the algorithm calculates the rotation and translation of the marker using PnP solvers. We moved the marker in a straight line and checked the variance of the detection, while recording the exact locations of the marker as ground truth to evaluate the localization results. RSSI localization acts as an assistive method. By receiving the signal strength from the AUVs and more than four other devices emitting Wi-Fi signals using a signal sensor, the algorithm can estimate the coordinates of the AUVs by matching the results of fingerprinting. Through various trials of recalibrating the camera array and RSSI sensor, we can achieve a localization error of less than $7\times 10^{-2}$~m, allowing us to apply the camera array under the water tank and the sensor at a corner of the top of the water tank to localize the AUVs.
         \paragraph{Sensor fusion}
             To achieve better localization of the AUVs, we will use a Kalman filter to fuse the results of different cameras and the RSSI sensors. In the original system \cite{cai_development_2024}, researchers utilize a yaw-only Kalman filter \cite{li_kalman_2015} to enhance localization. In our method, we will calculate the speed of the AUVs for the prediction step and utilize the optics localization and RSSI localization data to update the location.
             \begin{figure}
@@ -336,13 +341,13 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Implement noise models in the simulation environment.\\
             \textbf{Expected Outcome:} The environment works, and virtual AUVs can be located by virtual cameras.\\
             \textbf{Group member in charge:} XU, Borong\\
-            \textbf{Work:} We model of the camera projection error as a gamma distribution $f(x)=\frac{1}{\Gamma(\alpha)\theta^\alpha}x^{\alpha-1}e^{\frac{-x}{\theta}}$ in pixel level. With the probability distribution of the per-pixel error, we can model the effect of noise on the estimation and run the simulation to tune the parameter of the extended Kalman Filters.(Figure~\ref{error_distribution}
+            \textbf{Work:} We model the camera projection error as a gamma distribution $f(x)=\frac{1}{\Gamma(\alpha)\theta^\alpha}x^{\alpha-1}e^{\frac{-x}{\theta}}$ at the pixel level. With the probability distribution of the per-pixel error, we can model the effect of noise on the estimation and run the simulation to tune the parameters of the Extended Kalman Filter (Figure~\ref{error_distribution}).
             \begin{figure}
                     \centering
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/reprojection_error_distribution.png}
                     }
-                    \caption{.}
+                    \caption{Distribution of reprojection errors fitted to a gamma distribution, used for noise modeling in the simulation environment.}
                     \label{error_distribution}
                 \end{figure}
 
@@ -351,7 +356,7 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Validate the algorithms in the simulation environment.\\
             \textbf{Expected Outcome:} Error has to be within $7.0\times10^{-2}$m.\\
             \textbf{Group member in charge:} XU, Borong\\
-            \textbf{Work:} We use Kalman filter to fuse the camera localization results in the simulation environment. Reaching a $0.3\times10^{-2}$m error, which is in the range of our goal. Although the simulation environment cannot fully model the occultation and other noise, but it shows the effectiveness of using Kalman Filter to improve localization accuracy(Figure~\ref {EKF}).
+            \textbf{Work:} We use the Kalman filter to fuse the camera localization results in the simulation environment, reaching a $0.3\times10^{-2}$~m error, which is within our target range. Although the simulation environment cannot fully model occlusion and other noise sources, it demonstrates the effectiveness of using the Kalman filter to improve localization accuracy (Figure~\ref{EKF}).
             \begin{figure}
                     \centering
                     \rotatebox{0}{
@@ -372,9 +377,9 @@ BoldItalicFont={*-bold-italic}]
                 \textbf{Aim:} Get chessboard photos suitable for both intrinsic and extrinsic calibrations of all the cameras.\\
                 \textbf{Expected Outcome:} Valid photos are collected, so that the full chessboard can be captured by all the cameras in the same frame, and the image points can be further extracted and matched with the object points.\\
                 \textbf{Group member in charge:} CHAN, Sze Sen\\
-                \textbf{Work:} We wrote a Python code to collect frames from a camera array of three, as shown in figure~\ref{collection array}. We then collect frames of a chessboard with 8×11 23mm squares covering as many camera angles as possible, while outputting chessboard detection results for validation, as shown in figure~\ref{validation}.\\\\
-                When choosing a suitable chessboard, we needed one with more squares to ensure higher accuracy in the calibration steps that followed, while ensuring the squares were large enough for the cameras to detect. We also had to make sure the chessboard was able to be fully captured by all the cameras, so it could not be too large. It was a challenge to balance between these requirements. After testing with multiple chessboards, we chose the one with 8\times11 23mm squares at the end for most cases, and a 3\times16 9mm for single camera intrinsic calibration.\\\\
-                All cameras will capture the synchronized frame, so different cameras can share the same object points when calibration, which will be mandatory for extrinsic calibration(Figure~\ref {chessboard}, ~\ref{multi_cameras}). The chessboard works well in air experiments, but it performs poorly underwater due to difficulties in the corner detection algorithm with complex light reflection disturbance underwater. And also, the image points can only be extracted when the whole board is detected. This shortens the range of angles when it comes to extrinsic parameter calibration. To overcome these difficulties, we developed another method to extract image points.
+                \textbf{Work:} We wrote a Python program to collect frames from an array of three cameras, as shown in Figure~\ref{collection array}. We then collected frames of a chessboard with $8\times11$ 23mm squares covering as many camera angles as possible, while outputting chessboard detection results for validation, as shown in Figure~\ref{validation}.\\\\
+                When choosing a suitable chessboard, we needed one with more squares to ensure higher accuracy in the calibration steps that followed, while ensuring the squares were large enough for the cameras to detect. We also had to make sure the chessboard could be fully captured by all the cameras, so it could not be too large. It was a challenge to balance these requirements. After testing with multiple chessboards, we chose the one with $8\times11$ 23mm squares for most cases, and a $3\times16$ 9mm board for single-camera intrinsic calibration.\\\\
+                All cameras capture synchronized frames, so different cameras can share the same object points during calibration, which is mandatory for extrinsic calibration (Figure~\ref{chessboard}, \ref{multi_cameras}). The chessboard works well in air experiments but performs poorly underwater due to difficulties in the corner detection algorithm caused by complex light reflection disturbance. Additionally, image points can only be extracted when the entire board is detected, which limits the range of angles available for extrinsic parameter calibration. To overcome these difficulties, we developed another method to extract image points.
                 \begin{figure}
                     \centering
                     \rotatebox{-90}{
@@ -412,8 +417,8 @@ BoldItalicFont={*-bold-italic}]
                 \textbf{Aim:}  Get ChArUco photos suitable for both intrinsic and extrinsic calibrations of all the cameras and achieve better results under water compared to chess chessboard.\\
                 \textbf{Expected Outcome:} Valid photos are collected, so that part of the ChArUco can be captured by all the cameras in the same frame, and at least 6 points of the board can be further extracted and matched with the object points.\\
                 \textbf{Group member in charge:} XU, Borong\\
-                \textbf{Work:} To overcome the poor performance of the chessboard underwater,  we use another kind of calibration board. Similar to task2.1, we wrote a Python code to collect frames of a ChArUco board with 8×11 23mm squares covering as many camera angles as possible, while outputting ChArUco detection results for validation, as shown in figure~\ref{ChArUco}.\\\\
-                The ChArUco board is similar to a chessboard, while it has several ArUco marks inside the pattern. This allows the detection algorithm to extract image points without the whole board. And with this advantage in our experiment, it shows a stable detection underwater, especially for extrinsic calibration.
+                \textbf{Work:} To overcome the poor performance of the chessboard underwater, we use a different type of calibration board. Similar to Task 2.1, we wrote a Python program to collect frames of a ChArUco board with $8\times11$ 23mm squares covering as many camera angles as possible, while outputting ChArUco detection results for validation, as shown in Figure~\ref{ChArUco}.\\\\
+                The ChArUco board is similar to a chessboard but has several ArUco markers embedded inside the pattern. This allows the detection algorithm to extract image points without requiring the entire board to be visible. With this advantage, our experiment demonstrates stable detection underwater, especially for extrinsic calibration.
                 \begin{figure}
                     \centering
                     \rotatebox{0}{
@@ -461,7 +466,7 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Calibrate the extrinsic parameters of all the cameras.\\
             \textbf{Expected Outcome:} Error has to be within $2.0\times10^{-2}$m.\\
             \textbf{Group member in charge:} XU, Borong\\\
-            \textbf{Work:} We wrote an algorithm with stereo calibration techniques to determine relative camera positions and orientations between the center wide camera and the other side cameras. Then we input the collected chessboard photos again, and the algorithm outputs homogeneous transformation matrices between cameras. A world coordinate system was established with the center camera as the reference frame, and reprojection error analysis was also used in this step to validate calibration quality.We also roughly validated the extrinsic calibration results through visualizing the relative positions between the cameras(Figure~\ref{ext_result}), and it matches with our measurements of specification of the camera array.\\\\
+            \textbf{Work:} We wrote an algorithm using stereo calibration techniques to determine relative camera positions and orientations between the center wide-angle camera and the other side cameras. Then we input the collected chessboard photos, and the algorithm outputs homogeneous transformation matrices between cameras. A world coordinate system was established with the center camera as the reference frame, and reprojection error analysis was also used in this step to validate calibration quality. We also roughly validated the extrinsic calibration results by visualizing the relative positions between the cameras (Figure~\ref{ext_result}), which matches our physical measurements of the camera array.\\\\
             \begin{equation}
             \begin{aligned}
                 T &= \argmin_T||P_B - (P_A + T)||^2\\
@@ -477,9 +482,9 @@ BoldItalicFont={*-bold-italic}]
                     \caption{Capture of a ChArUco board in the cross section between two cameras.}
                     \label{charuco_capture}
             \end{figure}
-            In the under water settings. Since the field of view of the camera setting is not enough to capture the whole chess board in two camera frames, the traditional extrinsic calibration method using chessboard is not enough in our underwater environment. We propose a new method of using ChArUco board to calibration the camera matrix extrinsic parameters(Figure~\ref{charuco_capture}). Which utilize PnP solver to find both camera's relative transformation to the ChArUco calibration board, and produce pairs of camera location. With the camera point correspondence, we can solve the transformation between cameras(Equation~\ref{ext_goal}). Where $T$ is the optimal translation vector and $R$ is the optimal rotation matrix that minimize the Euclidean distance between corresponding 3D points $P_A$ and $P_B$ in different camera coordinate systems.
+            In the underwater setting, the field of view of each camera is insufficient to capture the entire chessboard in two camera frames simultaneously, making the traditional extrinsic calibration method inadequate. We propose a new method using the ChArUco board to calibrate the camera extrinsic parameters (Figure~\ref{charuco_capture}). This method utilizes PnP solvers to find each camera's relative transformation to the ChArUco calibration board, producing pairs of camera locations. With the camera point correspondences, we can solve the transformation between cameras (Equation~\ref{ext_goal}), where $T$ is the optimal translation vector and $R$ is the optimal rotation matrix that minimize the Euclidean distance between corresponding 3D points $P_A$ and $P_B$ in different camera coordinate systems.
 
-            Similar to intrinsic calibration, initial extrinsic calibration results showed higher errors due to insufficient calibration data. Increasing the number of valid captures from chessboard detection reduced the transformation error and improved calibration accuracy.
+            Similar to intrinsic calibration, initial extrinsic calibration results showed higher errors due to insufficient calibration data. Increasing the number of valid captures reduced the transformation error and improved calibration accuracy.
 
             \begin{figure}
                     \centering
@@ -494,10 +499,10 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Find the differences in calibration parameters in air and water.\\
             \textbf{Expected Outcome:} Get the correction factor of calibration parameters from air to water.\\
             \textbf{Group member in charge:} XU, Borong\\\
-            \textbf{Work:} We repeated intrinsic calibration underwater and discovered the calibration results failed in underwater environments. This could due to the light refraction when crossing different medium. \\
-            To test the effectiveness of the intrinsic calibration result, we use the extrinsic calibration results to compare the localization between different cameras. Since the extrinsic parameters consist of transformations between cameras, this will not be effect by light refraction. Once the extrinsic parameters is confirmed effective in air, we can use it to validate the intrinsic parameters produced by out method.\\
-            The cross medium light refraction invalidates the pinhole camera assumption and the traditional polynomial distortion model is not enough to estimate the distortion. Therefore, we propose our new method for underwater distortion calibration.\\\\
-            Our new method calibrates the camera parameter $K$ and distortion model $D$ separately. And we model the distortion parameter $D$ as a vector field We first apply OpenCV calibration program with assumption of no distortion to get the intrinsic parameter $K$, and using this $K$ matrix, we normalize the objects points using opencv undistort re-projected image points as a ground truth for distortion parameters. Then, we calibrate the distortion parameters using gradient descent with PyTorch. Using the new distortion model, we undistort the image points and calibrate the intrinsic parameter $K$ again.\\\
+            \textbf{Work:} We repeated intrinsic calibration underwater and discovered that the calibration results failed in underwater environments. This could be due to light refraction when crossing different media. \\
+            To test the effectiveness of the intrinsic calibration results, we use the extrinsic calibration results to compare the localization between different cameras. Since the extrinsic parameters consist of transformations between cameras, they are not affected by light refraction. Once the extrinsic parameters are confirmed effective in air, we can use them to validate the intrinsic parameters produced by our method.\\
+            The cross-medium light refraction invalidates the pinhole camera assumption, and the traditional polynomial distortion model is insufficient to estimate the distortion. Therefore, we propose a new method for underwater distortion calibration.\\\\
+            Our new method calibrates the camera parameter $K$ and distortion model $D$ separately. We model the distortion parameter $D$ as a vector field. We first apply the OpenCV calibration program with the assumption of no distortion to obtain the intrinsic parameter $K$, and using this $K$ matrix, we normalize the object points and use the undistorted reprojected image points as ground truth for the distortion parameters. Then, we calibrate the distortion parameters using gradient descent with PyTorch. Using the new distortion model, we undistort the image points and recalibrate the intrinsic parameter $K$.\\\
             \begin{algorithm}
             \caption{Separate K and Distortion Calibration}\label{alg:distortion_calibration}
             \begin{algorithmic}
@@ -530,7 +535,7 @@ BoldItalicFont={*-bold-italic}]
             \end{algorithm}
 
             To reduce the effect of overfitting on the model training, we apply a train validation split of 8:2, and use the model with best performance on the validation set as our final model of distortion.
-            For the model fo the vector field, we apply a traditional polynomial distortion with radial distortion and tangential distortion(Equation~\ref{polynomial}). And also a Multi-Layer-Perceptron model with tanH activation function to model the nonlinear relationship. The results can be found in (Figure~\ref{int_results}).  
+            For the model of the vector field, we apply a traditional polynomial distortion with radial and tangential components (Equation~\ref{polynomial}), as well as a Multi-Layer Perceptron (MLP) model with tanh activation function to model the nonlinear relationship. The results can be found in Figure~\ref{int_results}.  
             
             \begin{equation}
             \begin{aligned}
@@ -570,8 +575,8 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Track ArUco markers of the AUVs.\\
             \textbf{Expected Outcome:} All the AUVs in the water tank can be tracked.\\
             \textbf{Group member in charge:} Both members\\
-            \textbf{Work:} We wrote a Python code to implement real-time ArUco marker detection by OpenCV's ArUco module with DICT\_5X5\_50 dictionary. Robust localization was achieved under varying lighting conditions. When capturing chessboard photos, we also recorded some frames of an ArUco marker appearing at five fixed points and moving horizontally along a track (Figure~\ref{aruco test}) to test the algorithm. As a result, the algorithm visualized the coordinate axes of the marker and the output frame points associated with it.\\\\
-            Before recording those frames, we planned the range of locations of the marker to be 2m and the distance between each fixed point to be 0.5m. However, the table in the laboratory was not large enough to allow cameras to capture the marker in such a range. Therefore, the range was narrowed to 0.5m with 0.125m distance between each fixed point. On the other hand, we did not have any rails to move the marker horizontally in a straight line, but we found that there were two straight grooves next to the table. Therefore, we put the tablet that shows the marker into the groove to solve this problem, which saved time and unnecessary expense in getting the rail for this minor task.
+            \textbf{Work:} We wrote a Python program to implement real-time ArUco marker detection using OpenCV's ArUco module with the DICT\_5X5\_50 dictionary. Robust localization was achieved under varying lighting conditions. When capturing chessboard photos, we also recorded frames of an ArUco marker appearing at five fixed points and moving horizontally along a track (Figure~\ref{aruco test}) to test the algorithm. The algorithm visualized the coordinate axes of the marker and output the frame points associated with it.\\\\
+            Before recording those frames, we planned the range of marker locations to be 2~m with 0.5~m between each fixed point. However, the table in the laboratory was not large enough for cameras to capture the marker across such a range. Therefore, the range was narrowed to 0.5~m with 0.125~m between each fixed point. We did not have any rails to move the marker in a straight line, but we found two straight grooves next to the table. We placed the tablet displaying the marker into the groove, which saved time and unnecessary expense.
             \begin{figure}
                 \centering
                 \rotatebox{-90}{
@@ -586,7 +591,7 @@ BoldItalicFont={*-bold-italic}]
             \textbf{Aim:} Combine detections of the ArUco markers from multiple cameras.\\
             \textbf{Expected Outcome:} The ArUco markers can be located according to detections from multiple cameras.\\
             \textbf{Group member in charge:} XU, Borong\\
-            \textbf{Work:} We wrote an algorithm to combine detections from multiple cameras. Weighted averaging of the cameras was implemented based on detection confidence and viewing angle. The algorithm also handled occlusions and marker visibility transitions between cameras by estimating the AUV's position from previous frames.\\\\
+            \textbf{Work:} We wrote an algorithm to combine detections from multiple cameras. Weighted averaging was implemented based on detection confidence and viewing angle. The algorithm also handles occlusions and marker visibility transitions between cameras by estimating the AUV's position from previous frames.\\\\
 
 
             \begin{figure}

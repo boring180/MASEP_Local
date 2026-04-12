@@ -1,0 +1,51 @@
+\contentsline {section}{Cover Page}{i}{}%
+\contentsline {section}{Table of Contents}{ii}{}%
+\contentsline {section}{Abstract}{2}{}%
+\contentsline {section}{\numberline {1}Introduction}{3}{}%
+\contentsline {subsection}{\numberline {1.1}Background and Engineering Problem }{3}{}%
+\contentsline {subsection}{\numberline {1.2}Objectives }{3}{}%
+\contentsline {paragraph}{Objective Statements}{4}{}%
+\contentsline {subsection}{\numberline {1.3}Literature Review of Existing Solutions }{4}{}%
+\contentsline {paragraph}{Acoustic localization}{4}{}%
+\contentsline {paragraph}{Magnetic localization}{5}{}%
+\contentsline {paragraph}{Optical localization}{5}{}%
+\contentsline {paragraph}{RSSI localization}{5}{}%
+\contentsline {section}{\numberline {2}Methodology}{6}{}%
+\contentsline {subsection}{\numberline {2.1}Overview }{6}{}%
+\contentsline {subsubsection}{\numberline {2.1.1}System Description }{6}{}%
+\contentsline {paragraph}{Hardware Setup}{6}{}%
+\contentsline {paragraph}{Calibration}{6}{}%
+\contentsline {paragraph}{Localization}{6}{}%
+\contentsline {paragraph}{Sensor fusion}{7}{}%
+\contentsline {subsubsection}{\numberline {2.1.2}System Block Diagram}{8}{}%
+\contentsline {subsubsection}{\numberline {2.1.3}Components List}{8}{}%
+\contentsline {subsubsection}{\numberline {2.1.4}ECE Knowledge:}{9}{}%
+\contentsline {paragraph}{ELEC 2600 – Probability and Random Processes in Engineering}{9}{}%
+\contentsline {paragraph}{ELEC 3130 – Digital Image Processing}{9}{}%
+\contentsline {paragraph}{ELEC 3210 – Introduction to Mobile Robotics}{9}{}%
+\contentsline {paragraph}{ELEC 4471 – Computer Vision and Image Processing}{9}{}%
+\contentsline {paragraph}{ELEC 4610 – Engineering Optics}{9}{}%
+\contentsline {subsection}{\numberline {2.2}Objective Statement Execution}{9}{}%
+\contentsline {subsubsection}{\numberline {2.2.1}Objective Statement 1: Simulation Environment Development}{9}{}%
+\contentsline {subsubsection}{\numberline {2.2.2}Objective Statement 2: Camera Array Calibration}{11}{}%
+\contentsline {subsubsection}{\numberline {2.2.3}Objective Statement 3: ArUco Tracking Implementation}{20}{}%
+\contentsline {subsubsection}{\numberline {2.2.4}Objective Statement 4: RSSI localization Implementation}{21}{}%
+\contentsline {subsection}{\numberline {2.3}Main Objective Evaluation \& Discussion}{23}{}%
+\contentsline {section}{\numberline {3}Conclusion}{23}{}%
+\contentsline {section}{References}{24}{}%
+\contentsline {section}{Appendices}{24}{}%
+\contentsline {subsection}{Appendix A - Project Schedule}{24}{}%
+\contentsline {subsection}{Appendix B - Budget}{26}{}%
+\contentsline {subsection}{Appendix C - Meeting minutes}{27}{}%
+\contentsline {paragraph}{Meeting 1}{27}{}%
+\contentsline {paragraph}{Meeting 2}{28}{}%
+\contentsline {paragraph}{Meeting 3}{29}{}%
+\contentsline {paragraph}{Meeting 4}{30}{}%
+\contentsline {paragraph}{Meeting 5}{31}{}%
+\contentsline {paragraph}{Meeting 6}{32}{}%
+\contentsline {paragraph}{Meeting 7}{33}{}%
+\contentsline {paragraph}{Meeting 8}{34}{}%
+\contentsline {subsection}{Appendix D - Group Members’ Contribution}{35}{}%
+\contentsline {paragraph}{Individual Contributions:}{35}{}%
+\contentsline {subsection}{Appendix E - Deviation from the proposal and progress report and supporting reason}{37}{}%
+\contentsline {subsection}{Appendix F - Monthly Reports}{38}{}%
