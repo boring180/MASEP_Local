@@ -665,7 +665,13 @@ This report presents a fast and precise localization system for the Marine Autom
     \subsection{Main Objective Evaluation \& Discussion}
 
 \section{Conclusion}
-\TODO{}
+This project developed a multi-camera optical localization system for the Marine Automatic Swarm Experiment Platform (MASEP), targeting real-time AUV tracking with $\pm 7\times 10^{-2}$~m accuracy. We successfully designed and implemented a complete pipeline from camera calibration through ArUco marker detection to multi-camera fusion.
+
+Our main contributions are twofold. First, we proposed a ChArUco-based extrinsic calibration algorithm that addresses the fundamental limitation of traditional chessboard calibration in underwater environments. By leveraging the partial detection capability of ChArUco boards and PnP solvers, our method produces reliable inter-camera transformation matrices even when the full calibration pattern cannot be captured simultaneously by adjacent cameras. This achieved an extrinsic calibration error of $2.2\times 10^{-2}$~m. Second, we developed a nonlinear extrinsic calibration model that separately calibrates the camera intrinsic matrix $K$ and distortion model $D$. By modeling distortion as a vector field and training it via gradient descent with PyTorch, this approach overcomes the cross-medium light refraction that invalidates the standard pinhole camera assumption and traditional polynomial distortion models.
+
+The simulation environment with gamma-distributed noise modeling validated our Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error under simulated conditions. The intrinsic calibration currently achieves $7.1\times 10^{-2}$~m error, which is close to but has not yet met our target. Further refinement of the nonlinear distortion model and additional calibration data collection are expected to reduce this error. RSSI localization was also investigated as an assistive method to improve robustness under challenging optical conditions such as low lighting and occlusion.
+
+Overall, this project demonstrates that a low-cost multi-camera system with robust calibration techniques can provide accurate AUV localization for swarm robotics research, bridging the gap between simulation-based algorithm development and real-world underwater experiments.
 
 % References
 \newpage
@@ -1147,7 +1153,18 @@ This report presents a fast and precise localization system for the Marine Autom
 
     \paragraph{Individual Contributions:}
     \begin{itemize}
-        \item \textbf{XU, Borong:} Led algorithmic development including simulation framework, camera calibration, ArUco tracking, mechanical structure design, and sensor fusion implementation. Contributed significantly to technical documentation and mathematical derivations. 
+        \item \textbf{XU, Borong:}
+        I led the algorithmic development of the localization system, covering the full pipeline from simulation to real-world deployment.
+
+        For Objective 1, I designed and implemented the Python simulation environment using NumPy and Matplotlib, including virtual camera models with configurable intrinsic parameters, image point projection, and reprojection. I modeled the camera projection error as a gamma distribution for realistic noise simulation and implemented the Extended Kalman Filter for multi-camera fusion validation, achieving $0.3\times10^{-2}$~m error in simulation.
+
+        For Objective 2, I developed the core calibration algorithms. For intrinsic calibration, I wrote the algorithm that extracts focal length, principal point, and distortion coefficients from chessboard and ChArUco images. I proposed and implemented the ChArUco-based extrinsic calibration method, which is one of the main contributions of this project. This method uses PnP solvers to determine each camera's pose relative to the ChArUco board, enabling extrinsic calibration even when adjacent cameras cannot simultaneously capture the full calibration pattern. I also developed the nonlinear distortion calibration method that separately calibrates the camera matrix $K$ and distortion model $D$ using gradient descent with PyTorch, addressing the cross-medium refraction problem that invalidates conventional calibration approaches. I designed the camera array mounting structure and coordinated with CEERI for 3D printing of camera holders.
+
+        For Objective 3, I implemented the multi-camera fusion algorithm with weighted averaging based on detection confidence and viewing angle, including occlusion handling and marker visibility transitions between cameras. I also contributed to the ArUco localization algorithm using OpenCV's ArUco module.
+
+        For Objective 5, I implemented the Extended Kalman Filter for sensor fusion, combining results from different cameras with velocity estimation for the prediction step.
+
+        I wrote the methodology sections of the proposal and progress reports, including all mathematical derivations and algorithm descriptions. I also took meeting minutes and participated in all laboratory experiments at HKUST CKSRI.
         \newpage
         \item \textbf{CHAN, Sze Sen:} 
         I was responsible for hardware integration. To do this, I visited the HKUST CKSRI lab at the beginning of the project to inspect everything initially and ensure that the five-camera array was mounted correctly under the water tank we were using for our experiment, so that the overlapping fields of view from the cameras could provide optimal coverage. 
