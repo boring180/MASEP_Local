@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.18.0 (TeX Live 2024)  (format=lualatex 2025.3.2)  12 APR 2026 11:59
+This is LuaHBTeX, Version 1.18.0 (TeX Live 2024)  (format=lualatex 2025.3.2)  12 APR 2026 12:53
  restricted system commands enabled.
 **proposal.tex
 (./proposal.tex
@@ -759,9 +759,9 @@ File: CJK.enc 2021/10/16 4.8.5
 (/usr/local/texlive/2024/texmf-dist/tex/latex/base/fontenc.sty
 Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
 ))
-No file proposal.aux.
-
+(./proposal.aux)
 \openout1 = proposal.aux
+
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 78.
 LaTeX Font Info:    ... okay on input line 78.
 LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 78.
@@ -773,7 +773,7 @@ LaTeX Font Info:    ... okay on input line 78.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 78.
 LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 7
 8.
-(/usr/local/texlive/2024/texmf-dist/tex/latex/base/ts1cmr.fd
+ (/usr/local/texlive/2024/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 78.
@@ -976,974 +976,581 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 99.
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
-{/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-No file proposal.toc.
+{/usr/local/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./prop
+osal.toc)
 \tf@toc=\write4
 
 \openout4 = proposal.toc
-[2] (/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.bdg
-File: UTF8.bdg 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.enc
-File: UTF8.enc 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.chr
-File: UTF8.chr 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.enc
-File: UTF8.enc 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.chr
-File: UTF8.chr 2021/10/16 4.8.5
-)
-[1] (/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.enc
-File: UTF8.enc 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.chr
-File: UTF8.chr 2021/10/16 4.8.5
-)
+
+[2] (./proposal.lof)
+\tf@lof=\write5
+
+\openout5 = proposal.lof
+ [3] (./proposal.lot)
+\tf@lot=\write6
+
+\openout6 = proposal.lot
+ [4] [5]
+Underfull \hbox (badness 10000) in paragraph at lines 151--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 151--152
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 167--168
+
+ []
+
+[1]
+Underfull \hbox (badness 10000) in paragraph at lines 192--194
+
+ []
+
 [2]
-
-LaTeX Warning: Citation `pedersen_camera_2018' on page 3 undefined on input lin
-e 144.
-
-
-LaTeX Warning: Citation `cai_data-driven_2025' on page 3 undefined on input lin
-e 144.
-
-
-LaTeX Warning: Citation `zhou_survey_2022' on page 3 undefined on input line 14
-4.
-
-
-LaTeX Warning: Citation `agrawal_underwater_2025' on page 3 undefined on input 
-line 146.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 3 undefined on input lin
-e 146.
-
-
-LaTeX Warning: Citation `pedersen_camera_2018' on page 3 undefined on input lin
-e 148.
-
-
-LaTeX Warning: Citation `cai_data-driven_2025' on page 3 undefined on input lin
-e 148.
-
-
-LaTeX Warning: Citation `pedersen_camera_2018' on page 3 undefined on input lin
-e 148.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 148--149
+Underfull \hbox (badness 10000) in paragraph at lines 197--199
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 148--149
+Underfull \hbox (badness 10000) in paragraph at lines 202--204
 
  []
 
 
-LaTeX Warning: Citation `cai_development_2024' on page 3 undefined on input lin
-e 164.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 164--165
+Underfull \hbox (badness 10000) in paragraph at lines 207--210
 
  []
 
 
-LaTeX Warning: Citation `zhang_decentralized_2020' on page 3 undefined on input
- line 167.
+Underfull \hbox (badness 10000) in paragraph at lines 207--210
 
-
-LaTeX Warning: Citation `yang_intelligent_2023' on page 3 undefined on input li
-ne 167.
+ []
 
 [3]
+Underfull \hbox (badness 10000) in paragraph at lines 220--224
 
-LaTeX Warning: Citation `mceachern_real-time_2024' on page 4 undefined on input
- line 189.
-
-
-LaTeX Warning: Citation `bosser_broadband_2024' on page 4 undefined on input li
-ne 189.
+ []
 
 
-LaTeX Warning: Citation `mceachern_real-time_2024' on page 4 undefined on input
- line 190.
-
-
-LaTeX Warning: Citation `bosser_broadband_2024' on page 4 undefined on input li
-ne 190.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 189--191
+Underfull \hbox (badness 10000) in paragraph at lines 220--224
 
  []
 
 [4]
-
-LaTeX Warning: Citation `bosser_broadband_2024' on page 5 undefined on input li
-ne 192.
-
-
-LaTeX Warning: Citation `bosser_broadband_2024' on page 5 undefined on input li
-ne 192.
-
-
-LaTeX Warning: Citation `zhou_localization_2022' on page 5 undefined on input l
-ine 194.
-
-
-LaTeX Warning: Citation `gidugu_bio-inspired_2024' on page 5 undefined on input
- line 194.
-
-
-LaTeX Warning: Citation `zhou_localization_2022' on page 5 undefined on input l
-ine 195.
-
-
-LaTeX Warning: Citation `gidugu_bio-inspired_2024' on page 5 undefined on input
- line 195.
-
-
-LaTeX Warning: Citation `zhou_localization_2022' on page 5 undefined on input l
-ine 195.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 194--196
-
- []
-
-
-LaTeX Warning: Citation `zhou_localization_2022' on page 5 undefined on input l
-ine 197.
-
-
-LaTeX Warning: Citation `gidugu_bio-inspired_2024' on page 5 undefined on input
- line 197.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 199.
-
-
-LaTeX Warning: Citation `zhong_fast_2019' on page 5 undefined on input line 199
-.
-
-
-LaTeX Warning: Citation `zhong_fast_2019' on page 5 undefined on input line 199
-.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 199.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 200.
-
-
-LaTeX Warning: Citation `zhong_fast_2019' on page 5 undefined on input line 200
-.
-
-
-LaTeX Warning: Citation `zhong_fast_2019' on page 5 undefined on input line 200
-.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 199--201
-
- []
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 202.
-
-
-LaTeX Warning: Citation `zhong_fast_2019' on page 5 undefined on input line 202
-.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 202.
-
-
-LaTeX Warning: Citation `naqvi2025rssi' on page 5 undefined on input line 204.
-
-
-LaTeX Warning: Citation `sun2019mobile' on page 5 undefined on input line 204.
-
-
-LaTeX Warning: Citation `naqvi2025rssi' on page 5 undefined on input line 204.
-
-
-LaTeX Warning: Citation `sun2019mobile' on page 5 undefined on input line 204.
-
-
-LaTeX Warning: Citation `naqvi2025rssi' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `sun2019mobile' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `sun2019mobile' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `naqvi2025rssi' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `sun2019mobile' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `naqvi2025rssi' on page 5 undefined on input line 205.
-
-
-LaTeX Warning: Citation `cai_development_2024' on page 5 undefined on input lin
-e 206.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 204--207
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 204--207
-
- []
-
-[5]
-
-LaTeX Warning: Citation `cai_development_2024' on page 6 undefined on input lin
-e 215.
-
-
-LaTeX Warning: Reference `camera-array' on page 6 undefined on input line 215.
-
-
-LaTeX Warning: Citation `pedersen_camera_2018' on page 6 undefined on input lin
-e 217.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 217--221
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 217--221
-
- []
-
-
-LaTeX Warning: Citation `garrido-jurado_automatic_2014' on page 6 undefined on 
-input line 222.
-
-[6]
-
-LaTeX Warning: Citation `cai_development_2024' on page 7 undefined on input lin
-e 224.
-
-
-LaTeX Warning: Citation `li_kalman_2015' on page 7 undefined on input line 224.
-
-
-<figures/Camera array.png, id=40, 1575.8875pt x 1013.7875pt>
+<figures/Camera array.png, id=43, 1575.8875pt x 1013.7875pt>
 File: figures/Camera array.png Graphic file (type png)
 <use figures/Camera array.png>
-Package luatex.def Info: figures/Camera array.png  used on input line 227.
+Package luatex.def Info: figures/Camera array.png  used on input line 230.
 (luatex.def)             Requested size: 236.37292pt x 152.06157pt.
-<figures/System Block Diagram.png, id=41, 5434.3025pt x 3231.07124pt>
+<figures/System Block Diagram.png, id=44, 5434.3025pt x 3231.07124pt>
 File: figures/System Block Diagram.png Graphic file (type png)
 <use figures/System Block Diagram.png>
 Package luatex.def Info: figures/System Block Diagram.png  used on input line 2
-34.
+38.
 (luatex.def)             Requested size: 543.4621pt x 323.12605pt.
 
-Overfull \hbox (18.22446pt too wide) in paragraph at lines 234--235
+Overfull \hbox (18.22446pt too wide) in paragraph at lines 238--239
  [][] 
  []
 
-[7<./figures/Camera array.png>]
-
-LaTeX Warning: Reference `specifications' on page 8 undefined on input line 247
-.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 1 on input line 302.
-
-[8<./figures/System Block Diagram.png>]
-
-LaTeX Warning: Reference `sim' on page 9 undefined on input line 324.
-
-<figures/sim.png, id=50, 1076.1003pt x 740.7675pt>
+[5<./figures/Camera array.png>] [6<./figures/System Block Diagram.png>]
+<figures/sim.png, id=54, 1076.1003pt x 740.7675pt>
 File: figures/sim.png Graphic file (type png)
 <use figures/sim.png>
-Package luatex.def Info: figures/sim.png  used on input line 329.
+Package luatex.def Info: figures/sim.png  used on input line 333.
 (luatex.def)             Requested size: 315.14578pt x 216.93077pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 320--333
+Underfull \hbox (badness 10000) in paragraph at lines 324--337
 
  []
 
-[9]
-
-LaTeX Warning: Reference `error_distribution' on page 10 undefined on input lin
-e 339.
-
-<figures/reprojection_error_distribution.png, id=55, 722.7pt x 361.35pt>
+[7]
+<figures/reprojection_error_distribution.png, id=58, 722.7pt x 361.35pt>
 File: figures/reprojection_error_distribution.png Graphic file (type png)
 <use figures/reprojection_error_distribution.png>
 Package luatex.def Info: figures/reprojection_error_distribution.png  used on i
-nput line 344.
+nput line 348.
 (luatex.def)             Requested size: 315.14578pt x 157.57195pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 335--348
+Underfull \hbox (badness 10000) in paragraph at lines 339--352
 
  []
 
-
-LaTeX Warning: Reference `EKF' on page 10 undefined on input line 354.
-
-<figures/EKF.png, id=56, 714.7503pt x 356.2911pt>
+<figures/EKF.png, id=59, 714.7503pt x 356.2911pt>
 File: figures/EKF.png Graphic file (type png)
 <use figures/EKF.png>
-Package luatex.def Info: figures/EKF.png  used on input line 359.
+Package luatex.def Info: figures/EKF.png  used on input line 363.
 (luatex.def)             Requested size: 315.14578pt x 157.10019pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 350--363
+Underfull \hbox (badness 10000) in paragraph at lines 354--367
 
  []
 
-[10<./figures/sim.png><./figures/reprojection_error_distribution.png>]
-
-LaTeX Warning: Reference `collection array' on page 11 undefined on input line 
-375.
-
-
-LaTeX Warning: Reference `validation' on page 11 undefined on input line 375.
-
-
-LaTeX Warning: Reference `chessboard' on page 11 undefined on input line 377.
-
-
-LaTeX Warning: Reference `multi_cameras' on page 11 undefined on input line 377
-.
-
-
+[8<./figures/sim.png><./figures/reprojection_error_distribution.png>]
 warning  (file figures/cameras.jpeg) (readjpg): Exif resolution 72dpi x 72dpi di
 ffers from the input resolution 300dpi x 300dpi
-<figures/cameras.jpeg, id=64, 4047.12pt x 3035.34pt>
+<figures/cameras.jpeg, id=67, 4047.12pt x 3035.34pt>
 File: figures/cameras.jpeg Graphic file (type jpg)
 <use figures/cameras.jpeg>
-Package luatex.def Info: figures/cameras.jpeg  used on input line 382.
+Package luatex.def Info: figures/cameras.jpeg  used on input line 386.
 (luatex.def)             Requested size: 315.14578pt x 236.34799pt.
 
 warning  (file figures/detected.jpeg) (readjpg): Exif resolution 72dpi x 72dpi d
 iffers from the input resolution 300dpi x 300dpi
-<figures/detected.jpeg, id=65, 4047.12pt x 3035.34pt>
+<figures/detected.jpeg, id=68, 4047.12pt x 3035.34pt>
 File: figures/detected.jpeg Graphic file (type jpg)
 <use figures/detected.jpeg>
-Package luatex.def Info: figures/detected.jpeg  used on input line 390.
+Package luatex.def Info: figures/detected.jpeg  used on input line 394.
 (luatex.def)             Requested size: 315.14578pt x 236.34799pt.
-<figures/multi_cameras.jpg, id=66, 1927.2pt x 1284.8pt>
+<figures/multi_cameras.jpg, id=69, 1927.2pt x 1284.8pt>
 File: figures/multi_cameras.jpg Graphic file (type jpg)
 <use figures/multi_cameras.jpg>
-Package luatex.def Info: figures/multi_cameras.jpg  used on input line 398.
+Package luatex.def Info: figures/multi_cameras.jpg  used on input line 402.
 (luatex.def)             Requested size: 315.14578pt x 210.08122pt.
-<figures/arrow.png, id=67, 1097.0586pt x 729.927pt>
+<figures/arrow.png, id=70, 1097.0586pt x 729.927pt>
 File: figures/arrow.png Graphic file (type png)
 <use figures/arrow.png>
-Package luatex.def Info: figures/arrow.png  used on input line 406.
+Package luatex.def Info: figures/arrow.png  used on input line 410.
 (luatex.def)             Requested size: 315.14578pt x 209.67975pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 371--410
+Underfull \hbox (badness 10000) in paragraph at lines 375--414
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 371--410
+Underfull \hbox (badness 10000) in paragraph at lines 375--414
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 371--410
+Underfull \hbox (badness 10000) in paragraph at lines 375--414
 
  []
 
-[11<./figures/EKF.png>]
-
-LaTeX Warning: Reference `ChArUco' on page 12 undefined on input line 415.
-
-<figures/charuco.jpg, id=72, 1927.2pt x 1084.05pt>
+[9<./figures/EKF.png>]
+<figures/charuco.jpg, id=75, 1927.2pt x 1084.05pt>
 File: figures/charuco.jpg Graphic file (type jpg)
 <use figures/charuco.jpg>
-Package luatex.def Info: figures/charuco.jpg  used on input line 421.
+Package luatex.def Info: figures/charuco.jpg  used on input line 425.
 (luatex.def)             Requested size: 315.14578pt x 177.25603pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 411--425
+Underfull \hbox (badness 10000) in paragraph at lines 415--429
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 411--425
+Underfull \hbox (badness 10000) in paragraph at lines 415--429
 
  []
 
 
-LaTeX Warning: Reference `int_param' on page 12 undefined on input line 431.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 427--432
+Underfull \hbox (badness 10000) in paragraph at lines 431--436
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 427--432
+Underfull \hbox (badness 10000) in paragraph at lines 431--436
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 427--432
+Underfull \hbox (badness 10000) in paragraph at lines 431--436
 
  []
 
-[12<./figures/cameras.jpeg
+[10<./figures/cameras.jpeg
 warning  (readjpg): Exif resolution 72dpi x 72dpi differs from the input resolut
 ion 300dpi x 300dpi
->] [13<./figures/detected.jpeg
+>] [11<./figures/detected.jpeg
 warning  (readjpg): Exif resolution 72dpi x 72dpi differs from the input resolut
 ion 300dpi x 300dpi
-><./figures/multi_cameras.jpg>] [14<./figures/arrow.png><./figures/charuco.jpg>]
-Underfull \hbox (badness 10000) in paragraph at lines 444--447
+><./figures/multi_cameras.jpg>] [12<./figures/arrow.png><./figures/charuco.jpg>]
+Underfull \hbox (badness 10000) in paragraph at lines 448--451
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 444--447
+Underfull \hbox (badness 10000) in paragraph at lines 448--451
 
  []
 
 
-LaTeX Warning: Reference `undistrot' on page 15 undefined on input line 449.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 448--450
+Underfull \hbox (badness 10000) in paragraph at lines 452--454
 
  []
 
-<figures/undistort.png, id=83, 1101.3948pt x 734.2632pt>
+<figures/undistort.png, id=86, 1101.3948pt x 734.2632pt>
 File: figures/undistort.png Graphic file (type png)
 <use figures/undistort.png>
-Package luatex.def Info: figures/undistort.png  used on input line 455.
+Package luatex.def Info: figures/undistort.png  used on input line 459.
 (luatex.def)             Requested size: 315.14578pt x 210.09627pt.
 
-LaTeX Warning: Reference `ext_result' on page 15 undefined on input line 464.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 460--465
+Underfull \hbox (badness 10000) in paragraph at lines 464--469
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 460--465
+Underfull \hbox (badness 10000) in paragraph at lines 464--469
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 460--465
+Underfull \hbox (badness 10000) in paragraph at lines 464--469
 
  []
 
-[15<./figures/undistort.png>]
-<figures/charuco_capture.jpg, id=88, 1927.2pt x 3252.15pt>
+[13<./figures/undistort.png>]
+<figures/charuco_capture.jpg, id=91, 1927.2pt x 3252.15pt>
 File: figures/charuco_capture.jpg Graphic file (type jpg)
 <use figures/charuco_capture.jpg>
-Package luatex.def Info: figures/charuco_capture.jpg  used on input line 476.
+Package luatex.def Info: figures/charuco_capture.jpg  used on input line 480.
 (luatex.def)             Requested size: 315.14578pt x 531.7681pt.
-
-
-LaTeX Warning: Reference `charuco_capture' on page 16 undefined on input line 4
-80.
-
-
-LaTeX Warning: Reference `ext_goal' on page 16 undefined on input line 480.
-
-<figures/visualize_ext.png, id=89, 1084.05pt x 722.7pt>
+<figures/visualize_ext.png, id=92, 1084.05pt x 722.7pt>
 File: figures/visualize_ext.png Graphic file (type png)
 <use figures/visualize_ext.png>
-Package luatex.def Info: figures/visualize_ext.png  used on input line 488.
+Package luatex.def Info: figures/visualize_ext.png  used on input line 492.
 (luatex.def)             Requested size: 315.14578pt x 210.09592pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 493--531
+Underfull \hbox (badness 10000) in paragraph at lines 497--535
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 493--531
+Underfull \hbox (badness 10000) in paragraph at lines 497--535
 
  []
 
-
-LaTeX Warning: Reference `polynomial' on page 16 undefined on input line 533.
-
-
-LaTeX Warning: Reference `int_results' on page 16 undefined on input line 533.
-
-<figures/distortion_field.png, id=90, 722.7pt x 578.16pt>
+<figures/distortion_field.png, id=93, 722.7pt x 578.16pt>
 File: figures/distortion_field.png Graphic file (type png)
 <use figures/distortion_field.png>
-Package luatex.def Info: figures/distortion_field.png  used on input line 548.
+Package luatex.def Info: figures/distortion_field.png  used on input line 552.
 (luatex.def)             Requested size: 315.14578pt x 252.11511pt.
-<figures/Placeholder.png, id=91, 602.25pt x 602.25pt>
+<figures/Placeholder.png, id=94, 602.25pt x 602.25pt>
 File: figures/Placeholder.png Graphic file (type png)
 <use figures/Placeholder.png>
-Package luatex.def Info: figures/Placeholder.png  used on input line 557.
+Package luatex.def Info: figures/Placeholder.png  used on input line 561.
 (luatex.def)             Requested size: 315.14578pt x 315.15674pt.
-[16] [17<./figures/charuco_capture.jpg>] [18<./figures/visualize_ext.png>]
-[19<./figures/distortion_field.png><./figures/Placeholder.png>]
-
-LaTeX Warning: Reference `aruco test' on page 20 undefined on input line 573.
-
-
+[14] [15<./figures/charuco_capture.jpg>] [16<./figures/visualize_ext.png>]
+[17<./figures/distortion_field.png><./figures/Placeholder.png>]
 warning  (file figures/aruco test.jpeg) (readjpg): Exif resolution 72dpi x 72dpi
  differs from the input resolution 300dpi x 300dpi
-<figures/aruco test.jpeg, id=109, 4047.12pt x 3035.34pt>
+<figures/aruco test.jpeg, id=112, 4047.12pt x 3035.34pt>
 File: figures/aruco test.jpeg Graphic file (type jpg)
 <use figures/aruco test.jpeg>
-Package luatex.def Info: figures/aruco test.jpeg  used on input line 579.
+Package luatex.def Info: figures/aruco test.jpeg  used on input line 583.
 (luatex.def)             Requested size: 315.14578pt x 236.34799pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 569--583
+Underfull \hbox (badness 10000) in paragraph at lines 573--587
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 569--583
+Underfull \hbox (badness 10000) in paragraph at lines 573--587
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 585--590
+Underfull \hbox (badness 10000) in paragraph at lines 589--595
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 585--590
+Underfull \hbox (badness 10000) in paragraph at lines 589--595
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 585--590
+Underfull \hbox (badness 10000) in paragraph at lines 589--595
 
  []
 
-[20<./figures/aruco test.jpeg
+
+Underfull \hbox (badness 10000) in paragraph at lines 589--595
+
+ []
+
+[18<./figures/aruco test.jpeg
 warning  (readjpg): Exif resolution 72dpi x 72dpi differs from the input resolut
 ion 300dpi x 300dpi
 >]
-<figures/share_local.png, id=113, 1387.584pt x 780.516pt>
+<figures/share_local.png, id=116, 1387.584pt x 780.516pt>
 File: figures/share_local.png Graphic file (type png)
 <use figures/share_local.png>
-Package luatex.def Info: figures/share_local.png  used on input line 596.
+Package luatex.def Info: figures/share_local.png  used on input line 600.
 (luatex.def)             Requested size: 315.14578pt x 177.26396pt.
-<figures/air_tracking.png, id=114, 722.7pt x 722.7pt>
+<figures/air_tracking.png, id=117, 722.7pt x 722.7pt>
 File: figures/air_tracking.png Graphic file (type png)
 <use figures/air_tracking.png>
-Package luatex.def Info: figures/air_tracking.png  used on input line 604.
+Package luatex.def Info: figures/air_tracking.png  used on input line 608.
 (luatex.def)             Requested size: 315.14578pt x 315.14388pt.
-<figures/water_tracking.png, id=115, 722.7pt x 722.7pt>
+<figures/water_tracking.png, id=118, 722.7pt x 722.7pt>
 File: figures/water_tracking.png Graphic file (type png)
 <use figures/water_tracking.png>
-Package luatex.def Info: figures/water_tracking.png  used on input line 612.
+Package luatex.def Info: figures/water_tracking.png  used on input line 616.
 (luatex.def)             Requested size: 315.14578pt x 315.14388pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 630--635
+Underfull \hbox (badness 10000) in paragraph at lines 634--639
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 630--635
+Underfull \hbox (badness 10000) in paragraph at lines 634--639
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 630--635
+Underfull \hbox (badness 10000) in paragraph at lines 634--639
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 636--641
+Underfull \hbox (badness 10000) in paragraph at lines 640--645
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 636--641
+Underfull \hbox (badness 10000) in paragraph at lines 640--645
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 636--641
+Underfull \hbox (badness 10000) in paragraph at lines 640--645
 
  []
 
-[21<./figures/share_local.png>] [22<./figures/air_tracking.png><./figures/water_
+[19<./figures/share_local.png>] [20<./figures/air_tracking.png><./figures/water_
 tracking.png>]
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.enc
-File: UTF8.enc 2021/10/16 4.8.5
-)
-(/usr/local/texlive/2024/texmf-dist/tex/latex/cjk/texinput/UTF8/UTF8.chr
-File: UTF8.chr 2021/10/16 4.8.5
-)
-[23]
-No file proposal.bbl.
-[24]
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 Ob-jec-tive state-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 Group
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-\TU/calibri(0)/m/n/10.95 Mem-ber
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK1
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK2
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK3
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK4
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK5
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK6
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK7
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK8
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK9
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK10
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK11
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK12
- []
-
-
-Overfull \hbox (0.82132pt too wide) in paragraph at lines 682--682
-\TU/calibri(0)/m/n/10.95 13/10| 
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK13
- []
-
-
-Overfull \hbox (0.82132pt too wide) in paragraph at lines 682--682
-\TU/calibri(0)/m/n/10.95 20/10| 
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK14
- []
-
-
-Overfull \hbox (0.82132pt too wide) in paragraph at lines 682--682
-\TU/calibri(0)/m/n/10.95 27/10| 
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK15
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--682
-[]|\TU/calibri(0)/m/n/10.95 WK16
- []
-
-
-Overfull \hbox (0.82132pt too wide) in paragraph at lines 682--682
-\TU/calibri(0)/m/n/10.95 10/11| 
- []
-
-
-Overfull \hbox (0.92291pt too wide) in paragraph at lines 682--683
-[]|\TU/calibri(0)/m/n/10.95 WK17
- []
-
-
-Overfull \hbox (0.82132pt too wide) in paragraph at lines 682--683
-\TU/calibri(0)/m/n/10.95 17/11| 
+Underfull \hbox (badness 10000) in paragraph at lines 678--678
+[]|\TU/calibri(0)/m/n/10.95 Work-ing sim-u-la-tion
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 684--684
-[]|\TU/calibri(0)/m/n/10.95 Sim-u-la-tion En-vi-
+[]|$\OMS/cmsy/m/n/10.95 \OT1/cmr/m/n/10.95 7\OML/cmm/m/it/10.95 :\OT1/cmr/m/n/
+10.95 0 \OMS/cmsy/m/n/10.95  \OT1/cmr/m/n/10.95 10[]$ \TU/calibri(0)/m/n/10.95
+ m,
  []
 
 
-Underfull \hbox (badness 4441) in paragraph at lines 684--684
-\TU/calibri(0)/m/n/10.95 ron-ment De-vel-op-
+Underfull \hbox (badness 10000) in paragraph at lines 684--684
+[]|\TU/calibri(0)/m/n/10.95 Func-tional in air;
  []
 
 
-Underfull \hbox (badness 3724) in paragraph at lines 686--686
-[]|\TU/calibri(0)/m/n/10.95 Sim-u-la-tion Frame-
+Underfull \hbox (badness 10000) in paragraph at lines 684--684
+\TU/calibri(0)/m/n/10.95 un-der-wa-ter needs
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 686--686
-[]|\TU/calibri(0)/m/n/10.95 XU,
+Underfull \hbox (badness 3646) in paragraph at lines 686--686
+[]|\TU/calibri(0)/m/n/10.95 Sig-nal strength map-
+ []
+
+[21]
+Overfull \hbox (0.53072pt too wide) in paragraph at lines 715--716
+[]\TU/calibri(0)/m/n/10.95 The sim-u-la-tion en-vi-ron-ment with gamma-distribut
+ed noise mod-el-ing val-i-dated our Kalman fil-ter fu-sion ap-proach, achiev-
+ []
+
+[22] (./proposal.bbl
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+** WARNING: IEEEtran.bst: No hyphenation pattern has been
+** loaded for the language `en'. Using the pattern for
+** the default language instead.
+[23]) [24]
+Underfull \hbox (badness 10000) in paragraph at lines 739--739
+[]|\TU/calibri(0)/m/n/10.95 Mem-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 688--688
-[]|\TU/calibri(0)/m/n/10.95 Noise Mod-el-ing
+Underfull \hbox (badness 10000) in paragraph at lines 741--741
+[]|\TU/calibri(0)/m/n/10.95 Sim-u-la-tion
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 688--688
-[]|\TU/calibri(0)/m/n/10.95 XU,
+Underfull \hbox (badness 10000) in paragraph at lines 741--741
+\TU/calibri(0)/m/n/10.95 En-vi-ron-ment
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 690--690
-[]|\TU/calibri(0)/m/n/10.95 XU,
+Underfull \hbox (badness 10000) in paragraph at lines 743--743
+[]|\TU/calibri(0)/m/n/10.95 Sim-u-la-tion
  []
 
 
-Underfull \hbox (badness 4699) in paragraph at lines 694--694
-[]|\TU/calibri(0)/m/n/10.95 Chess-board photo
+Underfull \hbox (badness 10000) in paragraph at lines 751--751
+[]|\TU/calibri(0)/m/n/10.95 Chess-board col-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 694--694
-[]|\TU/calibri(0)/m/n/10.95 CHAN,
+Underfull \hbox (badness 10000) in paragraph at lines 753--753
+[]|\TU/calibri(0)/m/n/10.95 ChArUco col-lec-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 698--698
-[]|\TU/calibri(0)/m/n/10.95 Ex-trin-sic Pa-ram-e-
+Underfull \hbox (badness 10000) in paragraph at lines 755--755
+[]|\TU/calibri(0)/m/n/10.95 In-trin-sic Cal-i-bra-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 700--700
-[]|\TU/calibri(0)/m/n/10.95 Un-der-wa-ter
+Underfull \hbox (badness 10000) in paragraph at lines 757--757
+[]|\TU/calibri(0)/m/n/10.95 Ex-trin-sic Cal-i-bra-
  []
 
 
-Underfull \hbox (badness 1983) in paragraph at lines 700--700
-\TU/calibri(0)/m/n/10.95 Cal-i-bra-tion Ad-just-
+Underfull \hbox (badness 10000) in paragraph at lines 759--759
+[]|\TU/calibri(0)/m/n/10.95 Un-der-wa-ter Ad-
  []
 
 
-Underfull \hbox (badness 1867) in paragraph at lines 704--704
-[]|\TU/calibri(0)/m/n/10.95 ArUco Lo-cal-iza-tion
+Underfull \hbox (badness 2689) in paragraph at lines 761--761
+[]|\TU/calibri(0)/m/n/10.95 Non-lin-ear Dis-tor-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 706--706
-[]|\TU/calibri(0)/m/n/10.95 Multi-Camera
+Underfull \hbox (badness 10000) in paragraph at lines 765--765
+[]|\TU/calibri(0)/m/n/10.95 ArUco Lo-cal-iza-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 706--706
-[]|\TU/calibri(0)/m/n/10.95 XU,
- []
+Overfull \vbox (90.31766pt too high) has occurred while \output is active []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 708--708
-[]|\TU/calibri(0)/m/n/10.95 AUV lo-cal-iza-tion
- []
-
-
-Underfull \hbox (badness 1668) in paragraph at lines 710--710
-[]|\TU/calibri(0)/m/n/10.95 Sen-sor Fu-sion Im-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 712--712
-[]|\TU/calibri(0)/m/n/10.95 Ex-tended Kalman
- []
-
-
-Underfull \hbox (badness 1168) in paragraph at lines 712--712
-\TU/calibri(0)/m/n/10.95 Fil-ter Im-ple-men-ta-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 712--712
-[]|\TU/calibri(0)/m/n/10.95 XU,
- []
 
 [25]
-Overfull \hbox (2.21486pt too wide) in paragraph at lines 757--758
+Overfull \hbox (2.21486pt too wide) in paragraph at lines 816--817
 []\TU/calibri(0)/b/n/10.95 Cam-era se-lec-tion: \TU/calibri(0)/m/n/10.95 Five ca
 m-eras (4× WXSJ-H65HD + 1× S-YUE) pro-vide op-ti-mal cost-performance ra-tio 
 at ¥110/cam-
  []
 
-[26] [27] [28] [29]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 8 on input line 922.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 9 on input line 935.
-
-[30]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 10 on input line 970.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 11 on input line 985.
-
-[31]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 12 on input line 1020.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 13 on input line 1035.
-
-[32]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 14 on input line 1070.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 15 on input line 1083.
-
-[33]
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 16 on input line 1118.
-
-
-Package longtable Warning: Column widths have changed
-(longtable)                in table 17 on input line 1134.
-
-[34] [35] [36] [37]
+[26] [27] [28] [29] [30] [31] [32] [33] [34] [35] [36] [37]
 warning  (file monthly report/79_YH02a-25_MonReport1_01.pdf) (pdf inclusion): PD
 F inclusion: found PDF version '1.6', but at most version '1.5' allowed
-<monthly report/79_YH02a-25_MonReport1_01.pdf, id=171, 597.6729pt x 844.8363pt>
+<monthly report/79_YH02a-25_MonReport1_01.pdf, id=181, 597.6729pt x 844.8363pt>
 
 File: monthly report/79_YH02a-25_MonReport1_01.pdf Graphic file (type pdf)
 <use monthly report/79_YH02a-25_MonReport1_01.pdf>
 Package luatex.def Info: monthly report/79_YH02a-25_MonReport1_01.pdf  used on 
-input line 1174.
+input line 1253.
 (luatex.def)             Requested size: 525.23764pt x 742.49141pt.
 
-LaTeX Warning: Float too large for page by 5.84949pt on input line 1175.
+LaTeX Warning: Float too large for page by 5.84949pt on input line 1254.
 
-<monthly report/79_YH02a-25_MonReport2_01.pdf, id=172, 597.6729pt x 844.8363pt>
+<monthly report/79_YH02a-25_MonReport2_01.pdf, id=182, 597.6729pt x 844.8363pt>
 
 File: monthly report/79_YH02a-25_MonReport2_01.pdf Graphic file (type pdf)
 <use monthly report/79_YH02a-25_MonReport2_01.pdf>
 Package luatex.def Info: monthly report/79_YH02a-25_MonReport2_01.pdf  used on 
-input line 1178.
+input line 1257.
 (luatex.def)             Requested size: 525.23764pt x 742.49141pt.
 
-LaTeX Warning: Float too large for page by 5.84949pt on input line 1179.
+LaTeX Warning: Float too large for page by 5.84949pt on input line 1258.
 
 
 warning  (file monthly report/79_YH02a-25_MonReport3_01.pdf) (pdf inclusion): PD
 F inclusion: found PDF version '1.7', but at most version '1.5' allowed
-<monthly report/79_YH02a-25_MonReport3_01.pdf, id=173, 597.73312pt x 844.90656p
+<monthly report/79_YH02a-25_MonReport3_01.pdf, id=183, 597.73312pt x 844.90656p
 t>
 File: monthly report/79_YH02a-25_MonReport3_01.pdf Graphic file (type pdf)
 <use monthly report/79_YH02a-25_MonReport3_01.pdf>
 Package luatex.def Info: monthly report/79_YH02a-25_MonReport3_01.pdf  used on 
-input line 1182.
+input line 1261.
 (luatex.def)             Requested size: 525.23764pt x 742.47578pt.
 
-LaTeX Warning: Float too large for page by 5.83386pt on input line 1183.
+LaTeX Warning: Float too large for page by 5.83386pt on input line 1262.
 
 [38] [39<./monthly report/79_YH02a-25_MonReport1_01.pdf>] [40<./monthly report/7
 9_YH02a-25_MonReport2_01.pdf>] [41<./monthly report/79_YH02a-25_MonReport3_01.pd
-f>]
-
-Package longtable Warning: Table widths have changed. Rerun LaTeX.
-
-(./proposal.aux)
+f>] (./proposal.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 )
 
 Here is how much of LuaTeX's memory you used:
- 19362 strings out of 476447
- 244176,1977958 words of node,token memory allocated
- 730 words of node memory still in use:
-   6 hlist, 2 vlist, 2 rule, 2 glue, 4 kern, 1 glyph, 13 attribute, 95 glue_spec
+ 19206 strings out of 476447
+ 381557,1977958 words of node,token memory allocated
+ 720 words of node memory still in use:
+   6 hlist, 2 vlist, 2 rule, 2 glue, 4 kern, 1 glyph, 13 attribute, 93 glue_spec
 , 13 attribute_list, 2 write nodes
-   avail lists: 1:1,2:3591,3:1645,4:726,5:2085,6:1281,7:13273,8:36,9:11054,10:22
-,11:1309
- 40846 multiletter control sequences out of 65536+600000
+   avail lists: 2:5722,3:2662,4:1033,5:2088,6:2043,7:16304,8:36,9:17509,10:29,11
+:1309
+ 40706 multiletter control sequences out of 65536+600000
  59 fonts using 16150239 bytes
- 105i,14n,105p,1142b,471s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 105i,14n,105p,1138b,461s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/opentype/public/lm/lmmono10-regular.ot
 f><./font/calibri-italic.ttf><./font/calibri-regular.ttf><./font/calibri-bold.tt
 f></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb>
@@ -1955,10 +1562,10 @@ cal/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local
 live/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texli
 ve/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/
 2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on proposal.pdf (43 pages, 15835855 bytes).
+Output written on proposal.pdf (46 pages, 15862350 bytes).
 
-PDF statistics: 372 PDF objects out of 1000 (max. 8388607)
- 216 compressed objects within 3 object streams
+PDF statistics: 381 PDF objects out of 1000 (max. 8388607)
+ 222 compressed objects within 3 object streams
  0 named destinations out of 1000 (max. 131072)
  16 words of extra memory for PDF output out of 10000 (max. 100000000)
 

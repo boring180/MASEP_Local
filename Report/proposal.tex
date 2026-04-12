@@ -109,23 +109,17 @@ BoldItalicFont={*-bold-italic}]
         \item Use a sensor fusion algorithm to combine the results from cameras and RSSI localization. Tune the parameters of the algorithm until a robust and precise localization system is formed. With real-time tracking of the AUVs, the system can estimate the velocity of the AUVs and apply a Kalman filter to enhance the results further.
         % \yh{velocity is estimated in the localization?}
     \end{enumerate}
-    \thispagestyle{fancy} 
+    \thispagestyle{empty}
     \addcontentsline{toc}{section}{Cover Page}
-\end{titlepage} 
+\end{titlepage}
 
 % Table of Contents
 \tableofcontents
 \setcounter{page}{2}
-\thispagestyle{fancy} 
+\thispagestyle{fancy}
 \addcontentsline{toc}{section}{Table of Contents}
 
-\newpage
-\setcounter{page}{1}
-\pagenumbering{arabic}
-\pagestyle{fancy}
-\fancyhf{} 
-\fancyfoot[R]{\thepage}
-
+% List of Illustrations (Roman numerals)
 \newpage
 \section*{List of Illustrations}
 \addcontentsline{toc}{section}{List of Illustrations}
@@ -135,15 +129,19 @@ BoldItalicFont={*-bold-italic}]
 \subsection*{List of Tables}
 \listoftables
 
-% Abstract
+% Abstract (Roman numerals)
 \newpage
 \section*{Abstract}
 \addcontentsline{toc}{section}{Abstract}
-This report presents a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of Autonomous Underwater Vehicles (AUVs) with a target error margin of $\pm 7\times 10^{-2}$~m. The system employs a multi-camera optical tracking approach using five USB cameras arranged under a water tank with overlapping fields of view, detecting ArUco markers attached to AUVs via OpenCV. Two main contributions are presented: (1) a ChArUco-based extrinsic calibration algorithm that overcomes the limitations of traditional chessboard calibration in underwater environments by utilizing PnP solvers to determine inter-camera transformations from partial board observations, and (2) a nonlinear extrinsic calibration model that separately calibrates the camera intrinsic matrix $K$ and distortion model $D$ using gradient descent, addressing the cross-medium light refraction that invalidates the standard pinhole camera assumption. The system achieves an intrinsic calibration error of $7.1\times 10^{-2}$~m and an extrinsic calibration error of $2.2\times 10^{-2}$~m. A simulation environment with noise modeling validates the Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error. RSSI localization is also explored as an assistive method. The proposed system provides a low-cost, scalable solution for multi-AUV tracking in swarm robotics research.
+This project develops a localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of Autonomous Underwater Vehicles (AUVs) with a target accuracy of $\pm 7\times 10^{-2}$~m. Five USB cameras with overlapping views detect ArUco markers on AUVs via OpenCV. Two main contributions are presented: (1) a ChArUco-based extrinsic calibration algorithm using PnP solvers that overcomes traditional chessboard limitations underwater, and (2) a nonlinear distortion calibration model that separately calibrates the camera matrix $K$ and distortion $D$ via gradient descent, addressing cross-medium refraction. The system achieves intrinsic calibration error of $7.1\times 10^{-2}$~m and extrinsic error of $2.2\times 10^{-2}$~m. Simulation validates Kalman filter fusion at $0.3\times 10^{-2}$~m error. RSSI localization supplements optical tracking. The system provides a low-cost, scalable solution for multi-AUV swarm robotics research.
 
-
-% Introduction
+% Introduction (Arabic page numbers start here)
 \newpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
 \section{Introduction}
     \subsection{Background and Engineering Problem } 
         Marine research has gained increasing attention in recent years~\cite{pedersen_camera_2018}, covering diverse topics including marine animals, ecosystems, and water pollution. A key tool in this field is the Autonomous Underwater Vehicle (AUV), widely used for underwater exploration, environmental monitoring, and infrastructure maintenance~\cite{cai_data-driven_2025, zhou_survey_2022}.
@@ -217,7 +215,7 @@ This report presents a fast and precise localization system for the Marine Autom
         % If you are designing a hardware/software system, give details of the proposed components/function blocks of your system and their interactions, including the functions each proposed component/module serves, technical specifications, parameters and values.
         % If you are designing a simulation- or experiment-based project, outline your proposed process design, including what will be measured and how. 
         \paragraph{Hardware Setup}
-            The system is part of the Marine Automatic Swarm Experiment Platform (MASEP) project~\cite{cai_development_2024}, focusing on the multi-camera localization task. To achieve stable localization of AUVs, five cameras will be arranged under the water tank, with overlapping view ranges(Figure~\ref{camera-array}). All cameras will be connected to the desktop computer, which will run the localization system. With a synchronized time frame between cameras, a smooth transition between cameras can be performed. In addition, four RSSI sensors will also be installed at the four corners of the top of the water tank and connected to the desktop computer running the RSSI localization system.
+            The system is part of the Marine Automatic Swarm Experiment Platform (MASEP) project~\cite{cai_development_2024}, focusing on the multi-camera localization task. To achieve stable localization of AUVs, five cameras will be arranged under the water tank, with overlapping view ranges (Figure~\ref{camera-array}). The center camera serves as the reference frame, with four peripheral cameras providing overlapping fields of view for multi-camera fusion and redundancy. All cameras will be connected to the desktop computer, which will run the localization system. With a synchronized time frame between cameras, a smooth transition between cameras can be performed. In addition, four RSSI sensors will also be installed at the four corners of the top of the water tank and connected to the desktop computer running the RSSI localization system.
         \paragraph{Calibration}
             To establish an accurate localization, a precise calibration is required. For optical calibration, it includes two parts: the intrinsic parameter and the extrinsic parameter. Intrinsic calibration refers to the camera's basic parameters, including the focal length $f_x$ and $f_y$, and the focal point coordinates $c_x$ and $c_y$. To address the light refraction between different media (i.e., water and air), camera distortion parameters should also be considered~\cite{pedersen_camera_2018}. Intrinsic calibration can be validated using the re-projection error. \\
             \\
@@ -230,14 +228,15 @@ This report presents a fast and precise localization system for the Marine Autom
             \begin{figure}
               \centering
               \includegraphics[scale=0.15]{figures/Camera array.png}
-              \caption{MASEP camera array configuration showing five USB cameras arranged in a circular pattern around the water tank perimeter. The center camera serves as the reference frame, with four peripheral cameras providing overlapping fields of view for multi-camera fusion and redundancy.}
+              \caption{MASEP camera array configuration with five USB cameras under the water tank.}
               \label{camera-array}
             \end{figure}
         \subsubsection{System Block Diagram}
+            The system architecture (Figure~\ref{model-arch}) illustrates the data flow from the camera array through calibration and tracking modules to multi-camera fusion and sensor integration. The system processes synchronized video streams at 10~Hz to achieve real-time AUV localization.
             \begin{figure}[H]
               \centering
               \includegraphics[scale=0.1]{figures/System Block Diagram.png}
-              \caption{MASEP localization system architecture showing data flow from camera array through calibration and tracking modules to multi-camera fusion and sensor integration. The system processes synchronized video streams at 10 Hz to achieve real-time AUV localization with $\pm 7\times10^{-2}$ m accuracy.}
+              \caption{MASEP localization system block diagram.}
               \label{model-arch}
             \end{figure}
         \subsubsection{Components List}
@@ -326,13 +325,13 @@ This report presents a fast and precise localization system for the Marine Autom
             \textbf{Aim:} Develop a Python environment for simulation.\\
             \textbf{Expected Outcome:} The environment works, and virtual AUVs can be located by virtual cameras.\\
             \textbf{Group member in charge:} XU, Borong\\
-            \textbf{Work:} We installed and configured a Python simulation environment using NumPy and Matplotlib. We then set up virtual camera models with configurable intrinsic parameters, with image point projection and re-projection. The camera array and water tank are configured as the same size as the localization system in real life. And a simulated AUV will randomly move in the water tank(Figure~\ref {sim}).
+            \textbf{Work:} We installed and configured a Python simulation environment using NumPy and Matplotlib. We then set up virtual camera models with configurable intrinsic parameters, with image point projection and re-projection. The camera array and water tank are configured as the same size as the localization system in real life, and a simulated AUV randomly moves in the water tank (Figure~\ref{sim}). In the visualization, the blue dots represent camera positions, red trajectories show simulated AUV paths, and the coordinate system establishes the world reference frame.
             \begin{figure}
                     \centering
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/sim.png}
                     }
-                    \caption{3D simulation environment showing virtual camera array configuration and AUV trajectories within the MASEP water tank. The blue dots represent camera positions, red trajectories show simulated AUV paths, and the coordinate system establishes the world reference frame.}
+                    \caption{3D simulation environment with virtual camera array and AUV trajectories.}
                     \label{sim}
                 \end{figure}
 
@@ -347,7 +346,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/reprojection_error_distribution.png}
                     }
-                    \caption{Distribution of reprojection errors fitted to a gamma distribution, used for noise modeling in the simulation environment.}
+                    \caption{Reprojection error distribution fitted to a gamma distribution.}
                     \label{error_distribution}
                 \end{figure}
 
@@ -362,7 +361,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/EKF.png}
                     }
-                    \caption{Kalman filter results plot with raw camera results and ground truth trajectory.}
+                    \caption{Kalman filter fusion results compared with raw camera data and ground truth.}
                     \label{EKF}
                 \end{figure}
 
@@ -379,13 +378,13 @@ This report presents a fast and precise localization system for the Marine Autom
                 \textbf{Group member in charge:} CHAN, Sze Sen\\
                 \textbf{Work:} We wrote a Python program to collect frames from an array of three cameras, as shown in Figure~\ref{collection array}. We then collected frames of a chessboard with $8\times11$ 23mm squares covering as many camera angles as possible, while outputting chessboard detection results for validation, as shown in Figure~\ref{validation}.\\\\
                 When choosing a suitable chessboard, we needed one with more squares to ensure higher accuracy in the calibration steps that followed, while ensuring the squares were large enough for the cameras to detect. We also had to make sure the chessboard could be fully captured by all the cameras, so it could not be too large. It was a challenge to balance these requirements. After testing with multiple chessboards, we chose the one with $8\times11$ 23mm squares for most cases, and a $3\times16$ 9mm board for single-camera intrinsic calibration.\\\\
-                All cameras capture synchronized frames, so different cameras can share the same object points during calibration, which is mandatory for extrinsic calibration (Figure~\ref{chessboard}, \ref{multi_cameras}). The chessboard works well in air experiments but performs poorly underwater due to difficulties in the corner detection algorithm caused by complex light reflection disturbance. Additionally, image points can only be extracted when the entire board is detected, which limits the range of angles available for extrinsic parameter calibration. To overcome these difficulties, we developed another method to extract image points.
+                All cameras capture synchronized frames (Figure~\ref{multi_cameras}), so different cameras can share the same object points during calibration, which is mandatory for extrinsic calibration. The detected corner positions (Figure~\ref{chessboard}) are used for establishing the world coordinate system and computing camera projection matrices. The chessboard works well in air experiments but performs poorly underwater due to difficulties in the corner detection algorithm caused by complex light reflection disturbance. Additionally, image points can only be extracted when the entire board is detected, which limits the range of angles available for extrinsic parameter calibration. To overcome these difficulties, we developed another method to extract image points.
                 \begin{figure}
                     \centering
                     \rotatebox{-90}{
                     \includegraphics[width=0.6\linewidth]{figures/cameras.jpeg}
                     }
-                    \caption{Three-camera setup used for initial chessboard calibration data collection. Cameras are positioned to capture overlapping views of the calibration pattern from multiple angles, ensuring sufficient geometric diversity for robust intrinsic parameter estimation.}
+                    \caption{Three-camera setup for chessboard calibration data collection.}
                     \label{collection array}
                 \end{figure}
                 \begin{figure}
@@ -393,7 +392,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{180}{
                     \includegraphics[width=0.6\linewidth]{figures/detected.jpeg}
                     }
-                    \caption{Chessboard corner detection validation showing successful identification of 8×11 internal corners. The overlaid grid confirms proper pattern recognition, with corner coordinates used for camera calibration parameter estimation.}
+                    \caption{Chessboard corner detection validation with overlaid grid.}
                     \label{validation}
                 \end{figure}
                 \begin{figure}
@@ -401,7 +400,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/multi_cameras.jpg}
                     }
-                    \caption{Synchronized video frames from five cameras showing simultaneous capture of the chessboard pattern. Time synchronization ensures consistent object points across all camera views, enabling accurate extrinsic parameter calibration between camera coordinate systems.}
+                    \caption{Synchronized chessboard capture from five cameras.}
                     \label{multi_cameras}
                 \end{figure}
                 \begin{figure}
@@ -409,7 +408,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/arrow.png}
                     }
-                    \caption{Visualization of detected chessboard corners with overlaid coordinate axes. The red circles mark detected corner positions used for establishing the world coordinate system and computing camera projection matrices.}
+                    \caption{Detected chessboard corners with overlaid coordinate axes.}
                     \label{chessboard}
                 \end{figure}
 
@@ -424,7 +423,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/charuco.jpg}
                     }
-                    \caption{ChArUco calibration board with detected corner points marked in green. The embedded ArUco markers enable robust underwater detection even when only partial board segments are visible, overcoming limitations of traditional chessboard patterns in refractive environments.}
+                    \caption{ChArUco calibration board with detected corner points marked in green.}
                     \label{ChArUco}
                 \end{figure}
 
@@ -451,14 +450,14 @@ This report presents a fast and precise localization system for the Marine Autom
             After that, reprojection error analysis was used to validate calibration quality. Recently, the error is $7.1\times10^{-2}$m, which is close to but still does not meet our expected outcome.\\\\
             
             At first, we got the value of error significantly different from the requirement. We were using videos with a total length of 3 minutes, and each camera had around 40 valid captures on average at that time. We found that the amount of input might not be enough, so we recorded more videos with a total length of 8 minutes. As a result, around 90 valid captures were received on average from each camera, which reduced the error and got closer to the requirement.\\\\
-            The distortion parameter included in the intrinsic parameter can undistort the image for further application(Figure~\ref{undistrot}). The performance of the undistortion algorithm can shape the detection accuracy of our system under complex light environments (e.g., with underwater light refraction).
+            The distortion parameter included in the intrinsic parameter can undistort the image for further application (Figure~\ref{undistrot}). As shown, barrel distortion is corrected using the radial distortion coefficients, compensating for lens imperfections. The performance of the undistortion algorithm can shape the detection accuracy of our system under complex light environments (e.g., with underwater light refraction).
 
             \begin{figure}
                     \centering
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/undistort.png}
                     }
-                    \caption{Comparison of distorted (left) and undistorted (right) images showing barrel distortion correction using intrinsic calibration parameters. The radial distortion coefficients compensate for lens imperfections, ensuring accurate marker detection and pose estimation.}
+                    \caption{Comparison of distorted (left) and undistorted (right) images.}
                     \label{undistrot}
             \end{figure}
             
@@ -466,7 +465,7 @@ This report presents a fast and precise localization system for the Marine Autom
             \textbf{Aim:} Calibrate the extrinsic parameters of all the cameras.\\
             \textbf{Expected Outcome:} Error has to be within $2.0\times10^{-2}$m.\\
             \textbf{Group member in charge:} XU, Borong\\\
-            \textbf{Work:} We wrote an algorithm using stereo calibration techniques to determine relative camera positions and orientations between the center wide-angle camera and the other side cameras. Then we input the collected chessboard photos, and the algorithm outputs homogeneous transformation matrices between cameras. A world coordinate system was established with the center camera as the reference frame, and reprojection error analysis was also used in this step to validate calibration quality. We also roughly validated the extrinsic calibration results by visualizing the relative positions between the cameras (Figure~\ref{ext_result}), which matches our physical measurements of the camera array.\\\\
+            \textbf{Work:} We wrote an algorithm using stereo calibration techniques to determine relative camera positions and orientations between the center wide-angle camera and the other side cameras. Then we input the collected chessboard photos, and the algorithm outputs homogeneous transformation matrices between cameras. A world coordinate system was established with the center camera as the reference frame, and reprojection error analysis was also used in this step to validate calibration quality. We also roughly validated the extrinsic calibration results by visualizing the relative positions between the cameras (Figure~\ref{ext_result}), where the coordinate frames represent each camera's pose relative to the world coordinate system. The visualized layout matches our physical measurements of the camera array.\\\\
             \begin{equation}
             \begin{aligned}
                 T &= \argmin_T||P_B - (P_A + T)||^2\\
@@ -491,7 +490,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/visualize_ext.png}
                     }
-                    \caption{3D visualization of calibrated camera positions and orientations showing the extrinsic calibration results. The coordinate frames represent each camera's pose relative to the world coordinate system, with transformation matrices enabling consistent multi-camera localization.}
+                    \caption{Extrinsic calibration results with camera positions and orientations.}
                     \label{ext_result}
             \end{figure}
             
@@ -535,8 +534,8 @@ This report presents a fast and precise localization system for the Marine Autom
             \end{algorithm}
 
             To reduce the effect of overfitting on the model training, we apply a train validation split of 8:2, and use the model with best performance on the validation set as our final model of distortion.
-            For the model of the vector field, we apply a traditional polynomial distortion with radial and tangential components (Equation~\ref{polynomial}), as well as a Multi-Layer Perceptron (MLP) model with tanh activation function to model the nonlinear relationship. The results can be found in Figure~\ref{int_results}.  
-            
+            For the model of the vector field, we apply a traditional polynomial distortion with radial and tangential components (Equation~\ref{polynomial}), as well as a Multi-Layer Perceptron (MLP) model with tanh activation function to model the nonlinear relationship. The learned distortion is visualized as a vector field (Figure~\ref{distortion_field}), showing the per-pixel displacement applied to correct for underwater refraction. The different calibration methods are evaluated by cross-camera localization error using ground-truth extrinsic parameters, as shown in Figure~\ref{int_results}.
+
             \begin{equation}
             \begin{aligned}
             r^2 &= x^2 + y^2 \\
@@ -560,7 +559,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/Placeholder.png}
                     }
-                    \caption{Comparison of different method of intrinsic calibration with localization error between cameras with groundtruth extrinsic parameter.}
+                    \caption{Comparison of intrinsic calibration methods.}
                     \label{int_results}
             \end{figure}
 
@@ -582,7 +581,7 @@ This report presents a fast and precise localization system for the Marine Autom
                 \rotatebox{-90}{
                 \includegraphics[width=0.6\linewidth]{figures/aruco test.jpeg}
                 }
-                    \caption{ArUco marker tracking test setup showing marker movement along a linear path. The coordinate axes overlaid on the marker demonstrate successful pose estimation, with position data collected at 0.125m intervals for localization accuracy validation.}
+                    \caption{ArUco marker tracking test setup with marker moving along a linear path.}
                     \label{aruco test}
             \end{figure}
 
@@ -592,14 +591,14 @@ This report presents a fast and precise localization system for the Marine Autom
             \textbf{Expected Outcome:} The ArUco markers can be located according to detections from multiple cameras.\\
             \textbf{Group member in charge:} XU, Borong\\
             \textbf{Work:} We wrote an algorithm to combine detections from multiple cameras. Weighted averaging was implemented based on detection confidence and viewing angle. The algorithm also handles occlusions and marker visibility transitions between cameras by estimating the AUV's position from previous frames.\\\\
-
+            Figure~\ref{share_local} shows the position estimates from multiple cameras in the xy-plane, highlighting inconsistencies between camera coordinate systems before extrinsic calibration and fusion. After calibration, the in-air tracking results (Figure~\ref{air_tracking}) show a smooth trajectory with minimal scatter, demonstrating accurate pose estimation without refractive distortion effects. In contrast, the underwater tracking results (Figure~\ref{water_tracking}) using the same air calibration parameters show increased localization variability due to refraction effects, highlighting the need for refraction-corrected calibration parameters.\\\\
 
             \begin{figure}
                     \centering
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/share_local.png}
                     }
-                    \caption{Comparison of localization results from multiple cameras viewing the same ArUco marker. The scatter plot shows position estimates in the xy-plane, highlighting inconsistencies between camera coordinate systems before extrinsic calibration and fusion.}
+                    \caption{Multi-camera localization results of the same ArUco marker in the xy-plane.}
                     \label{share_local}
                 \end{figure}
             \begin{figure}
@@ -607,7 +606,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/air_tracking.png}
                     }
-                    \caption{ArUco marker trajectory tracking in air showing consistent localization performance. The smooth path (blue line) with minimal scatter demonstrates accurate pose estimation without refractive distortion effects.}
+                    \caption{ArUco marker trajectory tracking results in air.}
                     \label{air_tracking}
             \end{figure}
             \begin{figure}
@@ -615,7 +614,7 @@ This report presents a fast and precise localization system for the Marine Autom
                     \rotatebox{0}{
                     \includegraphics[width=0.6\linewidth]{figures/water_tracking.png}
                     }
-                    \caption{ArUco marker trajectory tracking underwater with the same distortion parameter in air. Showing increased localization variability due to refraction effects. The scattered position estimates highlight the need for refraction-corrected calibration parameters and robust multi-camera fusion algorithms.}
+                    \caption{ArUco marker trajectory tracking results underwater using air calibration parameters.}
                     \label{water_tracking}
             \end{figure}
             
@@ -663,6 +662,50 @@ This report presents a fast and precise localization system for the Marine Autom
         % \end{itemize}
 
     \subsection{Main Objective Evaluation \& Discussion}
+        The main objective of this project is to develop a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$~m and a detection speed of at least 10~Hz. The system aims to provide a low-cost, scalable solution for multi-AUV tracking in swarm robotics research by combining multi-camera optical tracking with RSSI-assisted localization.
+
+        \paragraph{Summary of Results}
+        Table~\ref{tab:results_summary} summarizes the key results achieved for each objective statement.
+
+        \begin{table}[H]
+        \centering
+        \caption{Summary of results for each objective statement.}
+        \label{tab:results_summary}
+        \begin{tabular}{|p{4cm}|p{3.5cm}|p{3.5cm}|p{3cm}|}
+        \hline
+        \textbf{Objective} & \textbf{Target} & \textbf{Achieved} & \textbf{Status} \\
+        \hline
+        Simulation Environment & Working simulation with noise & Gamma noise model, EKF validated at $0.3\times10^{-2}$~m & Completed \\
+        \hline
+        Intrinsic Calibration & $<7.0\times10^{-2}$~m & $7.1\times10^{-2}$~m & Close to target \\
+        \hline
+        Extrinsic Calibration & $<2.0\times10^{-2}$~m & $2.2\times10^{-2}$~m & Close to target \\
+        \hline
+        ArUco Tracking & $\pm7.0\times10^{-2}$~m, $\geq$10~Hz & Functional in air; underwater needs improved calibration & Partially met \\
+        \hline
+        RSSI Localization & Sub-$7.0\times10^{-2}$~m & Signal strength mapping completed; localization in progress & In progress \\
+        \hline
+        \end{tabular}
+        \end{table}
+
+        \paragraph{Analysis of Results}
+        The simulation environment (Objective 1) was fully completed and validated. The Kalman filter fusion achieved $0.3\times10^{-2}$~m error in simulation, well within the $\pm7\times10^{-2}$~m target, confirming the viability of multi-camera fusion under idealized noise conditions.
+
+        For camera calibration (Objective 2), the intrinsic calibration error of $7.1\times10^{-2}$~m is close to the $7.0\times10^{-2}$~m target but has not fully met it. The extrinsic calibration error of $2.2\times10^{-2}$~m slightly exceeds the $2.0\times10^{-2}$~m target. Both results improved significantly from initial trials through increasing the number of valid captures from approximately 40 to 90 per camera. The primary challenge remains the cross-medium light refraction, which invalidates the standard pinhole camera assumption. Our proposed nonlinear distortion calibration method, which separately calibrates $K$ and $D$ using gradient descent with PyTorch, represents a novel approach to this problem. While the polynomial distortion model provides a baseline, the MLP-based model shows potential for better capturing the nonlinear refraction effects, though further tuning and data collection are required to fully validate its superiority.
+
+        For ArUco tracking (Objective 3), the system successfully detects and tracks markers in air with smooth trajectories. However, underwater tracking using air calibration parameters shows significantly increased variability (Figures~\ref{air_tracking} and \ref{water_tracking}), confirming that refraction-corrected calibration is essential for meeting the accuracy target underwater.
+
+        \paragraph{Comparison with Literature}
+        Compared to the acoustic localization methods reviewed in Section 1.3, which typically achieve 0.5--1~m accuracy~\cite{mceachern_real-time_2024, bosser_broadband_2024}, our optical system provides approximately 10$\times$ better accuracy at significantly lower cost. The original MASEP localization system by Cai et al.~\cite{cai_development_2024} used only two fixed underwater cameras, whereas our five-camera array with overlapping views provides broader coverage and redundancy. Our ChArUco-based extrinsic calibration method addresses a key limitation not tackled in prior work: the inability of traditional chessboard calibration to function when the full pattern cannot be captured simultaneously by adjacent cameras underwater.
+
+        Compared to the RSSI localization methods by Naqvi et al.~\cite{naqvi2025rssi} (mean estimation error of 1.5 MSE) and Sun et al.~\cite{sun2019mobile} (0.12--0.49~m), our optical system achieves higher precision, though RSSI provides valuable complementary data in low-visibility conditions.
+
+        \paragraph{Assessment and Lessons Learned}
+        The project has successfully delivered a functional multi-camera localization system with two key technical contributions: the ChArUco-based extrinsic calibration algorithm and the nonlinear distortion calibration model. The simulation environment provided valuable insight into the effectiveness of Kalman filter fusion before real-world deployment.
+
+        The main challenge that prevented fully meeting the accuracy targets was the underwater refraction effect, which was more complex than initially anticipated. The traditional polynomial distortion model proved insufficient for cross-medium calibration, necessitating the development of the nonlinear approach. While the nonlinear model has shown promising results, additional training data and model refinement are needed to fully close the gap between air and underwater performance.
+
+        If the project were to be extended, collecting more underwater calibration data with diverse ChArUco board orientations and depths would likely improve the nonlinear distortion model accuracy. Additionally, integrating the RSSI localization data through the Extended Kalman Filter in real-world experiments (as validated in simulation) could provide the additional robustness needed to consistently meet the $\pm7\times10^{-2}$~m target.
 
 \section{Conclusion}
 This project developed a multi-camera optical localization system for the Marine Automatic Swarm Experiment Platform (MASEP), targeting real-time AUV tracking with $\pm 7\times 10^{-2}$~m accuracy. We successfully designed and implemented a complete pipeline from camera calibration through ArUco marker detection to multi-camera fusion.
@@ -672,6 +715,8 @@ Our main contributions are twofold. First, we proposed a ChArUco-based extrinsic
 The simulation environment with gamma-distributed noise modeling validated our Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error under simulated conditions. The intrinsic calibration currently achieves $7.1\times 10^{-2}$~m error, which is close to but has not yet met our target. Further refinement of the nonlinear distortion model and additional calibration data collection are expected to reduce this error. RSSI localization was also investigated as an assistive method to improve robustness under challenging optical conditions such as low lighting and occlusion.
 
 Overall, this project demonstrates that a low-cost multi-camera system with robust calibration techniques can provide accurate AUV localization for swarm robotics research, bridging the gap between simulation-based algorithm development and real-world underwater experiments.
+
+Future work should focus on: (1) collecting additional underwater calibration data with diverse ChArUco board orientations to improve the nonlinear distortion model; (2) deploying the Extended Kalman Filter in real-world experiments to fuse optical and RSSI localization data, as validated in simulation; (3) conducting multi-AUV tracking experiments to evaluate system performance under realistic occlusion and inter-vehicle interference conditions; and (4) scaling the system to larger water tanks by increasing the number of cameras and optimizing the camera array geometry.
 
 % References
 \newpage
@@ -683,48 +728,51 @@ Overall, this project demonstrates that a low-cost multi-camera system with robu
 \newpage
 \section*{Appendices}
 \addcontentsline{toc}{section}{Appendices}
-    \subsection*{Appendix A - Project Schedule} 
+    \subsection*{Appendix A - Project Schedule}
     \addcontentsline{toc}{subsection}{Appendix A - Project Schedule}
-        \newpage
+        \begin{table}[H]
         \centering
+        \caption{Project Gantt Chart\label{tab:schedule_gantt}}
         \begin{adjustbox}{max width=\textheight, angle=90}
-        \begin{tabular}{|p{3cm}|p{3cm}|p{1.5cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.75cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|p{0.9cm}|}
+        \begin{tabular}{|p{2.8cm}|p{2.8cm}|p{1.3cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|p{0.55cm}|}
         \hline
-        Objective statements& Task & Group Member in charge & WK1 28/7 & WK2 4/8 & WK3 11/8 & WK4 18/8 & WK5 25/8 & WK6 1/9 & WK7 8/9 & WK8 15/9 & WK9 22/9 & WK10 29/9 & WK11 6/10 & WK12 13/10 & WK13 20/10 & WK14 27/10 & WK15 3/11 & WK16 10/11 & WK17 17/11 \\
+        Objective & Task & Member & \rotatebox{90}{WK1 28/7} & \rotatebox{90}{WK2 4/8} & \rotatebox{90}{WK3 11/8} & \rotatebox{90}{WK4 18/8} & \rotatebox{90}{WK5 25/8} & \rotatebox{90}{WK6 1/9} & \rotatebox{90}{WK7 8/9} & \rotatebox{90}{WK8 15/9} & \rotatebox{90}{WK9 22/9} & \rotatebox{90}{WK10 29/9} & \rotatebox{90}{WK11 6/10} & \rotatebox{90}{WK12 13/10} & \rotatebox{90}{WK13 20/10} & \rotatebox{90}{WK14 27/10} & \rotatebox{90}{WK15 3/11} & \rotatebox{90}{WK16 10/11} & \rotatebox{90}{WK17 17/11} & \rotatebox{90}{WK18 1/12} & \rotatebox{90}{WK19 8/12} & \rotatebox{90}{WK20 5/1} & \rotatebox{90}{WK21 12/1} & \rotatebox{90}{WK22 19/1} & \rotatebox{90}{WK23 2/2} & \rotatebox{90}{WK24 9/2} & \rotatebox{90}{WK25 16/2} & \rotatebox{90}{WK26 23/2} & \rotatebox{90}{WK27 2/3} \\
         \hline
-         Simulation Environment Development&&&\cellcolor{blue!20}&\cellcolor{blue!20}&  &  &  &  &  &  &  &  &  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}\\
+         Simulation Environment Development&&&\cellcolor{blue!20}&\cellcolor{blue!20}&  &  &  &  &  &  &  &  &  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}& & & & & & & & & & \\
         \hline
-         &Simulation Framework Setup  &XU, Borong&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  \\
+         &Simulation Framework Setup  &XU&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  & & & & & & & & & & \\
         \hline
-         &Noise Modeling Implementation  &XU, Borong&  &  &  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&&  \\
+         &Noise Modeling  &XU&  &  &  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}& &  & & & & & & & & & & \\
         \hline
-         &Validation and Testing of algorithms&XU, Borong&  &  &  &  & &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
+         &EKF Validation&XU&  &  &  &  & &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}& & & & & & & & & & \\
         \hline
-         Camera Array Calibration&  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}\\
+         Camera Array Calibration&  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}& &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}\\
         \hline
-         & Chessboard photo collection&CHAN, Sze Sen&  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&&&&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  \\
+         & Chessboard collection&CHAN&  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&&&&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  & & & & & & & & & & \\
         \hline
-         &Intrinsic Parameter Calibration&Both&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&&&&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  \\
+         & ChArUco collection&XU&  &  & & & & &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  & & & & & & & & & & \\
         \hline
-         &Extrinsic Parameter Calibration&Both&  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  \\
+         &Intrinsic Calibration&Both&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&&&&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  & & &\cellcolor{yellow!20}&\cellcolor{yellow!20}& & & & & & \\
         \hline
-         &Underwater Calibration Adjustment&Both&  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
+         &Extrinsic Calibration&Both&  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  & & &\cellcolor{yellow!20}&\cellcolor{yellow!20}& & & & & & \\
+        \hline
+         &Underwater Adjustment&Both&  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}& & & & & & & & \\
+        \hline
+         &Nonlinear Distortion Calibration&XU&  &  &  &  &  &  &  &  & & &  &  &  &  & & & &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}& &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
          \hline
-         ArUco Tracking Implementation&  &  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20} \\
+         ArUco Tracking&  &  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&  &  &  &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20} & & & & & & & & & & \\
          \hline
-         & ArUco Localization Algorithm&Both&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  &  \\
+         & ArUco Localization&Both&  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  &  &  &  & & & & & & & & & & \\
          \hline
-         &Multi-Camera Fusion&XU, Borong&  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  \\
+         &Multi-Camera Fusion&XU&  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&  &  &  & & & & & & & & & & \\
          \hline
-         &AUV localization and results validation&Both&  &  &  &  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
+         RSSI Localization&  &  &  &  & & & & & & & & & &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}& & \\
          \hline
-         Sensor Fusion Implementation&  &  &  &  &  &  &  &  &  &  &  &  & &\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}&\cellcolor{blue!20}\\
-         \hline
-         &Extended Kalman Filter Implementation&XU, Borong&  &  &  &  &  &  &  &  &  &  &  &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
+         &RSSI Calibration&CHAN&  &  &  &  &  &  &  &  &  &  &  & & &\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}&\cellcolor{yellow!20}& & \\
         \hline
         \end{tabular}
         \end{adjustbox}
-        \label{tab:placeholder}
+        \end{table}
     \subsection*{Appendix B - Budget} 
     \addcontentsline{toc}{subsection}{Appendix B - Budget}
         \begin{longtable}[c]{| l | c | c |}
@@ -1186,7 +1234,16 @@ Overall, this project demonstrates that a low-cost multi-camera system with robu
     \newpage
     \subsection*{Appendix E - Deviation from the proposal and progress report and supporting reason}
     \addcontentsline{toc}{subsection}{Appendix E - Deviation from the proposal and progress report and supporting reason}
-    \begin{flushleft} At the beginning, we try to apply optical localization only to localize the AUVs. However, once we try in the lab environment with less light, the accuracy of optical localization is limited. Therefore, we find RSSI localization as an assistant to overcome an insufficient light environment. 
+    \begin{flushleft}
+    The following deviations from the original proposal and progress report occurred during the project:
+
+    \textbf{1. Addition of RSSI localization as an assistive method.} The original proposal focused exclusively on optical localization. However, during laboratory experiments, we found that optical localization performance degraded significantly in low-light environments and under certain occlusion scenarios. Upon Prof.\ YIN's suggestion, we added RSSI localization as an assistive method to improve system robustness. This required additional hardware (ESP32 module board) and software development in the Arduino environment, which was not part of the original plan.
+
+    \textbf{2. Transition from chessboard to ChArUco calibration boards.} The proposal originally planned to use traditional chessboard patterns for all calibration tasks. During underwater experiments, we discovered that chessboard corner detection failed frequently due to complex light reflection disturbance underwater, and the requirement for full board visibility limited the range of angles available for extrinsic calibration. We deviated by adopting ChArUco boards, which allow partial detection and proved far more robust in underwater environments.
+
+    \textbf{3. Development of nonlinear distortion calibration.} The original plan assumed that standard OpenCV calibration (polynomial distortion model) would be sufficient for both air and underwater environments. Underwater experiments revealed that cross-medium light refraction invalidates the pinhole camera assumption, requiring us to develop a new calibration method that separately calibrates the camera matrix $K$ and distortion model $D$ using gradient descent. This was not anticipated in the proposal.
+
+    \textbf{4. Sensor fusion implementation deferred.} The proposal planned for full Extended Kalman Filter sensor fusion combining optical and RSSI data (Objective 5). While the EKF was implemented and validated in simulation, the real-world sensor fusion combining both modalities was not completed due to the additional time required for the nonlinear calibration development and RSSI system setup. The EKF was validated in the simulation environment with promising results.
     \end{flushleft}
     \newpage
     \subsection*{Appendix F - Monthly Reports}
