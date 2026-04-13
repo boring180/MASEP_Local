@@ -29,28 +29,29 @@
 \contentsline {subsection}{\numberline {2.2}Objective Statement Execution}{7}{}%
 \contentsline {subsubsection}{\numberline {2.2.1}Objective Statement 1: Simulation Environment Development}{7}{}%
 \contentsline {subsubsection}{\numberline {2.2.2}Objective Statement 2: Camera Array Calibration}{9}{}%
-\contentsline {subsubsection}{\numberline {2.2.3}Objective Statement 3: ArUco Tracking Implementation}{18}{}%
-\contentsline {subsubsection}{\numberline {2.2.4}Objective Statement 4: RSSI localization Implementation}{19}{}%
+\contentsline {subsubsection}{\numberline {2.2.3}Objective Statement 3: ArUco Tracking Implementation}{16}{}%
+\contentsline {subsubsection}{\numberline {2.2.4}Objective Statement 4: RSSI localization Implementation}{18}{}%
 \contentsline {subsection}{\numberline {2.3}Main Objective Evaluation \& Discussion}{21}{}%
 \contentsline {paragraph}{Summary of Results}{21}{}%
-\contentsline {paragraph}{Analysis of Results}{21}{}%
-\contentsline {paragraph}{Comparison with Literature}{21}{}%
+\contentsline {paragraph}{Analysis of Results}{22}{}%
+\contentsline {paragraph}{Comparison with Literature}{22}{}%
 \contentsline {paragraph}{Assessment and Lessons Learned}{22}{}%
 \contentsline {section}{\numberline {3}Conclusion}{22}{}%
-\contentsline {section}{References}{23}{}%
-\contentsline {section}{Appendices}{25}{}%
-\contentsline {subsection}{Appendix A - Project Schedule}{25}{}%
-\contentsline {subsection}{Appendix B - Budget}{26}{}%
-\contentsline {subsection}{Appendix C - Meeting minutes}{27}{}%
-\contentsline {paragraph}{Meeting 1}{27}{}%
-\contentsline {paragraph}{Meeting 2}{28}{}%
-\contentsline {paragraph}{Meeting 3}{29}{}%
-\contentsline {paragraph}{Meeting 4}{30}{}%
-\contentsline {paragraph}{Meeting 5}{31}{}%
-\contentsline {paragraph}{Meeting 6}{32}{}%
-\contentsline {paragraph}{Meeting 7}{33}{}%
-\contentsline {paragraph}{Meeting 8}{34}{}%
-\contentsline {subsection}{Appendix D - Group Members’ Contribution}{35}{}%
-\contentsline {paragraph}{Individual Contributions:}{35}{}%
-\contentsline {subsection}{Appendix E - Deviation from the proposal and progress report and supporting reason}{37}{}%
-\contentsline {subsection}{Appendix F - Monthly Reports}{38}{}%
+\contentsline {section}{References}{24}{}%
+\contentsline {section}{Appendices}{26}{}%
+\contentsline {subsection}{Appendix A - Project Schedule}{26}{}%
+\contentsline {subsection}{Appendix B - Budget}{27}{}%
+\contentsline {subsection}{Appendix C - Meeting minutes}{29}{}%
+\contentsline {paragraph}{Meeting 1}{29}{}%
+\contentsline {paragraph}{Meeting 2}{30}{}%
+\contentsline {paragraph}{Meeting 3}{31}{}%
+\contentsline {paragraph}{Meeting 4}{32}{}%
+\contentsline {paragraph}{Meeting 5}{33}{}%
+\contentsline {paragraph}{Meeting 6}{34}{}%
+\contentsline {paragraph}{Meeting 7}{35}{}%
+\contentsline {paragraph}{Meeting 8}{36}{}%
+\contentsline {paragraph}{Meeting 9}{37}{}%
+\contentsline {subsection}{Appendix D - Group Members’ Contribution}{38}{}%
+\contentsline {paragraph}{Individual Contributions:}{38}{}%
+\contentsline {subsection}{Appendix E - Deviation from the proposal and progress report and supporting reason}{40}{}%
+\contentsline {subsection}{Appendix F - Monthly Reports}{41}{}%
