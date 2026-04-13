@@ -183,6 +183,12 @@ class pytorch_distortion_fit():
         print("Step 2: Train distortion model")
         self._fit_distortion()
 
+        # Step 3: Recalibrate K using undistorted points
+        print("Step 3: Recalibrate K (undistorted)")
+        undist_imgp = self.undistort_points()
+        self._calibrate_K(undist_imgp)
+        self._reproject()
+
         print(f"Final RMSE: {self.reprojection_error()}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
 

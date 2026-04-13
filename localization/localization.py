@@ -135,7 +135,7 @@ def localize_from_detections(detections, intrinsics_dict, extrinsics,
         if T_cam_board is None:
             continue
 
-        T_world_board = np.linalg.inv(extrinsics[cam]) @ T_cam_board
+        T_world_board = extrinsics[cam] @ T_cam_board
         results[cam] = T_world_board
 
     return results
