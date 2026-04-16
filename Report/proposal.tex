@@ -97,7 +97,7 @@ BoldItalicFont={*-bold-italic}]
     \vspace{0.5cm}
     {\large\bfseries Main objective: \par}
     \begin{flushleft}
-        This project develops a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$ meters. Using multi-camera optical tracking, sensor fusion, and robust calibration, with assistance of Received Signal Strength Indicator (RSSI) localization, the system supports scalable, low-cost underwater experiments for swarm robotics research.
+        The aim of this project is to develop a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$ meters. Using multi-camera optical tracking, sensor fusion, and robust calibration, with assistance of Received Signal Strength Indicator (RSSI) localization, the system supports scalable, low-cost underwater experiments for swarm robotics research.
         % \yh{to make the objective (abstract) more attractive}
     \vspace{0.5cm}
     \end{flushleft}
@@ -111,7 +111,6 @@ BoldItalicFont={*-bold-italic}]
         % \yh{velocity is estimated in the localization?}
     \end{enumerate}
     \thispagestyle{empty}
-    \addcontentsline{toc}{section}{Cover Page}
 \end{titlepage}
 
 % Table of Contents
@@ -134,7 +133,7 @@ BoldItalicFont={*-bold-italic}]
 \newpage
 \section*{Abstract}
 \addcontentsline{toc}{section}{Abstract}
-This project develops a localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of Autonomous Underwater Vehicles (AUVs) with a target accuracy of $\pm 7\times 10^{-2}$~m. Five USB cameras with overlapping views detect ArUco markers on AUVs via OpenCV. Two main contributions are presented: (1) a ChArUco-based extrinsic calibration algorithm using PnP solvers that overcomes traditional chessboard limitations underwater, and (2) a nonlinear distortion calibration model that separately calibrates the camera matrix $K$ and distortion $D$ via gradient descent, addressing cross-medium refraction. The system achieves an intrinsic calibration error of $7.1\times 10^{-2}$~m and an extrinsic error of $2.2\times 10^{-2}$~m. Simulation validates the Kalman filter fusion approach at $0.3\times 10^{-2}$~m error. RSSI localization supplements the optical tracking. The system provides a low-cost, scalable solution for multi-AUV swarm robotics research.
+We developed a localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of Autonomous Underwater Vehicles (AUVs) with a target accuracy of $\pm 7\times 10^{-2}$~m. Five USB cameras with overlapping views detect ArUco markers on AUVs via OpenCV. We present two main contributions: (1) a ChArUco-based extrinsic calibration algorithm using PnP solvers that overcomes traditional chessboard limitations underwater, and (2) a nonlinear distortion calibration model that separately calibrates the camera matrix $K$ and distortion $D$ via gradient descent, addressing cross-medium refraction. The system achieves an intrinsic calibration error of $7.1\times 10^{-2}$~m and an extrinsic error of $2.2\times 10^{-2}$~m. Simulation results validate the Kalman filter fusion approach at $0.3\times 10^{-2}$~m error. RSSI localization supplements the optical tracking. Our system provides a low-cost, scalable solution for multi-AUV swarm robotics research.
 
 % Introduction (Arabic page numbers start here)
 \newpage
@@ -147,7 +146,7 @@ This project develops a localization system for the Marine Automatic Swarm Exper
     \subsection{Background and Engineering Problem } 
         Marine research has gained increasing attention in recent years~\cite{pedersen_camera_2018}, covering diverse topics including marine animals, ecosystems, and water pollution. A key tool in this field is the Autonomous Underwater Vehicle (AUV), widely used for underwater exploration, environmental monitoring, and infrastructure maintenance~\cite{cai_data-driven_2025, zhou_survey_2022}.
 
-        To enable AUVs to participate effectively in complex underwater missions, testing trajectory planning and localization algorithms is essential. Previous researchers have utilized simulation environments for AUV experiments~\cite{agrawal_underwater_2025}. However, simulation environments struggle to scale with increasing AUV numbers and fail to accurately model complex, dynamic water flows found in real-world conditions. Consequently, researchers developed the Marine Autonomous Swarm Experiment Platform (MASEP), a desktop-scale, low-cost solution for multi-AUV tracking test beds~\cite{cai_development_2024}.
+        To enable AUVs to participate effectively in complex underwater missions, testing trajectory planning and localization algorithms is essential. Previous researchers have utilized simulation environments for AUV experiments~\cite{agrawal_underwater_2025}. However, simulation environments scale poorly with increasing AUV numbers and do not accurately model complex, dynamic water flows found in real-world conditions. Consequently, researchers developed the Marine Autonomous Swarm Experiment Platform (MASEP), a desktop-scale, low-cost solution for multi-AUV tracking test beds~\cite{cai_development_2024}.
 
         Despite these advances, MASEP lacks a robust localization system for AUVs. Obtaining accurate velocity and pose measurements remains challenging due to immeasurable wave disturbances, refraction-induced distortions, and inter-vehicle occlusions in underwater environments~\cite{pedersen_camera_2018, cai_data-driven_2025}. These factors complicate the adaptation of air-based calibration results to underwater experiments. Traditional underwater camera calibration methods, such as ray tracing using Snell's Law~\cite{pedersen_camera_2018}, require precise camera positioning and extensive modeling for scalability to larger water areas.
         
@@ -167,10 +166,10 @@ This project develops a localization system for the Marine Automatic Swarm Exper
 
         Comparative analysis shows this target provides 10x better accuracy than typical acoustic systems ($0.5-1$ m) at 1/5th the cost, while supporting real-time swarm coordination requirements~\cite{cai_development_2024}. Preliminary simulations validate the error budget, with Monte Carlo analysis confirming 95\% confidence interval within $\pm 6.2\times 10^{-2}$ m under nominal conditions.
 
-        Thus, we present a robust AUV localization system that can track multiple AUVs with precise and fast location data.
-        By solving the problems of underwater localization, we can test marine path planning algorithms on a desk-sized platform. This may include multi-AUV cooperative object transportation~\cite{zhang_decentralized_2020} and reinforcement learning based AUV path planning~\cite{yang_intelligent_2023}. These experiments have demonstrated solid results in simulation environments but lacked real-world validation. With our platform, these algorithms can be evaluated in terms of the sim-to-real gap and their potential for real-world applications, possibly providing new solutions to the field of marine research using AUVs.
+        Thus, we present an AUV localization system designed to track multiple AUVs with high positional accuracy and real-time speed.
+        By addressing the challenges of underwater localization, we can test marine path planning algorithms on a desk-sized platform. This may include multi-AUV cooperative object transportation~\cite{zhang_decentralized_2020} and reinforcement learning based AUV path planning~\cite{yang_intelligent_2023}. These approaches have yielded promising results in simulation but lack real-world validation. With our platform, these algorithms can be evaluated in terms of the sim-to-real gap and their potential for real-world applications, potentially providing new insights for marine research involving AUVs.
     \subsection{Objectives }
-        This project develops a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$ meters. Using multi-camera optical tracking, sensor fusion, and robust calibration, with assistance of Received Signal Strength Indicator (RSSI) localization, the system supports scalable, low-cost underwater experiments for swarm robotics research.
+        The aim of this project is to develop a fast and precise localization system for the Marine Automatic Swarm Experiment Platform (MASEP), enabling real-time tracking of AUVs with an error margin of $\pm 7\times 10^{-2}$ meters. Using multi-camera optical tracking, sensor fusion, and robust calibration, with assistance of Received Signal Strength Indicator (RSSI) localization, the system supports scalable, low-cost underwater experiments for swarm robotics research.
         % \yh{to make the objective (abstract) more attractive}
     \subsubsection{Objective Statements}
     The objectives are prioritized by dependency, criticality, and resource requirements, forming a sequential workflow where earlier objectives must be completed before subsequent ones can proceed. Each objective includes specific deliverables, success criteria, and risk mitigation strategies:
@@ -207,7 +206,7 @@ This project develops a localization system for the Marine Automatic Swarm Exper
         \paragraph{RSSI localization}
         There are various approaches for RSSI localization: employing mobile anchors for dynamic ranging, integrating environmental factors like temperature and salinity for velocity estimation, or using support vector regression (SVR) for interpolation in underwater wireless sensor networks (UWSNs) ~\cite{naqvi2025rssi,sun2019mobile}. In the experiment by Naqvi et al., which focuses on EM-based UWSNs, RSSI measurements are combined with velocity estimates derived from oceanographic data to achieve low mean square error (MSE) of 1.5 for AUV tracking, outperforming ToA and TDoA schemes by $15\%$ in 3D trajectory estimation ~\cite{naqvi2025rssi}. Similarly, Sun et al. deploy a mobile anchor node broadcasting signals in UWSNs, where unknown nodes (including AUVs) use RSSI for distance estimation via SVR interpolation and curve matching, yielding mean estimation errors of 0.12–0.49 m ~\cite{sun2019mobile}.\\\\
         The cost of implementing RSSI localization is relatively low due to the use of compact transceivers and simple signal processing, offering high speed with EM waves ($3×10^8$ m/s) for delay-sensitive applications and energy efficiency in low-power networks ~\cite{naqvi2025rssi,sun2019mobile}. RSSI localization also provides sub-meter accuracy and non-line-of-sight capability, supporting reliable real-time multi-AUV tracking ~\cite{sun2019mobile}. However, RSSI localization is easily affected by rapid signal attenuation in water, requiring careful calibration for environmental factors such as temperature, and may not achieve centimeter-level precision in small confined spaces without additional hardware ~\cite{naqvi2025rssi,sun2019mobile}. Furthermore, multipath interference in tanks can decrease accuracy, and the method often moves mobile anchors, complicating setup for micro AUVs ~\cite{naqvi2025rssi}.\\\\
-        Compared to acoustic and magnetic localization methods, optical localization offers simpler setup and implementation while providing high xy-plane accuracy, computational speed, and low cost~\cite{cai_development_2024}. Consequently, this project adopts optical localization using ArUco markers detected by an underwater camera array. Additionally, RSSI localization is a low-cost method that can overcome some of the challenges of underwater environments. The approach of combining optical localization with RSSI assistance targets high accuracy and robustness through a simple, low-cost platform that avoids additional payload requirements for AUVs.
+        Compared to acoustic and magnetic localization methods, optical localization offers simpler setup and implementation while providing high xy-plane accuracy, computational speed, and low cost~\cite{cai_development_2024}. Consequently, we adopt optical localization using ArUco markers detected by an underwater camera array. Additionally, RSSI localization is a low-cost method that can overcome some of the challenges of underwater environments. Combining optical localization with RSSI assistance targets high accuracy and robustness through a simple, low-cost platform that avoids additional payload requirements for AUVs.
         
 % Methodology
 \section{Methodology}
@@ -296,7 +295,6 @@ This project develops a localization system for the Marine Automatic Swarm Exper
                 & Optical clarity for underwater imaging \\
                 & Controlled lighting environment \\
                 \hline
-                \pagebreak                
                 Localization accuracy 
                 & Re-projection error for intrinsic calibration(m) \\
                 & Re-projection error for extrinsic calibration(m) \\
@@ -499,7 +497,7 @@ This project develops a localization system for the Marine Automatic Swarm Exper
             \textbf{Aim:} Find the differences in calibration parameters in air and water.\\
             \textbf{Expected Outcome:} Get the correction factor of calibration parameters from air to water.\\
             \textbf{Group member in charge:} XU, Borong\\
-            \textbf{Work:} We repeated intrinsic calibration underwater and discovered that the air calibration results failed in the underwater environment. This failure is attributed to light refraction when crossing different media. \\
+            \textbf{Work:} We repeated intrinsic calibration underwater and discovered that the air calibration results were inadequate for the underwater environment. We attribute this to light refraction when crossing different media. \\
             To test the effectiveness of the intrinsic calibration results, we use the extrinsic calibration results to compare localization between different cameras. Since the extrinsic parameters consist of transformations between cameras, they are not affected by light refraction. Once the extrinsic parameters are confirmed effective in air, we can use them to validate the intrinsic parameters produced by our method.\\
             The cross-medium light refraction invalidates the pinhole camera assumption, and the traditional polynomial distortion model is insufficient to estimate the distortion. Therefore, we propose a new method for underwater distortion calibration.\\\\
             Our new method calibrates the camera parameter $K$ and distortion model $D$ separately. We model the distortion parameter $D$ as a vector field. We first apply the OpenCV calibration program with the assumption of no distortion to obtain the intrinsic parameter $K$, and using this $K$ matrix, we normalize the object points and use the undistorted reprojected image points as ground truth for the distortion parameters. Then, we calibrate the distortion parameters using gradient descent with PyTorch. Using the new distortion model, we undistort the image points and recalibrate the intrinsic parameter $K$.\\
@@ -575,8 +573,8 @@ This project develops a localization system for the Marine Automatic Swarm Exper
             \textbf{Aim:} Track ArUco markers of the AUVs.\\
             \textbf{Expected Outcome:} All the AUVs in the water tank can be tracked.\\
             \textbf{Group member in charge:} Both members\\
-            \textbf{Work:} We wrote a Python program to implement real-time ArUco marker detection using OpenCV's ArUco module with the DICT\_5X5\_50 dictionary. Robust localization was achieved under varying lighting conditions. When capturing chessboard photos, we also recorded frames of an ArUco marker placed at five fixed points and moving horizontally along a track (Figure~\ref{aruco test}) to test the algorithm. The algorithm visualizes the coordinate axes of the marker and outputs the frame points associated with it.\\\\
-            Before recording these frames, we planned the range of marker locations to be 2~m with 0.5~m between each fixed point. However, the laboratory table was not large enough for cameras to capture the marker across such a range. Therefore, the range was narrowed to 0.5~m with 0.125~m between each fixed point. We did not have rails to move the marker in a straight line, but we found two straight grooves next to the table. We placed the tablet displaying the marker into the groove, which saved time and avoided unnecessary expense.
+            \textbf{Work:} We wrote a Python program to implement real-time ArUco marker detection using OpenCV's ArUco module with the DICT\_5X5\_50 dictionary. We achieved robust detection under varying lighting conditions. When capturing chessboard photos, we also recorded frames of an ArUco marker placed at five fixed points and moving horizontally along a track (Figure~\ref{aruco test}) to test the algorithm. The algorithm visualizes the coordinate axes of the marker and outputs the frame points associated with it.\\\\
+            Before recording these frames, we planned the range of marker locations to be 2~m with 0.5~m between each fixed point. However, the laboratory table was not large enough for cameras to capture the marker across such a range. Therefore, the range was narrowed to 0.5~m with 0.125~m between each fixed point. We did not have rails to move the marker in a straight line, but we found two straight grooves next to the table. We placed the tablet displaying the marker into the groove, thereby reducing both time and cost.
             \begin{figure}
                 \centering
                 \rotatebox{-90}{
@@ -735,9 +733,9 @@ This project develops a localization system for the Marine Automatic Swarm Exper
         \end{table}
 
         \paragraph{Analysis of Results}
-        The simulation environment (Objective 1) was fully completed and validated. The Kalman filter fusion achieved $0.3\times10^{-2}$~m error in simulation, well within the $\pm7\times10^{-2}$~m target, confirming the viability of multi-camera fusion under idealized noise conditions.
+        We fully completed and validated the simulation environment (Objective 1). The Kalman filter fusion achieved $0.3\times10^{-2}$~m error in simulation, well within the $\pm7\times10^{-2}$~m target, confirming the viability of multi-camera fusion under idealized noise conditions.
 
-        For camera calibration (Objective 2), the intrinsic calibration error of $7.1\times10^{-2}$~m is close to the $7.0\times10^{-2}$~m target but has not yet met it. The extrinsic calibration error of $2.2\times10^{-2}$~m slightly exceeds the $2.0\times10^{-2}$~m target. Both results improved significantly from initial trials by increasing the number of valid captures from approximately 40 to 90 per camera. The primary challenge remains cross-medium light refraction, which invalidates the standard pinhole camera assumption. Our proposed nonlinear distortion calibration method, which separately calibrates $K$ and $D$ using gradient descent with PyTorch, represents a novel approach to this problem. While the polynomial distortion model provides a baseline, the MLP-based model shows potential for better capturing the nonlinear refraction effects, though further tuning and data collection are required to fully validate its superiority.
+        For camera calibration (Objective 2), the intrinsic calibration error of $7.1\times10^{-2}$~m is close to the $7.0\times10^{-2}$~m target but has not yet met it. The extrinsic calibration error of $2.2\times10^{-2}$~m slightly exceeds the $2.0\times10^{-2}$~m target. Both errors decreased significantly from initial trials by increasing the number of valid captures from approximately 40 to 90 per camera. The primary challenge remains cross-medium light refraction, which invalidates the standard pinhole camera assumption. Our proposed nonlinear distortion calibration method, which separately calibrates $K$ and $D$ using gradient descent with PyTorch, represents a novel approach to this problem. While the polynomial distortion model provides a baseline, the MLP-based model shows potential for better capturing the nonlinear refraction effects, though further tuning and data collection are required to fully validate its superiority.
 
         For ArUco tracking (Objective 3), the system successfully detects and tracks markers in air with smooth trajectories. However, underwater tracking using air calibration parameters shows significantly increased variability (Figures~\ref{air_tracking} and \ref{water_tracking}), confirming that refraction-corrected calibration is essential for meeting the accuracy target underwater.
 
@@ -747,22 +745,22 @@ This project develops a localization system for the Marine Automatic Swarm Exper
         Compared to the RSSI localization methods by Naqvi et al.~\cite{naqvi2025rssi} (mean estimation error of 1.5 MSE) and Sun et al.~\cite{sun2019mobile} (0.12--0.49~m), our optical system achieves higher precision, though RSSI provides valuable complementary data in low-visibility conditions.
 
         \paragraph{Assessment and Lessons Learned}
-        The project has successfully delivered a functional multi-camera localization system with two key technical contributions: the ChArUco-based extrinsic calibration algorithm and the nonlinear distortion calibration model. The simulation environment provided valuable insight into the effectiveness of Kalman filter fusion before real-world deployment.
+        We have successfully developed a functional multi-camera localization system with two key technical contributions: the ChArUco-based extrinsic calibration algorithm and the nonlinear distortion calibration model. The simulation environment provided valuable insight into the effectiveness of Kalman filter fusion before real-world deployment.
 
-        The main challenge that prevented the system from fully meeting the accuracy targets was the underwater refraction effect, which was more complex than initially anticipated. The traditional polynomial distortion model proved insufficient for cross-medium calibration, necessitating the development of the nonlinear approach. While the nonlinear model has shown promising results, additional training data and model refinement are needed to fully close the gap between air and underwater performance.
+        The main challenge that prevented us from fully meeting the accuracy targets was the underwater refraction effect, which was more complex than initially anticipated. The traditional polynomial distortion model proved insufficient for cross-medium calibration, necessitating the development of the nonlinear approach. While the nonlinear model has shown promising results, additional training data and model refinement are needed to fully close the gap between air and underwater performance.
 
-        If the project were to be extended, collecting more underwater calibration data with diverse ChArUco board orientations and depths would likely improve the nonlinear distortion model accuracy. Additionally, integrating RSSI localization data through the Extended Kalman Filter in real-world experiments (as validated in simulation) could provide the additional robustness needed to consistently meet the $\pm7\times10^{-2}$~m target.
+        If this work were to be extended, collecting more underwater calibration data with diverse ChArUco board orientations and depths would likely improve the nonlinear distortion model accuracy. Additionally, integrating RSSI localization data through the Extended Kalman Filter in real-world experiments (as validated in simulation) could provide the additional robustness needed to consistently meet the $\pm7\times10^{-2}$~m target.
 
 \section{Conclusion}
-This project developed a multi-camera optical localization system for the Marine Automatic Swarm Experiment Platform (MASEP), targeting real-time AUV tracking with $\pm 7\times 10^{-2}$~m accuracy. We successfully designed and implemented a complete pipeline from camera calibration through ArUco marker detection to multi-camera fusion.
+We developed a multi-camera optical localization system for the Marine Automatic Swarm Experiment Platform (MASEP), targeting real-time AUV tracking with $\pm 7\times 10^{-2}$~m accuracy. We successfully designed and implemented a complete pipeline from camera calibration through ArUco marker detection to multi-camera fusion.
 
 Our main contributions are twofold. First, we proposed a ChArUco-based extrinsic calibration algorithm that addresses the fundamental limitation of traditional chessboard calibration in underwater environments. By leveraging the partial detection capability of ChArUco boards and PnP solvers, our method produces reliable inter-camera transformation matrices even when the full calibration pattern cannot be captured simultaneously by adjacent cameras, achieving an extrinsic calibration error of $2.2\times 10^{-2}$~m. Second, we developed a nonlinear distortion calibration model that separately calibrates the camera intrinsic matrix $K$ and distortion model $D$. By modeling distortion as a vector field and training it via gradient descent with PyTorch, this approach overcomes the cross-medium light refraction that invalidates the standard pinhole camera assumption and traditional polynomial distortion models.
 
-The simulation environment with gamma-distributed noise modeling validated our Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error under simulated conditions. The intrinsic calibration currently achieves $7.1\times 10^{-2}$~m error, which is close to but has not yet met our target. Further refinement of the nonlinear distortion model and additional calibration data collection are expected to reduce this error. RSSI localization was also investigated as an assistive method to improve robustness under challenging optical conditions, such as low lighting and occlusion.
+The simulation environment with gamma-distributed noise modeling validated our Kalman filter fusion approach, achieving $0.3\times 10^{-2}$~m error under simulated conditions. The intrinsic calibration currently achieves $7.1\times 10^{-2}$~m error, which is close to but has not yet met our target. Further refinement of the nonlinear distortion model and additional calibration data collection are expected to reduce this error. We also investigated RSSI localization as an assistive method to improve robustness under challenging optical conditions, such as low lighting and occlusion.
 
-Overall, this project demonstrates that a low-cost multi-camera system with robust calibration techniques can provide accurate AUV localization for swarm robotics research, bridging the gap between simulation-based algorithm development and real-world underwater experiments.
+Overall, our results demonstrate that a low-cost multi-camera system with robust calibration techniques can provide accurate AUV localization for swarm robotics research, bridging the gap between simulation-based algorithm development and real-world underwater experiments.
 
-Future work should focus on: (1) collecting additional underwater calibration data with diverse ChArUco board orientations to improve the nonlinear distortion model; (2) deploying the Extended Kalman Filter in real-world experiments to fuse optical and RSSI localization data, as validated in simulation; (3) conducting multi-AUV tracking experiments to evaluate system performance under realistic occlusion and inter-vehicle interference conditions; and (4) scaling the system to larger water tanks by increasing the number of cameras and optimizing the camera array geometry.
+Future work should focus on the following: (1) collecting additional underwater calibration data with diverse ChArUco board orientations to improve the nonlinear distortion model; (2) deploying the Extended Kalman Filter in real-world experiments to fuse optical and RSSI localization data, as validated in simulation; (3) conducting multi-AUV tracking experiments to evaluate system performance under realistic occlusion and inter-vehicle interference conditions; and (4) scaling the system to larger water tanks by increasing the number of cameras and optimizing the camera array geometry.
 
 % References
 \newpage
@@ -772,6 +770,7 @@ Future work should focus on: (1) collecting additional underwater calibration da
 
 % Appendices
 \newpage
+    \begin{landscape}
 \section*{Appendices}
 \addcontentsline{toc}{section}{Appendices}
     \subsection*{Appendix A -- Final Project Schedule}
@@ -816,7 +815,7 @@ Future work should focus on: (1) collecting additional underwater calibration da
         \hline
         RSSI Localization& & & & & & & & & & & & &\cellcolor{blue!20}&\cellcolor{blue!20}\\
         \hline
-        &RSSI Fingerprints Mapping&CHAN& & & & & & & & & & & & \\
+        &RSSI Fingerprints Mapping&CHAN& & & & & & & & & & &\cellcolor{yellow!20}&\cellcolor{yellow!20}\\
         \hline
         &Fingerprints Matching&CHAN& & & & & & & & & & & & \\
         \hline
@@ -870,6 +869,8 @@ Future work should focus on: (1) collecting additional underwater calibration da
         \end{tabular}
         \end{adjustbox}
         \end{table}
+    \end{landscape}
+    \newpage
     \subsection*{Appendix B -- Budget}
     \addcontentsline{toc}{subsection}{Appendix B -- Budget}
         \begin{longtable}[c]{| l | c | c |}
@@ -1400,15 +1401,15 @@ Future work should focus on: (1) collecting additional underwater calibration da
     \newpage
     \subsection*{Appendix F -- Monthly Reports}
     \addcontentsline{toc}{subsection}{Appendix F -- Monthly Reports}
-    \begin{figure}
+    \begin{figure}[H]
         \centering
         \includegraphics[width=1\linewidth]{monthly report/79_YH02a-25_MonReport1_01.pdf}
     \end{figure}
-    \begin{figure}
+    \begin{figure}[H]
         \centering
         \includegraphics[width=1\linewidth]{monthly report/79_YH02a-25_MonReport2_01.pdf}
     \end{figure}
-    \begin{figure}
+    \begin{figure}[H]
         \centering
         \includegraphics[width=1\linewidth]{monthly report/79_YH02a-25_MonReport3_01.pdf}
     \end{figure}    
