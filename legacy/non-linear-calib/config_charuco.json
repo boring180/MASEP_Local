@@ -1,0 +1,10 @@
+{
+  "images_folder": "./calibration_images_charuco",
+  "output_file": "calibration_points_charuco.npz",
+  "aruco_dict": "DICT_5X5_100",
+  "charuco_squares_x": 11,
+  "charuco_squares_y": 8,
+  "square_size": 0.023,
+  "marker_size": 0.017
+}
+

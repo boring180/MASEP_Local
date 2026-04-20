@@ -1,0 +1,8 @@
+{
+  "images_folder": "./calibration_images",
+  "output_file": "calibration_points.npz",
+  "pattern_width": 27,
+  "pattern_height": 18,
+  "square_size": 0.009
+}
+

@@ -1,0 +1,19 @@
+\contentsline {figure}{\numberline {1}{\ignorespaces MASEP camera array configuration with five USB cameras under the water tank.}}{5}{}%
+\contentsline {figure}{\numberline {2}{\ignorespaces MASEP localization system block diagram.}}{5}{}%
+\contentsline {figure}{\numberline {3}{\ignorespaces 3D simulation environment with virtual camera array and AUV trajectories.}}{7}{}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Reprojection error distribution fitted to a gamma distribution.}}{8}{}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Kalman filter fusion results compared with raw camera data and ground truth.}}{8}{}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Three-camera setup for chessboard calibration data collection.}}{9}{}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Chessboard corner detection validation with overlaid grid.}}{10}{}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Synchronized chessboard capture from five cameras.}}{10}{}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Detected chessboard corners with overlaid coordinate axes.}}{11}{}%
+\contentsline {figure}{\numberline {10}{\ignorespaces ChArUco calibration board with detected corner points marked in green.}}{11}{}%
+\contentsline {figure}{\numberline {11}{\ignorespaces Comparison of distorted (left) and undistorted (right) images.}}{12}{}%
+\contentsline {figure}{\numberline {12}{\ignorespaces Capture of a ChArUco board in the cross section between two cameras.}}{14}{}%
+\contentsline {figure}{\numberline {13}{\ignorespaces Extrinsic calibration results with camera positions and orientations.}}{15}{}%
+\contentsline {figure}{\numberline {14}{\ignorespaces Vector field of the camera distortion.}}{16}{}%
+\contentsline {figure}{\numberline {15}{\ignorespaces Comparison of intrinsic calibration methods.}}{16}{}%
+\contentsline {figure}{\numberline {16}{\ignorespaces ArUco marker tracking test setup with marker moving along a linear path.}}{17}{}%
+\contentsline {figure}{\numberline {17}{\ignorespaces Multi-camera localization results of the same ArUco marker in the xy-plane.}}{18}{}%
+\contentsline {figure}{\numberline {18}{\ignorespaces ArUco marker trajectory tracking results in air.}}{19}{}%
+\contentsline {figure}{\numberline {19}{\ignorespaces ArUco marker trajectory tracking results underwater using air calibration parameters.}}{19}{}%
