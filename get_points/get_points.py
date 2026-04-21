@@ -42,6 +42,7 @@ def process_videos(
     marker_size=0.017,
     aruco_dict_name="DICT_5X5_100",
     min_corners=15,
+    exclusive=False,
 ):
     """
     Extract ChArUco points from videos with 3 vertically stacked cameras.
@@ -53,6 +54,11 @@ def process_videos(
     Photos saved under:
       - photos_folder/single/   (frames with any detection, per-camera)
       - photos_folder/multi/    (frames where >=2 cameras detected, combined)
+
+    If `exclusive` is True, a frame's detections are routed to either the
+    intrinsic or the extrinsic set but never both: multi-cam frames (>=2
+    detections) go only to extrinsic, single-cam frames go only to intrinsic.
+    If False (default), multi-cam frames contribute to both sets.
     """
     video_dir = Path(video_folder)
     video_files = sorted(
@@ -110,13 +116,17 @@ def process_videos(
                 if obj is not None:
                     detections[cam] = (obj, img, ci)
 
-            for cam, (obj, img, ci) in detections.items():
-                intrinsic[cam]["obj"].append(obj)
-                intrinsic[cam]["img"].append(img)
-                _draw_corners(subs[ci], img)
-                cv2.imwrite(str(single_photo_dir / f"{global_idx}_{cam}.jpg"), subs[ci])
+            is_multi = len(detections) >= 2
+            add_to_intrinsic = not (exclusive and is_multi)
 
-            if len(detections) >= 2:
+            if add_to_intrinsic:
+                for cam, (obj, img, ci) in detections.items():
+                    intrinsic[cam]["obj"].append(obj)
+                    intrinsic[cam]["img"].append(img)
+                    _draw_corners(subs[ci], img)
+                    cv2.imwrite(str(single_photo_dir / f"{global_idx}_{cam}.jpg"), subs[ci])
+
+            if is_multi:
                 for cam in CAMERA_NAMES:
                     if cam in detections:
                         obj, img, _ = detections[cam]
