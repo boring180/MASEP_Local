@@ -6,8 +6,8 @@ from datetime import datetime
 from pathlib import Path
 
 CAMERA_INDICES = [2, 1, 0]  # top to bottom: cam2, cam1, cam0
-FRAME_WIDTH = 1280
-FRAME_HEIGHT = 960
+FRAME_WIDTH = 1920
+FRAME_HEIGHT = 1080
 FPS = 24
 OUTPUT_DIR = Path("../video/charuco_air")
 

@@ -41,7 +41,7 @@ def process_videos(
     square_size=0.023,
     marker_size=0.017,
     aruco_dict_name="DICT_5X5_100",
-    min_corners=15,
+    min_corners=6,
     exclusive=False,
 ):
     """

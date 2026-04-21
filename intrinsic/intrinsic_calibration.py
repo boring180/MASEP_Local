@@ -10,9 +10,16 @@ def opencv_full_calib(objpoints, imgpoints, image_size):
     # The filtered lists are used for the calibration
     objp_list, imgp_list = [], []
     for o, i in zip(objpoints, imgpoints):
-        if len(i) >= 6:
-            objp_list.append(np.asarray(o, np.float32))
-            imgp_list.append(np.asarray(i, np.float32))
+        if len(i) < 6:
+            continue
+        # Reject collinear object points — cv2.calibrateCamera's internal
+        # PnP requires a 2D spread on the board plane.
+        xy = np.asarray(o, np.float64)[:, :2]
+        s = np.linalg.svd(xy - xy.mean(0), compute_uv=False)
+        if s[1] < 1e-6 * s[0]:
+            continue
+        objp_list.append(np.asarray(o, np.float32))
+        imgp_list.append(np.asarray(i, np.float32))
 
     # flags = cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6
     flags = 0
