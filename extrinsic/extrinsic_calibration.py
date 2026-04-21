@@ -43,8 +43,12 @@ class ExtrinsicCalibration:
             else:
                 print(f"  WARNING: intrinsics not found for {cam}")
 
-    def _estimate_poses(self):
-        """Estimate board pose per camera per synced frame via solvePnP."""
+    def _estimate_poses(self, min_pts=6, max_reproj_err=3.0):
+        """Estimate board pose per camera per synced frame via solvePnP.
+
+        Rejects poses with non-collinear failures, board behind the camera,
+        or mean reprojection error above `max_reproj_err` pixels.
+        """
         frame_poses = []
         for fi in range(self.n_frames):
             poses = {}
@@ -53,13 +57,24 @@ class ExtrinsicCalibration:
                     continue
                 obj = self.camera_obj_points[cam][fi]
                 img = self.camera_img_points[cam][fi]
-                if obj is None or img is None:
+                if obj is None or img is None or len(obj) < min_pts:
+                    continue
+                xy = np.asarray(obj, np.float64)[:, :2]
+                s = np.linalg.svd(xy - xy.mean(0), compute_uv=False)
+                if s[1] < 1e-6 * s[0]:
                     continue
                 ret, rvec, tvec = cv2.solvePnP(
                     obj.astype(np.float32), img.astype(np.float32),
-                    self.camera_mtx[cam], self.camera_dist[cam])
-                if ret:
-                    poses[cam] = (rvec, tvec, len(obj))
+                    self.camera_mtx[cam], self.camera_dist[cam], flags=cv2.SOLVEPNP_IPPE)
+                if not ret or float(tvec[2, 0]) <= 0:
+                    continue
+                proj, _ = cv2.projectPoints(obj.astype(np.float32), rvec, tvec,
+                                            self.camera_mtx[cam], self.camera_dist[cam])
+                d = proj.reshape(-1, 2).astype(np.float64) - img.reshape(-1, 2).astype(np.float64)
+                err = float(np.sqrt((d * d).sum(1)).mean())
+                if err > max_reproj_err:
+                    continue
+                poses[cam] = (rvec, tvec, len(obj))
             frame_poses.append(poses)
         return frame_poses
 
@@ -85,9 +100,13 @@ class ExtrinsicCalibration:
         if not Ts:
             raise RuntimeError(f"No shared frames between {target_camera} and {center_camera}")
 
-        # Average rotation (via quaternions) and translation
-        rotations = R.from_matrix([T[:3, :3] for T in Ts])
-        avg_rot = rotations.mean()
+        # Quaternion-based rotation mean — robust to the sign ambiguity and
+        # sidesteps scipy's eigh() which can fail to converge on degenerate sets.
+        quats = R.from_matrix([T[:3, :3] for T in Ts]).as_quat()  # (N, 4) xyzw
+        quats *= np.sign(quats @ quats[0])[:, None]  # hemisphere-align to first
+        q_mean = quats.mean(axis=0)
+        q_mean /= np.linalg.norm(q_mean)
+        avg_rot = R.from_quat(q_mean)
         avg_trans = np.mean([T[:3, 3] for T in Ts], axis=0)
 
         T = np.eye(4)
