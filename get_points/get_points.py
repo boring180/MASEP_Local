@@ -165,5 +165,5 @@ def process_videos(
 
 
 if __name__ == "__main__":
-    process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air")
-    process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water")
+    process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air", exclusive=False)
+    # process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water", exclusive=False)

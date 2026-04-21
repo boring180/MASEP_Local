@@ -39,13 +39,34 @@ def opencv_full_calib(objpoints, imgpoints, image_size):
 
 
 class pytorch_distortion_fit():
-    def __init__(self, objpoints, imgpoints, image_size, device='cpu', epochs=10000, val_ratio=0.2):
+    def __init__(self, objpoints, imgpoints, image_size, K, dist, rvecs=None, tvecs=None,
+                 device='cpu', epochs=10000, val_ratio=0.2):
+        """Fit a nonlinear distortion model given a pre-calibrated K (and linear D).
+
+        K, dist, rvecs, tvecs are expected to come from cv2.calibrateCamera
+        (e.g. opencv_full_calib). K is taken as-is. The linear `dist` is kept
+        for reference but is NOT used when reprojecting the target; the
+        reprojection target is obtained with zero distortion so the nonlinear
+        model learns the full inverse-distortion from observed → undistorted.
+        If rvecs/tvecs are omitted they are recovered per view via solvePnP.
+        """
         self.image_size = image_size
+        self.mtx = np.asarray(K, dtype=np.float64)
+        self.dist_linear = np.asarray(dist, dtype=np.float64).reshape(-1)
+        # Zero distortion target: reprojections through K alone → ideal undistorted pixels.
+        self.dist = np.zeros(5, dtype=np.float64)
+
         self.objp_list, self.imgp_list = [], []
         for o, i in zip(objpoints, imgpoints):
             if len(i) >= 6:
                 self.objp_list.append(np.asarray(o, np.float32))
                 self.imgp_list.append(np.asarray(i, np.float32))
+
+        if rvecs is not None and tvecs is not None:
+            self.rvecs = list(rvecs)
+            self.tvecs = list(tvecs)
+        else:
+            self._solve_extrinsics()
 
         self.epochs = epochs
         self.device = device
@@ -56,22 +77,27 @@ class pytorch_distortion_fit():
     def __str__(self):
         return f"K:\n{self.mtx}\nDistortion: {self.model}"
 
-    def _calibrate_K(self, imgp_list):
-        """Calibrate K with zero distortion assumption."""
-        flags = (cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 |
-                 cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6)
-        _, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(
-            self.objp_list, imgp_list, self.image_size, None, None, flags=flags)
+    def _solve_extrinsics(self):
+        """Recover per-view pose using the provided K and linear distortion."""
+        self.rvecs, self.tvecs = [], []
+        for objp, imgp in zip(self.objp_list, self.imgp_list):
+            ok, rvec, tvec = cv2.solvePnP(
+                objp.reshape(-1, 1, 3), imgp.reshape(-1, 1, 2),
+                self.mtx, self.dist_linear)
+            if not ok:
+                raise RuntimeError("solvePnP failed for a view")
+            self.rvecs.append(rvec)
+            self.tvecs.append(tvec)
 
     def _reproject(self):
-        """Reproject object points using K — these are the undistorted ground truth."""
+        """Reproject object points through K with zero distortion — undistorted ground truth."""
         self.reprojected_imgp = []
         for objp, rvec, tvec in zip(self.objp_list, self.rvecs, self.tvecs):
             proj, _ = cv2.projectPoints(objp, rvec, tvec, self.mtx, self.dist)
             self.reprojected_imgp.append(proj.reshape(-1, 2))
 
     def _normalize(self, imgp_list):
-        """Apply K_inv to pixel points → normalized coords."""
+        """Apply K_inv to pixel points → normalized coords (no distortion applied)."""
         cat = np.concatenate([p.reshape(-1, 1, 2) for p in imgp_list], axis=0).astype(np.float32)
         return cv2.undistortPoints(cat, self.mtx, self.dist).reshape(-1, 2)
 
@@ -173,21 +199,13 @@ class pytorch_distortion_fit():
         return float(np.sqrt(sse / n))
 
     def fit(self):
-        """Pipeline: OpenCV calibrate K → train distortion model."""
-        # Step 1: Calibrate K using OpenCV full calibration
-        print("Step 1: Calibrate K (OpenCV)")
-        self._calibrate_K(self.imgp_list)
+        """Pipeline: use provided K (+linear D) → train nonlinear distortion model."""
+        # K is fixed; only build the undistorted-target reprojection and train.
+        print("Step 1: Reproject with provided K (zero distortion target)")
         self._reproject()
 
-        # Step 2: Train distortion model (distorted → reprojected)
         print("Step 2: Train distortion model")
         self._fit_distortion()
-
-        # Step 3: Recalibrate K using undistorted points
-        print("Step 3: Recalibrate K (undistorted)")
-        undist_imgp = self.undistort_points()
-        self._calibrate_K(undist_imgp)
-        self._reproject()
 
         print(f"Final RMSE: {self.reprojection_error()}")
         return self.mtx, self.dist, self.rvecs, self.tvecs
@@ -389,8 +407,12 @@ class pytorch_distortion_fit():
         return obj
 
 
-def calibrate_camera(points_file, output_dir):
-    """Run all calibration methods on one camera's point file and save results."""
+def opencv_calibrate_and_save(points_file, output_dir):
+    """Run full OpenCV calibration on `points_file` and persist K/D/poses.
+
+    Writes `{cam_name}_opencv.npz` under `output_dir` containing K, dist,
+    rvecs, tvecs, img_size, and rmse. Returns (opencv_result, save_path).
+    """
     from pathlib import Path
     data = np.load(points_file, allow_pickle=True)
     obj_points = [arr.astype(np.float32) for arr in data["obj_points"]]
@@ -401,20 +423,64 @@ def calibrate_camera(points_file, output_dir):
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # OpenCV full calibration
-    opencv_result = opencv_full_calib(obj_points, img_points, img_size)
-    np.savez(str(out / f"{cam_name}_opencv.npz"),
-             K=opencv_result["K"], dist=opencv_result["dist"],
-             img_size=np.array(img_size), rmse=opencv_result["rmse_px"])
+    result = opencv_full_calib(obj_points, img_points, img_size)
+    save_path = out / f"{cam_name}_opencv.npz"
+    np.savez(str(save_path),
+             K=result["K"], dist=result["dist"],
+             rvecs=np.array(result["rvecs"], dtype=object),
+             tvecs=np.array(result["tvecs"], dtype=object),
+             img_size=np.array(img_size), rmse=result["rmse_px"])
+    return result, save_path
 
-    # Ordinary polynomial distortion
-    poly_fit = pytorch_distortion_fit(obj_points, img_points, img_size)
+
+def load_opencv_result(path):
+    """Load a saved OpenCV calibration npz back into the dict shape of opencv_full_calib."""
+    data = np.load(path, allow_pickle=True)
+    return {
+        "K": np.asarray(data["K"], dtype=np.float64),
+        "dist": np.asarray(data["dist"], dtype=np.float64).reshape(-1),
+        "rvecs": [np.asarray(r, dtype=np.float64) for r in data["rvecs"]],
+        "tvecs": [np.asarray(t, dtype=np.float64) for t in data["tvecs"]],
+        "rmse_px": float(data["rmse"]),
+    }
+
+
+def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
+    """Fit poly + MLP distortion on one camera's point file.
+
+    If `opencv_dir` is None, run full OpenCV calibration (saved into
+    `output_dir`) and use its K/D/poses. Otherwise load the existing
+    `{cam_name}_opencv.npz` from `opencv_dir` and reuse it.
+    """
+    from pathlib import Path
+    data = np.load(points_file, allow_pickle=True)
+    obj_points = [arr.astype(np.float32) for arr in data["obj_points"]]
+    img_points = [arr.astype(np.float32) for arr in data["img_points"]]
+    img_size = tuple(int(x) for x in data["img_size"])
+    cam_name = Path(points_file).stem
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    if opencv_dir is None:
+        opencv_result, _ = opencv_calibrate_and_save(points_file, output_dir)
+    else:
+        opencv_result = load_opencv_result(Path(opencv_dir) / f"{cam_name}_opencv.npz")
+
+    # Ordinary polynomial distortion (K + D from OpenCV)
+    poly_fit = pytorch_distortion_fit(
+        obj_points, img_points, img_size,
+        K=opencv_result["K"], dist=opencv_result["dist"],
+        rvecs=opencv_result["rvecs"], tvecs=opencv_result["tvecs"])
     poly_fit.ordinary_polynomial_distortion()
     poly_fit.fit()
     poly_fit.save(str(out / f"{cam_name}_poly.pt"))
 
-    # MLP distortion
-    mlp_fit = pytorch_distortion_fit(obj_points, img_points, img_size)
+    # MLP distortion (K + D from OpenCV)
+    mlp_fit = pytorch_distortion_fit(
+        obj_points, img_points, img_size,
+        K=opencv_result["K"], dist=opencv_result["dist"],
+        rvecs=opencv_result["rvecs"], tvecs=opencv_result["tvecs"])
     mlp_fit.mlp_distortion()
     mlp_fit.fit()
     mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
@@ -429,10 +495,10 @@ def calibrate_camera(points_file, output_dir):
 
 if __name__ == "__main__":
     from pathlib import Path
-    import sys
 
-    points_dir = Path("../points/water")
-    output_dir = Path("../calibration/water")
+    points_dir = Path("../points/air")
+    output_dir = Path("../calibration/air")
 
     for npz in sorted(points_dir.glob("cam*.npz")):
-        calibrate_camera(str(npz), str(output_dir))
+        # calibrate_camera_multiple_methods(str(npz), str(output_dir))
+        opencv_calibrate_and_save(str(npz), str(output_dir))

@@ -158,7 +158,7 @@ class ExtrinsicCalibration:
 
 
 if __name__ == "__main__":
-    ec = ExtrinsicCalibration("../points/water/extrinsic.npz")
-    ec.load_intrinsics("../calibration/water")
-    ec.calibrate_all(center_camera="cam1", save_dir="../calibration/water")
+    ec = ExtrinsicCalibration("../points/air/extrinsic.npz")
+    ec.load_intrinsics("../calibration/air")
+    ec.calibrate_all(center_camera="cam1", save_dir="../calibration/air")
     ec.visualize(save_path="extrinsic_air.png")
