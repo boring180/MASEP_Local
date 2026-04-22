@@ -114,7 +114,28 @@ class ExtrinsicCalibration:
         T[:3, 3] = avg_trans
         self.camera_extrinsic[target_camera] = T
 
+        # Validation loss: apply the averaged extrinsic and measure per-frame residual
+        # between the predicted center-camera board pose and the directly-observed one.
+        # Translation residual is in the center-camera frame; rotation residual is the
+        # axis-angle error of R_pred^T @ R_obs expressed as xyz Euler (degrees).
+        t_res, r_res = [], []
+        for fp in frame_poses:
+            if target_camera not in fp or center_camera not in fp:
+                continue
+            T_ctr_board_obs = self._pose_to_T(*fp[center_camera][:2])
+            T_tgt_board = self._pose_to_T(*fp[target_camera][:2])
+            T_ctr_board_pred = T @ T_tgt_board
+            t_res.append(T_ctr_board_obs[:3, 3] - T_ctr_board_pred[:3, 3])
+            R_err = T_ctr_board_pred[:3, :3].T @ T_ctr_board_obs[:3, :3]
+            r_res.append(R.from_matrix(R_err).as_euler("xyz", degrees=True))
+        t_res = np.asarray(t_res)
+        r_res = np.asarray(r_res)
+
         print(f"{target_camera} -> {center_camera}: {len(Ts)} shared frames")
+        print(f"  translation residual mean (x,y,z): {t_res.mean(axis=0)}")
+        print(f"  translation residual std  (x,y,z): {t_res.std(axis=0)}")
+        print(f"  rotation residual mean (rx,ry,rz) deg: {r_res.mean(axis=0)}")
+        print(f"  rotation residual std  (rx,ry,rz) deg: {r_res.std(axis=0)}")
         print(f"  T:\n{T}")
         return T
 

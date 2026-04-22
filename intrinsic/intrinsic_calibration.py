@@ -6,64 +6,28 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-def opencv_full_calib(objpoints, imgpoints, image_size, min_pts=10, min_spread_ratio=0.05):
-    # Geometric pre-filter: enough points, non-collinear, 2D spread on both axes.
-    # Weak geometry produces unstable PnP solutions that corrupt the global calib.
-    w, h = image_size
-    min_span_px = min_spread_ratio * min(w, h)
+def opencv_full_calib(objpoints, imgpoints, image_size):
+    # Minimal filter: OpenCV requires >=4 non-collinear points per view.
     objp_list, imgp_list = [], []
     for o, i in zip(objpoints, imgpoints):
-        i_arr = np.asarray(i, np.float64).reshape(-1, 2)
-        if len(i_arr) < min_pts:
+        if len(i) < 4:
             continue
         xy = np.asarray(o, np.float64)[:, :2]
         s = np.linalg.svd(xy - xy.mean(0), compute_uv=False)
         if s[1] < 1e-6 * s[0]:
             continue
-        if (np.ptp(i_arr[:, 0]) < min_span_px) or (np.ptp(i_arr[:, 1]) < min_span_px):
-            continue
         objp_list.append(np.asarray(o, np.float32))
         imgp_list.append(np.asarray(i, np.float32))
 
-    flags = 0
     rms_opencv, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-        objp_list, imgp_list, image_size, None, None, flags=flags
-    )
+        objp_list, imgp_list, image_size, None, None)
 
-    # Robustify: drop views whose mean reprojection error exceeds max(5*median, 2 px)
-    # or whose recovered board depth is non-positive, then re-fit.
-    per_view_err = []
-    for obj_pts, img_pts, rv, tv in zip(objp_list, imgp_list, rvecs, tvecs):
-        proj, _ = cv2.projectPoints(obj_pts, rv, tv, mtx, dist)
-        d = proj.reshape(-1, 2).astype(np.float64) - np.asarray(img_pts, np.float64).reshape(-1, 2)
-        per_view_err.append(float(np.sqrt((d * d).sum(1)).mean()))
-    per_view_err = np.asarray(per_view_err)
-    depths = np.asarray([float(t[2, 0]) for t in tvecs])
-    thresh = 5.0 * float(np.median(per_view_err))
-    keep = (per_view_err < thresh) & (depths > 0)
-    # print(f"Kept {keep.sum()} points")
-    if keep.sum() < len(objp_list):
-        print(f"  dropping {len(objp_list) - keep.sum()}/{len(objp_list)} outlier views "
-              f"(thresh={thresh:.2f}px) and refitting")
-        objp_list = [o for o, k in zip(objp_list, keep) if k]
-        imgp_list = [p for p, k in zip(imgp_list, keep) if k]
-        rms_opencv, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-            objp_list, imgp_list, image_size, None, None, flags=flags
-        )
-
-    sse = n = 0
-    for obj_pts, img_pts, rv, tv in zip(objp_list, imgp_list, rvecs, tvecs):
-        proj, _ = cv2.projectPoints(obj_pts, rv, tv, mtx, dist)
-        d = proj.reshape(-1, 2).astype(np.float64) - np.asarray(img_pts, np.float64).reshape(-1, 2)
-        sse += float((d * d).sum())
-        n += d.size // 2
-    rmse = float(np.sqrt(sse / n))
     return {
         "K": mtx,
         "dist": dist.reshape(-1).astype(np.float64),
         "rvecs": rvecs,
         "tvecs": tvecs,
-        "rmse_px": rmse,
+        "rmse_px": float(rms_opencv),
         "filtered_obj": objp_list,
         "filtered_img": imgp_list,
         "rms_opencv": float(rms_opencv),
