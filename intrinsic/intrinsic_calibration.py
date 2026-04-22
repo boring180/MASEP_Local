@@ -39,7 +39,7 @@ def opencv_full_calib(objpoints, imgpoints, image_size, min_pts=10, min_spread_r
         per_view_err.append(float(np.sqrt((d * d).sum(1)).mean()))
     per_view_err = np.asarray(per_view_err)
     depths = np.asarray([float(t[2, 0]) for t in tvecs])
-    thresh = 1.0 * float(np.median(per_view_err))
+    thresh = 5.0 * float(np.median(per_view_err))
     keep = (per_view_err < thresh) & (depths > 0)
     # print(f"Kept {keep.sum()} points")
     if keep.sum() < len(objp_list):
@@ -481,6 +481,71 @@ def load_opencv_result(path):
     }
 
 
+def save_reprojection_images(points_file, opencv_result, output_dir):
+    """Render per-view reprojection overlays (observed vs projected points).
+
+    For each view in `points_file`, projects the object points through the
+    calibrated K/D and saved pose, then draws both observed (green) and
+    reprojected (red) points on a blank canvas of `img_size`. Writes one
+    PNG per view under `output_dir/{cam_name}/view_XXX.png`.
+    """
+    from pathlib import Path
+    data = np.load(points_file, allow_pickle=True)
+    obj_points = [arr.astype(np.float32) for arr in data["obj_points"]]
+    img_points = [arr.astype(np.float32) for arr in data["img_points"]]
+    img_size = tuple(int(x) for x in data["img_size"])
+    cam_name = Path(points_file).stem
+    w, h = img_size
+
+    K = opencv_result["K"]
+    dist = opencv_result["dist"]
+    rvecs = opencv_result["rvecs"]
+    tvecs = opencv_result["tvecs"]
+
+    # OpenCV calibration filters out weak views, so rvecs/tvecs may be fewer
+    # than the raw input. Re-solve PnP per-view to pair each view with a pose.
+    out = Path(output_dir) / cam_name
+    out.mkdir(parents=True, exist_ok=True)
+
+    n_saved = 0
+    for idx, (objp, imgp) in enumerate(zip(obj_points, img_points)):
+        imgp_arr = np.asarray(imgp, dtype=np.float32).reshape(-1, 2)
+        if len(imgp_arr) < 4:
+            continue
+        ok, rvec, tvec = cv2.solvePnP(
+            objp.reshape(-1, 1, 3), imgp_arr.reshape(-1, 1, 2), K, dist, flags=cv2.SOLVEPNP_IPPE)
+        if not ok:
+            continue
+        proj, _ = cv2.projectPoints(objp, rvec, tvec, K, dist)
+        proj = proj.reshape(-1, 2)
+        if not np.all(np.isfinite(proj)):
+            # Unstable pose (this view was likely dropped as an outlier during calibration).
+            continue
+
+        def pt(xy):
+            return (int(round(float(xy[0]))), int(round(float(xy[1]))))
+
+        canvas = np.full((h, w, 3), 255, dtype=np.uint8)
+        for row in imgp_arr:
+            cv2.circle(canvas, pt(row), 4, (0, 200, 0), 2)
+        for row in proj:
+            cv2.circle(canvas, pt(row), 3, (0, 0, 255), -1)
+        for obs, pr in zip(imgp_arr, proj):
+            cv2.line(canvas, pt(obs), pt(pr), (128, 128, 128), 1)
+
+        d = proj.astype(np.float64) - imgp_arr.astype(np.float64)
+        rmse = float(np.sqrt((d * d).sum(1).mean()))
+        cv2.putText(canvas, f"view {idx}  RMSE={rmse:.3f}px",
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
+        cv2.putText(canvas, "green=observed  red=reprojected",
+                    (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
+
+        cv2.imwrite(str(out / f"view_{idx:03d}.png"), canvas)
+        n_saved += 1
+
+    print(f"Saved {n_saved} reprojection images to {out}")
+
+
 def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     """Fit poly + MLP distortion on one camera's point file.
 
@@ -534,7 +599,9 @@ if __name__ == "__main__":
 
     points_dir = Path("../points/air")
     output_dir = Path("../calibration/air")
+    reproj_dir = Path("../points/air_reprojected")
 
     for npz in sorted(points_dir.glob("cam*.npz")):
         # calibrate_camera_multiple_methods(str(npz), str(output_dir))
-        opencv_calibrate_and_save(str(npz), str(output_dir))
+        opencv_result, _ = opencv_calibrate_and_save(str(npz), str(output_dir))
+        save_reprojection_images(str(npz), opencv_result, str(reproj_dir))
