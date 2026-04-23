@@ -208,29 +208,23 @@ class pytorch_distortion_fit():
 
     def plot_loss(self, save_path="loss_plot.png", opencv_rmse=None):
         import matplotlib.pyplot as plt
+        name = self.model.__class__.__name__
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
-        ax1.plot(self.loss_history, label="PyTorch distortion fit")
-        ax1.set_xlabel("Global Step")
-        ax1.set_ylabel("Loss")
-        ax1.set_title("Training Loss")
-        ax1.grid(True)
-
-        ax2.plot(self.loss_history, label="PyTorch distortion fit")
-        ax2.set_yscale("log")
-        ax2.set_xlabel("Global Step")
-        ax2.set_ylabel("Loss (log scale)")
-        ax2.set_title("Training Loss (log scale)")
-        ax2.grid(True)
-
-        epochs_per = self.epoch_per_iteration
         for ax in (ax1, ax2):
-            for i in range(1, self.iteration_of_training):
-                ax.axvline(x=i * epochs_per, color="red", linestyle="--", alpha=0.5)
+            ax.plot(self.loss_history, label="train", color="steelblue")
+            ax.plot(self.val_loss_history, label="val", color="darkorange")
+            ax.set_xlabel("Epoch")
+            ax.set_ylabel("Loss")
+            ax.grid(True)
             if opencv_rmse is not None:
                 ax.axhline(y=opencv_rmse, color="green", linestyle="-", linewidth=2,
                            label=f"OpenCV RMSE ({opencv_rmse:.4f})")
             ax.legend()
+
+        ax1.set_title(f"{name} Training/Val Loss")
+        ax2.set_yscale("log")
+        ax2.set_title(f"{name} Training/Val Loss (log)")
 
         plt.tight_layout()
         plt.savefig(save_path, dpi=150)
@@ -290,8 +284,9 @@ class pytorch_distortion_fit():
         import matplotlib.pyplot as plt
         from scipy.stats import gaussian_kde
 
+        undist_list = self.undistort_points()
         all_sq_dists = []
-        for imgp, reproj in zip(self.undistort_imgp_list, self.reprojected_imgp):
+        for imgp, reproj in zip(undist_list, self.reprojected_imgp):
             d = reproj.astype(np.float64) - imgp.reshape(-1, 2).astype(np.float64)
             sq_dist = np.sum(d ** 2, axis=1)
             all_sq_dists.append(sq_dist)
@@ -315,7 +310,7 @@ class pytorch_distortion_fit():
         ax.set_xlim(0, p95 * 1.05)
         ax.set_xlabel("Squared Reprojection Distance (px²)")
         ax.set_ylabel("Probability Density")
-        ax.set_title(f"PDF of Per-Point Squared Reprojection Error "
+        ax.set_title(f"PDF of Per-Point Squared Reprojection Error — {self.model.__class__.__name__} "
                      f"(95th percentile, {n_outliers} outliers clipped)")
         ax.legend()
         ax.grid(True, alpha=0.3, axis="y")
@@ -532,6 +527,8 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     else:
         opencv_result = load_opencv_result(Path(opencv_dir) / f"{cam_name}_opencv.npz")
 
+    opencv_rmse = opencv_result["rmse_px"]
+
     # Ordinary polynomial distortion (K + D from OpenCV)
     poly_fit = pytorch_distortion_fit(
         obj_points, img_points, img_size,
@@ -540,6 +537,9 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     poly_fit.ordinary_polynomial_distortion()
     poly_fit.fit()
     poly_fit.save(str(out / f"{cam_name}_poly.pt"))
+    poly_fit.plot_loss(str(out / f"{cam_name}_poly_loss.png"), opencv_rmse=opencv_rmse)
+    poly_fit.plot_distortion_field(str(out / f"{cam_name}_poly_distortion_field.png"))
+    poly_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_poly_reproj_err.png"))
 
     # MLP distortion (K + D from OpenCV)
     mlp_fit = pytorch_distortion_fit(
@@ -549,6 +549,9 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     mlp_fit.mlp_distortion()
     mlp_fit.fit()
     mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
+    mlp_fit.plot_loss(str(out / f"{cam_name}_mlp_loss.png"), opencv_rmse=opencv_rmse)
+    mlp_fit.plot_distortion_field(str(out / f"{cam_name}_mlp_distortion_field.png"))
+    mlp_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_mlp_reproj_err.png"))
 
     print(f"\n{cam_name} results:")
     print(f"  OpenCV RMSE: {opencv_result['rmse_px']:.6f}")
@@ -558,14 +561,124 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     return opencv_result, poly_fit, mlp_fit
 
 
+def _direct_reprojection_rmse(obj_points, img_points, K, dist):
+    """Per-view PnP with given K/dist, then measure RMSE against reprojection.
+
+    Returns (rmse_px, rvecs, tvecs, used_indices).
+    """
+    rvecs, tvecs, used = [], [], []
+    sse = n = 0
+    for idx, (objp, imgp) in enumerate(zip(obj_points, img_points)):
+        imgp_arr = np.asarray(imgp, np.float32).reshape(-1, 1, 2)
+        objp_arr = np.asarray(objp, np.float32).reshape(-1, 1, 3)
+        if len(imgp_arr) < 4:
+            continue
+        ok, rvec, tvec = cv2.solvePnP(objp_arr, imgp_arr, K, dist)
+        if not ok:
+            continue
+        proj, _ = cv2.projectPoints(objp_arr, rvec, tvec, K, dist)
+        proj = proj.reshape(-1, 2)
+        if not np.all(np.isfinite(proj)):
+            continue
+        d = proj.astype(np.float64) - imgp_arr.reshape(-1, 2).astype(np.float64)
+        sse += float((d * d).sum())
+        n += d.shape[0]
+        rvecs.append(rvec)
+        tvecs.append(tvec)
+        used.append(idx)
+    rmse = float(np.sqrt(sse / n)) if n else float("nan")
+    return rmse, rvecs, tvecs, used
+
+
+def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
+    """Compare 4 methods on water points:
+      1. Direct use of air intrinsics (PnP + reproject with air K/D).
+      2. Full OpenCV recalibration on water points.
+      3. MLP cross-medium correction on top of air K/D.
+      4. Polynomial cross-medium correction on top of air K/D.
+
+    Saves per-method results, plots, and a summary to `output_dir`.
+    """
+    from pathlib import Path
+    data = np.load(water_points_file, allow_pickle=True)
+    obj_points = [arr.astype(np.float32) for arr in data["obj_points"]]
+    img_points = [arr.astype(np.float32) for arr in data["img_points"]]
+    img_size = tuple(int(x) for x in data["img_size"])
+    cam_name = Path(water_points_file).stem
+
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    air = load_opencv_result(air_opencv_path)
+    air_K, air_dist = air["K"], air["dist"]
+
+    # Method 1: direct air intrinsics on water points.
+    m1_rmse, m1_rvecs, m1_tvecs, _ = _direct_reprojection_rmse(
+        obj_points, img_points, air_K, air_dist)
+    np.savez(str(out / f"{cam_name}_air_direct.npz"),
+             K=air_K, dist=air_dist,
+             rvecs=np.array(m1_rvecs, dtype=object),
+             tvecs=np.array(m1_tvecs, dtype=object),
+             img_size=np.array(img_size), rmse=m1_rmse)
+
+    # Method 2: full OpenCV recalibration on water points.
+    m2 = opencv_full_calib(obj_points, img_points, img_size)
+    np.savez(str(out / f"{cam_name}_water_opencv.npz"),
+             K=m2["K"], dist=m2["dist"],
+             rvecs=np.array(m2["rvecs"], dtype=object),
+             tvecs=np.array(m2["tvecs"], dtype=object),
+             img_size=np.array(img_size), rmse=m2["rmse_px"])
+
+    # Methods 3 & 4: learn cross-medium correction on top of air K/D.
+    poly_fit = pytorch_distortion_fit(
+        obj_points, img_points, img_size,
+        K=air_K, dist=air_dist)
+    poly_fit.ordinary_polynomial_distortion()
+    poly_fit.fit()
+    poly_fit.save(str(out / f"{cam_name}_poly.pt"))
+    poly_fit.plot_loss(str(out / f"{cam_name}_poly_loss.png"), opencv_rmse=m1_rmse)
+    poly_fit.plot_distortion_field(str(out / f"{cam_name}_poly_distortion_field.png"))
+    poly_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_poly_reproj_err.png"))
+
+    mlp_fit = pytorch_distortion_fit(
+        obj_points, img_points, img_size,
+        K=air_K, dist=air_dist)
+    mlp_fit.mlp_distortion()
+    mlp_fit.fit()
+    mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
+    mlp_fit.plot_loss(str(out / f"{cam_name}_mlp_loss.png"), opencv_rmse=m1_rmse)
+    mlp_fit.plot_distortion_field(str(out / f"{cam_name}_mlp_distortion_field.png"))
+    mlp_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_mlp_reproj_err.png"))
+
+    summary = {
+        "air_direct": m1_rmse,
+        "water_opencv": m2["rmse_px"],
+        "poly_correction": poly_fit.reprojection_error(),
+        "mlp_correction": mlp_fit.reprojection_error(),
+    }
+    print(f"\n{cam_name} cross-medium comparison:")
+    for k, v in summary.items():
+        print(f"  {k:20s} RMSE = {v:.6f} px")
+    return summary
+
+
 if __name__ == "__main__":
     from pathlib import Path
 
-    points_dir = Path("../points/air")
-    output_dir = Path("../calibration/air")
+    air_points_dir = Path("../points/air")
+    air_output_dir = Path("../calibration/air")
+    water_points_dir = Path("../points/water")
+    water_output_dir = Path("../calibration/water")
     reproj_dir = Path("../points/air_reprojected")
 
-    for npz in sorted(points_dir.glob("cam*.npz")):
-        # calibrate_camera_multiple_methods(str(npz), str(output_dir))
-        opencv_result, _ = opencv_calibrate_and_save(str(npz), str(output_dir))
+    for npz in sorted(air_points_dir.glob("cam*.npz")):
+        calibrate_camera_multiple_methods(str(npz), str(air_output_dir))
         # save_reprojection_images(str(npz), opencv_result, str(reproj_dir))
+
+    for npz in sorted(water_points_dir.glob("cam*.npz")):
+        cam_name = npz.stem
+        air_opencv_path = air_output_dir / f"{cam_name}_opencv.npz"
+        if not air_opencv_path.exists():
+            print(f"Skipping {cam_name}: no air calibration at {air_opencv_path}")
+            continue
+        calibrate_water_from_air(str(npz), str(air_opencv_path), str(water_output_dir))

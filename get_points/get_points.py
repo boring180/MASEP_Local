@@ -198,7 +198,7 @@ def save_density_heatmaps(points_folder, bin_size=20, blur_sigma=1.5):
 
 
 if __name__ == "__main__":
-    process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air", exclusive=False)
-    save_density_heatmaps("../points/air")
-    # process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water", exclusive=False)
-    # save_density_heatmaps("../points/water")
+    # process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air", exclusive=False)
+    # save_density_heatmaps("../points/air")
+    process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water", exclusive=True)
+    save_density_heatmaps("../points/water")
