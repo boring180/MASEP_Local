@@ -1,32 +1,30 @@
-"""Compare charuco localization under water using 3 intrinsic methods."""
+"""Compare charuco localization under water using the three underwater
+intrinsic methods: air_direct, water_opencv, and refractive."""
 
 from localization import (
-    load_extrinsics, load_opencv_intrinsics, load_pytorch_intrinsics,
+    METHODS,
+    load_extrinsics, load_intrinsics,
     make_charuco_detector, detect_video, localize_from_detections,
 )
 from result_analysis import (
     extract_positions, compare_methods, plot_inter_camera_mse, plot_scatter_grid,
 )
 
-CALIB_DIR = "../calibration/water"
+INTRINSIC_DIR = "../calibration/water"
+EXTRINSIC_DIR = "../calibration/air"  # extrinsics were calibrated in air
 VIDEO_DIR = "../video/charuco_water"
 VIDEOS = [
     "charuco_underwater1.mp4",
     "charuco_underwater2.mp4",
     "charuco_underwater3.mp4",
 ]
-METHODS = ["opencv", "poly", "mlp"]
 
 
 def main():
     board, detector = make_charuco_detector()
-    extrinsics = load_extrinsics(CALIB_DIR)
+    extrinsics = load_extrinsics(EXTRINSIC_DIR)
 
-    intrinsics = {
-        "opencv": load_opencv_intrinsics(CALIB_DIR),
-        "poly": load_pytorch_intrinsics(CALIB_DIR, "poly"),
-        "mlp": load_pytorch_intrinsics(CALIB_DIR, "mlp"),
-    }
+    intrinsics = {m: load_intrinsics(INTRINSIC_DIR, m) for m in METHODS}
 
     all_results = {m: [] for m in METHODS}
     for video in VIDEOS:

@@ -1,17 +1,21 @@
-"""Multi-camera ChArUco localization via PnP with different intrinsic models."""
+"""Multi-camera ChArUco localization via PnP with different intrinsic models.
+
+Supports the three underwater intrinsic methods produced by
+`intrinsic/intrinsic_calibration.py`:
+  - "air_direct":   air calibration applied as-is to water pixels.
+  - "water_opencv": OpenCV recalibration on water points.
+  - "refractive":   air K/D plus a learned refractive index n
+                    (Singh & Alexis 2024 flat-port model).
+"""
 
 import cv2
 import numpy as np
 import pickle
-import torch
 from pathlib import Path
-import sys
-
-sys.path.append(str(Path(__file__).resolve().parent.parent / "intrinsic"))
-from intrinsic_calibration import pytorch_distortion_fit
 
 
 CAMERA_NAMES = ["cam2", "cam1", "cam0"]  # top to bottom
+METHODS = ("air_direct", "water_opencv", "refractive")
 
 
 def load_extrinsics(calib_dir):
@@ -25,28 +29,25 @@ def load_extrinsics(calib_dir):
     return extrinsics
 
 
-def load_opencv_intrinsics(calib_dir):
-    """Load OpenCV K and dist for each camera."""
-    intrinsics = {}
-    for cam in CAMERA_NAMES:
-        p = Path(calib_dir) / f"{cam}_opencv.npz"
-        if p.exists():
-            d = np.load(str(p))
-            intrinsics[cam] = {"K": d["K"], "dist": d["dist"]}
-    return intrinsics
+def load_intrinsics(calib_dir, method):
+    """Load per-camera intrinsics for one of the methods in `METHODS`.
 
-
-def load_pytorch_intrinsics(calib_dir, model_suffix):
-    """Load PyTorch distortion model (.pt) for each camera.
-
-    model_suffix: 'poly' or 'mlp'
-    Returns dict of {cam: pytorch_distortion_fit} with K accessible via .mtx
+    Returns dict of {cam: {"K", "dist", "n"?}}. `n` is only present for the
+    refractive method.
     """
+    if method not in METHODS:
+        raise ValueError(f"unknown method {method!r}; expected one of {METHODS}")
     intrinsics = {}
     for cam in CAMERA_NAMES:
-        p = Path(calib_dir) / f"{cam}_{model_suffix}.pt"
-        if p.exists():
-            intrinsics[cam] = pytorch_distortion_fit.load(str(p))
+        p = Path(calib_dir) / f"{cam}_{method}.npz"
+        if not p.exists():
+            continue
+        d = np.load(str(p))
+        entry = {"K": np.asarray(d["K"], np.float64),
+                 "dist": np.asarray(d["dist"], np.float64).reshape(-1)}
+        if method == "refractive":
+            entry["n"] = float(d["n"])
+        intrinsics[cam] = entry
     return intrinsics
 
 
@@ -68,30 +69,41 @@ def detect_charuco(gray, board, detector, min_corners=6):
     return obj_points[:, 0, :], img_points[:, 0, :]
 
 
+def _rt_to_pose(rvec, tvec):
+    T = np.eye(4)
+    T[:3, :3], _ = cv2.Rodrigues(rvec)
+    T[:3, 3] = tvec.flatten()
+    return T
+
+
 def solve_pnp_opencv(obj_pts, img_pts, K, dist):
     """SolvePnP using OpenCV intrinsics (K + dist)."""
     ret, rvec, tvec = cv2.solvePnP(
         obj_pts.astype(np.float32), img_pts.astype(np.float32), K, dist)
-    if not ret:
-        return None
-    T = np.eye(4)
-    T[:3, :3], _ = cv2.Rodrigues(rvec)
-    T[:3, 3] = tvec.flatten()
-    return T
+    return _rt_to_pose(rvec, tvec) if ret else None
 
 
-def solve_pnp_pytorch(obj_pts, img_pts, pt_model):
-    """SolvePnP using PyTorch distortion model: undistort points first, then PnP with dist=0."""
-    undist = pt_model.undistort_points([img_pts])[0]
+def solve_pnp_refractive(obj_pts, img_pts, K, dist, n):
+    """PnP under the Singh & Alexis 2024 flat-port refractive model.
+
+    Pipeline: (1) lens-undistort observed water pixels with air K/D to get
+    normalized refracted rays p̄_{C,r}; (2) invert refraction to recover the
+    air-equivalent rays p̄_C = p̄_{C,r} / sqrt(n² r_r² + n² − r_r²); (3) map
+    back to pixels with air K and solve PnP against zero distortion.
+    """
+    normalized = cv2.undistortPoints(
+        img_pts.astype(np.float32).reshape(-1, 1, 2), K, dist).reshape(-1, 2)
+    rr2 = (normalized ** 2).sum(axis=1)
+    m = np.sqrt(n * n * rr2 + n * n - rr2)
+    undist_norm = normalized / m[:, None]
+    fx, fy = K[0, 0], K[1, 1]
+    cx, cy = K[0, 2], K[1, 2]
+    undist_px = np.stack([undist_norm[:, 0] * fx + cx,
+                          undist_norm[:, 1] * fy + cy], axis=1)
     ret, rvec, tvec = cv2.solvePnP(
-        obj_pts.astype(np.float32), undist.astype(np.float32),
-        pt_model.mtx, np.zeros(5))
-    if not ret:
-        return None
-    T = np.eye(4)
-    T[:3, :3], _ = cv2.Rodrigues(rvec)
-    T[:3, 3] = tvec.flatten()
-    return T
+        obj_pts.astype(np.float32), undist_px.astype(np.float32),
+        K, np.zeros(5))
+    return _rt_to_pose(rvec, tvec) if ret else None
 
 
 def detect_frame(sub_frames, board, detector, min_corners=6):
@@ -110,48 +122,37 @@ def detect_frame(sub_frames, board, detector, min_corners=6):
 
 
 def localize_from_detections(detections, intrinsics_dict, extrinsics,
-                             method="opencv"):
-    """Run PnP on pre-detected points for a given intrinsic method.
+                             method="air_direct"):
+    """Run PnP on pre-detected points under the chosen intrinsic method.
 
-    Args:
-        detections: dict of {cam: (obj_points, img_points)} from detect_frame
-        intrinsics_dict: for 'opencv': {cam: {K, dist}}, for 'poly'/'mlp': {cam: pytorch_distortion_fit}
-        method: 'opencv', 'poly', or 'mlp'
-
-    Returns:
-        dict of {cam: 4x4 world pose} for cameras with valid PnP solutions
+    `intrinsics_dict` is the dict returned by `load_intrinsics(calib_dir, method)`.
+    For `air_direct` / `water_opencv` it yields {K, dist}; for `refractive` it
+    additionally carries the learned `n`.
     """
+    if method not in METHODS:
+        raise ValueError(f"unknown method {method!r}; expected one of {METHODS}")
     results = {}
     for cam, (obj_pts, img_pts) in detections.items():
         if cam not in intrinsics_dict or cam not in extrinsics:
             continue
-
-        if method == "opencv":
-            T_cam_board = solve_pnp_opencv(
-                obj_pts, img_pts, intrinsics_dict[cam]["K"], intrinsics_dict[cam]["dist"])
+        entry = intrinsics_dict[cam]
+        if method == "refractive":
+            T_cam_board = solve_pnp_refractive(
+                obj_pts, img_pts, entry["K"], entry["dist"], entry["n"])
         else:
-            T_cam_board = solve_pnp_pytorch(obj_pts, img_pts, intrinsics_dict[cam])
-
+            T_cam_board = solve_pnp_opencv(
+                obj_pts, img_pts, entry["K"], entry["dist"])
         if T_cam_board is None:
             continue
-
-        T_world_board = extrinsics[cam] @ T_cam_board
-        results[cam] = T_world_board
-
+        results[cam] = extrinsics[cam] @ T_cam_board
     return results
 
 
 def localize_frame(sub_frames, board, detector, intrinsics_dict, extrinsics,
-                    method="opencv", min_corners=6):
-    """Localize charuco board in each camera, return world poses.
+                    method="air_direct", min_corners=6):
+    """Localize the charuco board in each camera; return `{cam: world pose}`.
 
-    Args:
-        sub_frames: list of 3 camera images (top to bottom)
-        intrinsics_dict: for 'opencv': {cam: {K, dist}}, for 'poly'/'mlp': {cam: pytorch_distortion_fit}
-        method: 'opencv', 'poly', or 'mlp'
-
-    Returns:
-        dict of {cam: 4x4 world pose} for cameras that detected the board
+    `method` must be one of `METHODS`; see `localize_from_detections`.
     """
     detections = detect_frame(sub_frames, board, detector, min_corners)
     return localize_from_detections(detections, intrinsics_dict, extrinsics, method)
@@ -180,7 +181,7 @@ def detect_video(video_path, board, detector, min_corners=6):
 
 
 def process_video(video_path, board, detector, intrinsics_dict, extrinsics,
-                  method="opencv", min_corners=6):
+                  method="air_direct", min_corners=6):
     """Process a video and return per-frame localization results.
 
     Returns:
