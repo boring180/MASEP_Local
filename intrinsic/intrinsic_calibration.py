@@ -112,15 +112,37 @@ class pytorch_distortion_fit():
         best_val_loss = float('inf')
         best_state = None
 
+        # Jacobian-determinant penalty: enforces locally one-to-one (orientation-
+        # preserving) mapping by punishing any non-positive det(J). Sampled at
+        # the training points each step. Set lambda=0 to disable.
+        jacobian_lambda = getattr(self, "jacobian_lambda", 1.0)
+
+        def jacobian_penalty(xin, yin):
+            xin = xin.detach().clone().requires_grad_(True)
+            yin = yin.detach().clone().requires_grad_(True)
+            fx, fy = self.model(xin, yin)
+            dfx_dx, dfx_dy = torch.autograd.grad(
+                fx.sum(), [xin, yin], create_graph=True)
+            dfy_dx, dfy_dy = torch.autograd.grad(
+                fy.sum(), [xin, yin], create_graph=True)
+            det = dfx_dx * dfy_dy - dfx_dy * dfy_dx
+            # Punish det <= eps; a positive det everywhere ⇒ local bijection.
+            return torch.relu(1e-3 - det).pow(2).mean()
+
         for epoch in range(self.epochs):
             # Train
             self.model.train()
             optimizer.zero_grad()
             px, py = self.model(x_train, y_train)
-            loss = criterion(px, tx_train) + criterion(py, ty_train)
+            fit_loss = criterion(px, tx_train) + criterion(py, ty_train)
+            if jacobian_lambda > 0:
+                reg = jacobian_penalty(x_train, y_train)
+                loss = fit_loss + jacobian_lambda * reg
+            else:
+                loss = fit_loss
             loss.backward()
             optimizer.step()
-            self.loss_history.append(loss.item())
+            self.loss_history.append(fit_loss.item())
 
             # Validate
             self.model.eval()
@@ -365,18 +387,31 @@ class pytorch_distortion_fit():
         refractive index (≈1.33 for water at 20 °C).
         """
         class RefractiveDistortion(nn.Module):
+            """n is reparametrized as 1 + softplus(raw) so n > 1 is hard-enforced.
+            This matches physical reality (water/glass: n > 1 in an air-cased
+            camera) and keeps the mapping one-to-one — for n ≥ 1 the scale
+            m(n, r_r) is real and strictly positive over the image disk, so
+            dividing by it never flips orientation or folds the plane."""
+
             def __init__(self, n0):
                 super().__init__()
-                self.n = nn.Parameter(torch.tensor(float(n0)))
+                # Invert n = 1 + softplus(raw): raw = log(exp(n0 - 1) - 1).
+                raw0 = float(np.log(np.expm1(max(n0 - 1.0, 1e-6))))
+                self.raw_n = nn.Parameter(torch.tensor(raw0))
+
+            @property
+            def n(self):
+                return 1.0 + torch.nn.functional.softplus(self.raw_n)
 
             def forward(self, x, y):
                 # x, y = distorted normalized coords (p̄_C,r); return undistorted p̄_C.
+                n = self.n
                 r2 = x * x + y * y
-                m = torch.sqrt(self.n ** 2 * r2 + self.n ** 2 - r2)
+                m = torch.sqrt(n ** 2 * r2 + n ** 2 - r2)
                 return x / m, y / m
 
             def __str__(self):
-                return f"RefractiveDistortion(n={self.n.item():.6f})"
+                return f"RefractiveDistortion(n={float(self.n):.6f})"
 
         self.model = RefractiveDistortion(n_init).to(self.device)
 
@@ -583,6 +618,97 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
     return opencv_result, poly_fit, mlp_fit
 
 
+def refractive_bundle_adjustment(
+        obj_lists, img_lists, air_K, air_D,
+        rvec_init, tvec_init, n_init=1.33,
+        epochs=5000, lr=1e-3, device='cpu'):
+    """Joint fit of refractive index n and per-view (rvec, tvec) via BA.
+
+    Minimizes pixel-space reprojection residual under the full physical model
+    from Singh & Alexis 2024:
+        u = air_K · D_air( m(n, r) · p̄_C(rvec, tvec, X) ),  m = n/sqrt(1+r²−n²r²)
+    with `air_K` and `air_D` held fixed (they're medium-independent lens
+    properties). Initial poses seed the optimization but are free parameters —
+    without this, any bias in the initial poses would get baked into n.
+
+    Returns (n_learned, rvecs, tvecs, rmse_px, loss_history).
+    """
+    import torch.nn.functional as F
+
+    dtype = torch.float64
+    K_t = torch.tensor(np.asarray(air_K), dtype=dtype, device=device)
+    D = np.asarray(air_D).reshape(-1).astype(np.float64)
+    D_padded = np.zeros(5, dtype=np.float64)
+    D_padded[: min(5, len(D))] = D[: min(5, len(D))]  # (k1, k2, p1, p2, k3)
+    D_t = torch.tensor(D_padded, dtype=dtype, device=device)
+
+    raw_n0 = float(np.log(np.expm1(max(n_init - 1.0, 1e-6))))
+    raw_n = torch.tensor(raw_n0, dtype=dtype, device=device, requires_grad=True)
+    rvec_params = [torch.tensor(np.asarray(r).reshape(3), dtype=dtype,
+                                device=device, requires_grad=True) for r in rvec_init]
+    tvec_params = [torch.tensor(np.asarray(t).reshape(3), dtype=dtype,
+                                device=device, requires_grad=True) for t in tvec_init]
+    obj_tensors = [torch.tensor(np.asarray(o).reshape(-1, 3), dtype=dtype, device=device)
+                   for o in obj_lists]
+    img_tensors = [torch.tensor(np.asarray(i).reshape(-1, 2), dtype=dtype, device=device)
+                   for i in img_lists]
+
+    optimizer = optim.Adam([raw_n] + rvec_params + tvec_params, lr=lr)
+
+    def rodrigues(rvec):
+        theta = torch.linalg.norm(rvec) + 1e-12
+        k = rvec / theta
+        Kx = torch.zeros(3, 3, dtype=dtype, device=device)
+        Kx[0, 1] = -k[2]; Kx[0, 2] = k[1]
+        Kx[1, 0] = k[2];  Kx[1, 2] = -k[0]
+        Kx[2, 0] = -k[1]; Kx[2, 1] = k[0]
+        I = torch.eye(3, dtype=dtype, device=device)
+        return I + torch.sin(theta) * Kx + (1 - torch.cos(theta)) * (Kx @ Kx)
+
+    def project_view(obj, rvec, tvec, n):
+        R = rodrigues(rvec)
+        X = obj @ R.T + tvec
+        x = X[:, 0] / X[:, 2]
+        y = X[:, 1] / X[:, 2]
+        r2 = x * x + y * y
+        # Forward refraction: Eq. 8, m = n / sqrt(1 + r² − n²r²)
+        m = n / torch.sqrt(torch.clamp(1 + r2 - n * n * r2, min=1e-8))
+        x_r, y_r = m * x, m * y
+        # Brown–Conrady forward lens distortion with air_D (fixed).
+        k1, k2, p1, p2, k3 = D_t
+        rr2 = x_r * x_r + y_r * y_r
+        radial = 1 + k1 * rr2 + k2 * rr2 ** 2 + k3 * rr2 ** 3
+        x_d = x_r * radial + 2 * p1 * x_r * y_r + p2 * (rr2 + 2 * x_r ** 2)
+        y_d = y_r * radial + p1 * (rr2 + 2 * y_r ** 2) + 2 * p2 * x_r * y_r
+        u = K_t[0, 0] * x_d + K_t[0, 2]
+        v = K_t[1, 1] * y_d + K_t[1, 2]
+        return torch.stack([u, v], dim=1)
+
+    loss_history = []
+    total_pts = sum(int(t.shape[0]) for t in img_tensors)
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        n_val = 1.0 + F.softplus(raw_n)
+        sse = torch.zeros((), dtype=dtype, device=device)
+        for obj, img, rvec, tvec in zip(obj_tensors, img_tensors, rvec_params, tvec_params):
+            proj = project_view(obj, rvec, tvec, n_val)
+            sse = sse + ((proj - img) ** 2).sum()
+        loss = sse / total_pts  # mean squared pixel error
+        loss.backward()
+        optimizer.step()
+        loss_history.append(float(loss.item()))
+        if epoch % 500 == 0:
+            print(f"  BA epoch {epoch}: rmse={float(loss.item()) ** 0.5:.4f}px, n={float(n_val):.4f}")
+
+    with torch.no_grad():
+        n_final = float(1.0 + F.softplus(raw_n))
+        rmse_final = float(loss_history[-1] ** 0.5)
+    rvecs_out = [r.detach().cpu().numpy().reshape(3, 1) for r in rvec_params]
+    tvecs_out = [t.detach().cpu().numpy().reshape(3, 1) for t in tvec_params]
+    print(f"  final: n = {n_final:.6f}, rmse = {rmse_final:.4f} px")
+    return n_final, rvecs_out, tvecs_out, rmse_final, loss_history
+
+
 def _direct_reprojection_rmse(obj_points, img_points, K, dist):
     """Per-view PnP with given K/dist, then measure RMSE against reprojection.
 
@@ -616,16 +742,18 @@ def _direct_reprojection_rmse(obj_points, img_points, K, dist):
 
 
 def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
-    """Compare 5 methods on water points given an air calibration:
+    """Compare 3 methods on water points given an air calibration:
       1. Direct use of air intrinsics (PnP + reproject with air K/D).
       2. Full OpenCV recalibration on water points.
-      3. Polynomial cross-medium correction on top of air K/D.
-      4. MLP cross-medium correction on top of air K/D.
-      5. Physics-based refractive-index fit (Singh & Alexis, 2024).
+      3. Physics-based refractive-index fit (Singh & Alexis, 2024).
 
-    Methods 3–5 reuse the per-view PnP poses from Method 1 so every fit
-    operates on the same view set, letting the learned residual isolate the
-    cross-medium distortion instead of pose error.
+    For method 3, the per-view poses come from Method 2 (water OpenCV calib)
+    while the target reprojection uses the AIR K/D. The pose is estimated
+    under a water-calibrated lens model, so reprojecting that pose through
+    the air lens model exposes exactly the cross-medium refractive residual
+    that the refractive model is meant to fit. If we instead used Method 1's
+    poses (solvePnP with air K/D on water points), the pose would already
+    have absorbed the refraction and the best fit collapses to n = 1.
     """
     from pathlib import Path
     data = np.load(water_points_file, allow_pickle=True)
@@ -660,52 +788,53 @@ def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
              filtered_img=np.array(m2["filtered_img"], dtype=object),
              img_size=np.array(img_size), rmse=m2["rmse_px"])
 
-    def _new_fit():
-        return pytorch_distortion_fit(
-            fit_obj, fit_img, img_size,
-            K=air_K, dist=air_dist,
-            rvecs=m1_rvecs, tvecs=m1_tvecs)
+    # Method 3: refractive bundle adjustment — jointly fit (n, per-view poses)
+    # under the full physical water model with air K/D fixed. Poses from
+    # Method 2 are used only as a warm start; leaving them free is what lets
+    # n converge to the true refractive index instead of compensating for
+    # bias baked into pre-computed poses.
+    n_learned, refr_rvecs, refr_tvecs, refr_rmse, refr_loss_hist = \
+        refractive_bundle_adjustment(
+            m2["filtered_obj"], m2["filtered_img"],
+            air_K, air_dist,
+            rvec_init=m2["rvecs"], tvec_init=m2["tvecs"])
+    np.savez(str(out / f"{cam_name}_refractive.npz"),
+             K=air_K, dist=air_dist, n=n_learned,
+             rvecs=np.array(refr_rvecs, dtype=object),
+             tvecs=np.array(refr_tvecs, dtype=object),
+             img_size=np.array(img_size), rmse=refr_rmse)
 
-    # Method 3: polynomial residual correction.
-    poly_fit = _new_fit()
-    poly_fit.ordinary_polynomial_distortion()
-    poly_fit.fit()
-    poly_fit.save(str(out / f"{cam_name}_poly.pt"))
-    poly_fit.plot_loss(str(out / f"{cam_name}_poly_loss.png"), opencv_rmse=m1_rmse)
-    poly_fit.plot_distortion_field(str(out / f"{cam_name}_poly_distortion_field.png"))
-    poly_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_poly_reproj_err.png"))
-
-    # Method 4: MLP residual correction.
-    mlp_fit = _new_fit()
-    mlp_fit.mlp_distortion()
-    mlp_fit.fit()
-    mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
-    mlp_fit.plot_loss(str(out / f"{cam_name}_mlp_loss.png"), opencv_rmse=m1_rmse)
-    mlp_fit.plot_distortion_field(str(out / f"{cam_name}_mlp_distortion_field.png"))
-    mlp_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_mlp_reproj_err.png"))
-
-    # Method 5: physics-based refractive index fit.
-    refr_fit = _new_fit()
-    refr_fit.refractive_distortion()
-    refr_fit.fit()
-    refr_fit.save(str(out / f"{cam_name}_refractive.pt"))
-    refr_fit.plot_loss(str(out / f"{cam_name}_refractive_loss.png"), opencv_rmse=m1_rmse)
-    refr_fit.plot_distortion_field(str(out / f"{cam_name}_refractive_distortion_field.png"))
-    refr_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_refractive_reproj_err.png"))
-    learned_n = float(refr_fit.model.n.detach().cpu().item())
+    # Refractive loss curve (training RMSE over BA epochs).
+    try:
+        import matplotlib.pyplot as plt
+        rmse_hist = np.sqrt(np.asarray(refr_loss_hist))
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(rmse_hist, label="BA RMSE")
+        ax.axhline(m1_rmse, color="red", linestyle="--", label=f"air_direct ({m1_rmse:.2f})")
+        ax.axhline(m2["rmse_px"], color="green", linestyle="--",
+                   label=f"water_opencv ({m2['rmse_px']:.2f})")
+        ax.set_xlabel("BA epoch")
+        ax.set_ylabel("RMSE (px)")
+        ax.set_title(f"{cam_name} refractive BA  (n={n_learned:.4f})")
+        ax.set_yscale("log")
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+        plt.tight_layout()
+        plt.savefig(str(out / f"{cam_name}_refractive_loss.png"), dpi=150)
+        plt.close(fig)
+    except Exception as e:
+        print(f"  (skipping refractive loss plot: {e})")
 
     summary = {
         "air_direct": m1_rmse,
         "water_opencv": m2["rmse_px"],
-        "poly_correction": poly_fit.reprojection_error(),
-        "mlp_correction": mlp_fit.reprojection_error(),
-        "refractive": refr_fit.reprojection_error(),
+        "refractive": refr_rmse,
     }
     print(f"\n{cam_name} cross-medium comparison:")
     for k, v in summary.items():
         print(f"  {k:20s} RMSE = {v:.6f} px")
-    print(f"  learned refractive index n = {learned_n:.6f} (water ≈ 1.33)")
-    summary["learned_n"] = learned_n
+    print(f"  learned refractive index n = {n_learned:.6f} (water ≈ 1.33)")
+    summary["learned_n"] = n_learned
     return summary
 
 
