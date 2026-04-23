@@ -35,34 +35,30 @@ def opencv_full_calib(objpoints, imgpoints, image_size):
 
 
 class pytorch_distortion_fit():
-    def __init__(self, objpoints, imgpoints, image_size, K, dist, rvecs=None, tvecs=None,
-                 device='cpu', epochs=10000, val_ratio=0.2):
-        """Fit a nonlinear distortion model given a pre-calibrated K (and linear D).
+    def __init__(self, objpoints, imgpoints, image_size, K, dist, rvecs, tvecs,
+                 device='cpu', epochs=100000, val_ratio=0.2):
+        """Fit a nonlinear distortion model on top of a pre-calibrated K + D.
 
-        K, dist, rvecs, tvecs are expected to come from cv2.calibrateCamera
-        (e.g. opencv_full_calib). K is taken as-is. The linear `dist` is kept
-        for reference but is NOT used when reprojecting the target; the
-        reprojection target is obtained with zero distortion so the nonlinear
-        model learns the full inverse-distortion from observed → undistorted.
+        K and the OpenCV-calibrated distortion D are taken as-is and used for
+        both per-view reprojection (target) and pixel normalization (input).
+        The nonlinear model therefore learns only the RESIDUAL distortion left
+        after the OpenCV lens model has been applied — for air data this
+        residual is near zero; for water data this captures the cross-medium
+        refractive effect on top of the air calibration.
         If rvecs/tvecs are omitted they are recovered per view via solvePnP.
         """
         self.image_size = image_size
         self.mtx = np.asarray(K, dtype=np.float64)
-        self.dist_linear = np.asarray(dist, dtype=np.float64).reshape(-1)
-        # Zero distortion target: reprojections through K alone → ideal undistorted pixels.
-        self.dist = np.zeros(5, dtype=np.float64)
+        # Use the OpenCV-calibrated distortion throughout — reprojections and
+        # normalized-coord transforms both go through this D.
+        self.dist = np.asarray(dist, dtype=np.float64).reshape(-1)
 
-        self.objp_list, self.imgp_list = [], []
-        for o, i in zip(objpoints, imgpoints):
-            if len(i) >= 6:
-                self.objp_list.append(np.asarray(o, np.float32))
-                self.imgp_list.append(np.asarray(i, np.float32))
+        # Caller must pass obj/img lists aligned 1:1 with rvecs/tvecs.
+        self.objp_list = [np.asarray(o, np.float32) for o in objpoints]
+        self.imgp_list = [np.asarray(i, np.float32) for i in imgpoints]
 
-        if rvecs is not None and tvecs is not None:
-            self.rvecs = list(rvecs)
-            self.tvecs = list(tvecs)
-        else:
-            self._solve_extrinsics()
+        self.rvecs = list(rvecs)
+        self.tvecs = list(tvecs)
 
         self.epochs = epochs
         self.device = device
@@ -73,27 +69,15 @@ class pytorch_distortion_fit():
     def __str__(self):
         return f"K:\n{self.mtx}\nDistortion: {self.model}"
 
-    def _solve_extrinsics(self):
-        """Recover per-view pose using the provided K and linear distortion."""
-        self.rvecs, self.tvecs = [], []
-        for objp, imgp in zip(self.objp_list, self.imgp_list):
-            ok, rvec, tvec = cv2.solvePnP(
-                objp.reshape(-1, 1, 3), imgp.reshape(-1, 1, 2),
-                self.mtx, self.dist_linear)
-            if not ok:
-                raise RuntimeError("solvePnP failed for a view")
-            self.rvecs.append(rvec)
-            self.tvecs.append(tvec)
-
     def _reproject(self):
-        """Reproject object points through K with zero distortion — undistorted ground truth."""
+        """Reproject object points through K and the OpenCV-calibrated D — target image points."""
         self.reprojected_imgp = []
         for objp, rvec, tvec in zip(self.objp_list, self.rvecs, self.tvecs):
             proj, _ = cv2.projectPoints(objp, rvec, tvec, self.mtx, self.dist)
             self.reprojected_imgp.append(proj.reshape(-1, 2))
 
     def _normalize(self, imgp_list):
-        """Apply K_inv to pixel points → normalized coords (no distortion applied)."""
+        """Apply K_inv + OpenCV lens-undistort to pixel points → normalized coords."""
         cat = np.concatenate([p.reshape(-1, 1, 2) for p in imgp_list], axis=0).astype(np.float32)
         return cv2.undistortPoints(cat, self.mtx, self.dist).reshape(-1, 2)
 
@@ -368,6 +352,34 @@ class pytorch_distortion_fit():
 
         self.model = MLPDistortion().to(self.device)
 
+    def refractive_distortion(self, n_init=1.33):
+        """Physics-based flat-port refractive model (Singh & Alexis, 2024).
+
+        Single learnable refractive index n. Backward (inverse) mapping —
+        same direction as the poly/MLP models: input (x, y) is the distorted
+        normalized point p̄_C,r (after K_inv + OpenCV lens-undistort on the
+        observed water pixel), output is the undistorted air-equivalent p̄_C.
+        Implements the paper's Eq. 9:
+            p̄_C = p̄_C,r / sqrt(n² r_r² + n² - r_r²),  r_r = ‖p̄_C,r‖.
+        After fitting, the learned n should be close to the medium's true
+        refractive index (≈1.33 for water at 20 °C).
+        """
+        class RefractiveDistortion(nn.Module):
+            def __init__(self, n0):
+                super().__init__()
+                self.n = nn.Parameter(torch.tensor(float(n0)))
+
+            def forward(self, x, y):
+                # x, y = distorted normalized coords (p̄_C,r); return undistorted p̄_C.
+                r2 = x * x + y * y
+                m = torch.sqrt(self.n ** 2 * r2 + self.n ** 2 - r2)
+                return x / m, y / m
+
+            def __str__(self):
+                return f"RefractiveDistortion(n={self.n.item():.6f})"
+
+        self.model = RefractiveDistortion(n_init).to(self.device)
+
     def save(self, path):
         """Save K matrix and distortion model state_dict."""
         torch.save({
@@ -393,6 +405,8 @@ class pytorch_distortion_fit():
             obj.ordinary_polynomial_distortion()
         elif data["model_name"] == "MLPDistortion":
             obj.mlp_distortion()
+        elif data["model_name"] == "RefractiveDistortion":
+            obj.refractive_distortion()
         obj.model.load_state_dict(data["model_state"])
         obj.model.eval()
         return obj
@@ -420,6 +434,8 @@ def opencv_calibrate_and_save(points_file, output_dir):
              K=result["K"], dist=result["dist"],
              rvecs=np.array(result["rvecs"], dtype=object),
              tvecs=np.array(result["tvecs"], dtype=object),
+             filtered_obj=np.array(result["filtered_obj"], dtype=object),
+             filtered_img=np.array(result["filtered_img"], dtype=object),
              img_size=np.array(img_size), rmse=result["rmse_px"])
     print(f"OpenCV calibration saved to {save_path}")
     print(f"  K =\n{result['K']}")
@@ -431,13 +447,17 @@ def opencv_calibrate_and_save(points_file, output_dir):
 def load_opencv_result(path):
     """Load a saved OpenCV calibration npz back into the dict shape of opencv_full_calib."""
     data = np.load(path, allow_pickle=True)
-    return {
+    out = {
         "K": np.asarray(data["K"], dtype=np.float64),
         "dist": np.asarray(data["dist"], dtype=np.float64).reshape(-1),
         "rvecs": [np.asarray(r, dtype=np.float64) for r in data["rvecs"]],
         "tvecs": [np.asarray(t, dtype=np.float64) for t in data["tvecs"]],
         "rmse_px": float(data["rmse"]),
     }
+    if "filtered_obj" in data.files:
+        out["filtered_obj"] = [np.asarray(a, np.float32) for a in data["filtered_obj"]]
+        out["filtered_img"] = [np.asarray(a, np.float32) for a in data["filtered_img"]]
+    return out
 
 
 def save_reprojection_images(points_file, opencv_result, output_dir):
@@ -528,10 +548,12 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
         opencv_result = load_opencv_result(Path(opencv_dir) / f"{cam_name}_opencv.npz")
 
     opencv_rmse = opencv_result["rmse_px"]
+    fit_obj = opencv_result["filtered_obj"]
+    fit_img = opencv_result["filtered_img"]
 
     # Ordinary polynomial distortion (K + D from OpenCV)
     poly_fit = pytorch_distortion_fit(
-        obj_points, img_points, img_size,
+        fit_obj, fit_img, img_size,
         K=opencv_result["K"], dist=opencv_result["dist"],
         rvecs=opencv_result["rvecs"], tvecs=opencv_result["tvecs"])
     poly_fit.ordinary_polynomial_distortion()
@@ -543,7 +565,7 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
 
     # MLP distortion (K + D from OpenCV)
     mlp_fit = pytorch_distortion_fit(
-        obj_points, img_points, img_size,
+        fit_obj, fit_img, img_size,
         K=opencv_result["K"], dist=opencv_result["dist"],
         rvecs=opencv_result["rvecs"], tvecs=opencv_result["tvecs"])
     mlp_fit.mlp_distortion()
@@ -564,40 +586,46 @@ def calibrate_camera_multiple_methods(points_file, output_dir, opencv_dir=None):
 def _direct_reprojection_rmse(obj_points, img_points, K, dist):
     """Per-view PnP with given K/dist, then measure RMSE against reprojection.
 
-    Returns (rmse_px, rvecs, tvecs, used_indices).
+    Returns (rmse_px, rvecs, tvecs, filt_obj, filt_img) with all four lists
+    aligned 1:1 to the views that passed PnP.
     """
-    rvecs, tvecs, used = [], [], []
+    rvecs, tvecs, filt_obj, filt_img = [], [], [], []
     sse = n = 0
-    for idx, (objp, imgp) in enumerate(zip(obj_points, img_points)):
-        imgp_arr = np.asarray(imgp, np.float32).reshape(-1, 1, 2)
-        objp_arr = np.asarray(objp, np.float32).reshape(-1, 1, 3)
+    for objp, imgp in zip(obj_points, img_points):
+        imgp_arr = np.asarray(imgp, np.float32).reshape(-1, 2)
+        objp_arr = np.asarray(objp, np.float32).reshape(-1, 3)
         if len(imgp_arr) < 4:
             continue
-        ok, rvec, tvec = cv2.solvePnP(objp_arr, imgp_arr, K, dist)
+        ok, rvec, tvec = cv2.solvePnP(
+            objp_arr.reshape(-1, 1, 3), imgp_arr.reshape(-1, 1, 2), K, dist, flags=cv2.SOLVEPNP_IPPE)
         if not ok:
             continue
         proj, _ = cv2.projectPoints(objp_arr, rvec, tvec, K, dist)
         proj = proj.reshape(-1, 2)
         if not np.all(np.isfinite(proj)):
             continue
-        d = proj.astype(np.float64) - imgp_arr.reshape(-1, 2).astype(np.float64)
+        d = proj.astype(np.float64) - imgp_arr.astype(np.float64)
         sse += float((d * d).sum())
         n += d.shape[0]
         rvecs.append(rvec)
         tvecs.append(tvec)
-        used.append(idx)
+        filt_obj.append(objp_arr)
+        filt_img.append(imgp_arr)
     rmse = float(np.sqrt(sse / n)) if n else float("nan")
-    return rmse, rvecs, tvecs, used
+    return rmse, rvecs, tvecs, filt_obj, filt_img
 
 
 def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
-    """Compare 4 methods on water points:
+    """Compare 5 methods on water points given an air calibration:
       1. Direct use of air intrinsics (PnP + reproject with air K/D).
       2. Full OpenCV recalibration on water points.
-      3. MLP cross-medium correction on top of air K/D.
-      4. Polynomial cross-medium correction on top of air K/D.
+      3. Polynomial cross-medium correction on top of air K/D.
+      4. MLP cross-medium correction on top of air K/D.
+      5. Physics-based refractive-index fit (Singh & Alexis, 2024).
 
-    Saves per-method results, plots, and a summary to `output_dir`.
+    Methods 3–5 reuse the per-view PnP poses from Method 1 so every fit
+    operates on the same view set, letting the learned residual isolate the
+    cross-medium distortion instead of pose error.
     """
     from pathlib import Path
     data = np.load(water_points_file, allow_pickle=True)
@@ -612,8 +640,9 @@ def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
     air = load_opencv_result(air_opencv_path)
     air_K, air_dist = air["K"], air["dist"]
 
-    # Method 1: direct air intrinsics on water points.
-    m1_rmse, m1_rvecs, m1_tvecs, _ = _direct_reprojection_rmse(
+    # Method 1: direct air intrinsics on water points. Provides shared
+    # rvecs/tvecs (and the matching obj/img list) used by methods 3–5.
+    m1_rmse, m1_rvecs, m1_tvecs, fit_obj, fit_img = _direct_reprojection_rmse(
         obj_points, img_points, air_K, air_dist)
     np.savez(str(out / f"{cam_name}_air_direct.npz"),
              K=air_K, dist=air_dist,
@@ -627,12 +656,18 @@ def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
              K=m2["K"], dist=m2["dist"],
              rvecs=np.array(m2["rvecs"], dtype=object),
              tvecs=np.array(m2["tvecs"], dtype=object),
+             filtered_obj=np.array(m2["filtered_obj"], dtype=object),
+             filtered_img=np.array(m2["filtered_img"], dtype=object),
              img_size=np.array(img_size), rmse=m2["rmse_px"])
 
-    # Methods 3 & 4: learn cross-medium correction on top of air K/D.
-    poly_fit = pytorch_distortion_fit(
-        obj_points, img_points, img_size,
-        K=air_K, dist=air_dist)
+    def _new_fit():
+        return pytorch_distortion_fit(
+            fit_obj, fit_img, img_size,
+            K=air_K, dist=air_dist,
+            rvecs=m1_rvecs, tvecs=m1_tvecs)
+
+    # Method 3: polynomial residual correction.
+    poly_fit = _new_fit()
     poly_fit.ordinary_polynomial_distortion()
     poly_fit.fit()
     poly_fit.save(str(out / f"{cam_name}_poly.pt"))
@@ -640,9 +675,8 @@ def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
     poly_fit.plot_distortion_field(str(out / f"{cam_name}_poly_distortion_field.png"))
     poly_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_poly_reproj_err.png"))
 
-    mlp_fit = pytorch_distortion_fit(
-        obj_points, img_points, img_size,
-        K=air_K, dist=air_dist)
+    # Method 4: MLP residual correction.
+    mlp_fit = _new_fit()
     mlp_fit.mlp_distortion()
     mlp_fit.fit()
     mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
@@ -650,15 +684,28 @@ def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
     mlp_fit.plot_distortion_field(str(out / f"{cam_name}_mlp_distortion_field.png"))
     mlp_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_mlp_reproj_err.png"))
 
+    # Method 5: physics-based refractive index fit.
+    refr_fit = _new_fit()
+    refr_fit.refractive_distortion()
+    refr_fit.fit()
+    refr_fit.save(str(out / f"{cam_name}_refractive.pt"))
+    refr_fit.plot_loss(str(out / f"{cam_name}_refractive_loss.png"), opencv_rmse=m1_rmse)
+    refr_fit.plot_distortion_field(str(out / f"{cam_name}_refractive_distortion_field.png"))
+    refr_fit.plot_reprojection_error_distribution(str(out / f"{cam_name}_refractive_reproj_err.png"))
+    learned_n = float(refr_fit.model.n.detach().cpu().item())
+
     summary = {
         "air_direct": m1_rmse,
         "water_opencv": m2["rmse_px"],
         "poly_correction": poly_fit.reprojection_error(),
         "mlp_correction": mlp_fit.reprojection_error(),
+        "refractive": refr_fit.reprojection_error(),
     }
     print(f"\n{cam_name} cross-medium comparison:")
     for k, v in summary.items():
         print(f"  {k:20s} RMSE = {v:.6f} px")
+    print(f"  learned refractive index n = {learned_n:.6f} (water ≈ 1.33)")
+    summary["learned_n"] = learned_n
     return summary
 
 
@@ -671,8 +718,8 @@ if __name__ == "__main__":
     water_output_dir = Path("../calibration/water")
     reproj_dir = Path("../points/air_reprojected")
 
-    for npz in sorted(air_points_dir.glob("cam*.npz")):
-        calibrate_camera_multiple_methods(str(npz), str(air_output_dir))
+    # for npz in sorted(air_points_dir.glob("cam*.npz")):
+    #     calibrate_camera_multiple_methods(str(npz), str(air_output_dir))
         # save_reprojection_images(str(npz), opencv_result, str(reproj_dir))
 
     for npz in sorted(water_points_dir.glob("cam*.npz")):
