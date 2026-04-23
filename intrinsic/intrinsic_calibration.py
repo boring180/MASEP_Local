@@ -568,4 +568,4 @@ if __name__ == "__main__":
     for npz in sorted(points_dir.glob("cam*.npz")):
         # calibrate_camera_multiple_methods(str(npz), str(output_dir))
         opencv_result, _ = opencv_calibrate_and_save(str(npz), str(output_dir))
-        save_reprojection_images(str(npz), opencv_result, str(reproj_dir))
+        # save_reprojection_images(str(npz), opencv_result, str(reproj_dir))

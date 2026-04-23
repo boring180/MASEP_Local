@@ -164,6 +164,41 @@ def process_videos(
         np.savez(str(points_dir / "extrinsic.npz"), **ext_save)
 
 
+def save_density_heatmaps(points_folder, bin_size=20, blur_sigma=1.5):
+    """Render per-camera point-density heatmaps from saved intrinsic npz files.
+
+    Bins all observed image points on a grid of `bin_size`-pixel cells, applies
+    a Gaussian blur, and writes a JET-colormapped PNG per camera into
+    `points_folder`. Useful to spot regions of the sensor with little/no
+    calibration coverage.
+    """
+    points_dir = Path(points_folder)
+    for npz in sorted(points_dir.glob("cam*.npz")):
+        data = np.load(str(npz), allow_pickle=True)
+        img_w, img_h = (int(x) for x in data["img_size"])
+        pts = np.concatenate(
+            [np.asarray(p, np.float32).reshape(-1, 2) for p in data["img_points"]],
+            axis=0)
+
+        nx = max(1, img_w // bin_size)
+        ny = max(1, img_h // bin_size)
+        hist, _, _ = np.histogram2d(
+            pts[:, 1], pts[:, 0], bins=[ny, nx],
+            range=[[0, img_h], [0, img_w]])
+        hist = cv2.GaussianBlur(hist, (0, 0), blur_sigma)
+        density = cv2.resize(hist, (img_w, img_h), interpolation=cv2.INTER_LINEAR)
+        norm = (density / density.max() * 255).astype(np.uint8) if density.max() > 0 else density.astype(np.uint8)
+        heatmap = cv2.applyColorMap(norm, cv2.COLORMAP_JET)
+
+        cv2.putText(heatmap, f"{npz.stem}  N={len(pts)}",
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        out_path = points_dir / f"{npz.stem}_density.png"
+        cv2.imwrite(str(out_path), heatmap)
+        print(f"  wrote {out_path} ({len(pts)} points)")
+
+
 if __name__ == "__main__":
     process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air", exclusive=False)
+    save_density_heatmaps("../points/air")
     # process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water", exclusive=False)
+    # save_density_heatmaps("../points/water")
