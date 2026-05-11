@@ -5,6 +5,28 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
+def filter_best_frames(results, keep=0.99):
+    """Drop the worst (1 − keep) fraction of frames by inter-camera spread.
+
+    For each multi-camera frame, compute the sum of per-axis stdev across
+    detecting cameras. Frames above the `keep`-quantile of that score are
+    replaced with an empty dict (i.e. treated as un-localized downstream).
+    Frames with fewer than 2 detecting cameras have no spread signal and
+    are always kept.
+    """
+    spreads = []
+    for i, frame in enumerate(results):
+        if len(frame) < 2:
+            continue
+        pts = np.array([T[:3, 3] for T in frame.values()])
+        spreads.append((i, float(pts.std(axis=0).sum())))
+    if not spreads:
+        return list(results)
+    threshold = np.quantile([s for _, s in spreads], keep)
+    drop = {i for i, s in spreads if s > threshold}
+    return [{} if i in drop else f for i, f in enumerate(results)]
+
+
 def extract_positions(results):
     """Extract board XYZ positions per frame (average across detecting cameras).
 

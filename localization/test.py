@@ -7,7 +7,8 @@ from localization import (
     make_charuco_detector, detect_video, localize_from_detections,
 )
 from result_analysis import (
-    extract_positions, compare_methods, plot_inter_camera_mse, plot_scatter_grid,
+    extract_positions, filter_best_frames,
+    compare_methods, plot_inter_camera_mse, plot_scatter_grid,
 )
 
 INTRINSIC_DIR = "../calibration/water"
@@ -39,15 +40,19 @@ def main():
                        for det in detections]
             all_results[method].extend(results)
 
+    # Keep only the best 95% of frames (drop worst 5% by inter-camera spread)
+    # per method, so stats/plots aren't dragged by occasional PnP outliers.
+    all_results = {m: filter_best_frames(r, keep=0.95) for m, r in all_results.items()}
+
     all_positions = {}
     for method in METHODS:
         all_positions[method] = extract_positions(all_results[method])
         n = sum(1 for p in all_positions[method] if p is not None)
-        print(f"'{method}': {n}/{len(all_positions[method])} frames localized")
+        print(f"'{method}': {n}/{len(all_positions[method])} frames localized (top 95%)")
 
     compare_methods(all_positions)
     plot_inter_camera_mse(all_results)
-    plot_scatter_grid(all_results)
+    # plot_scatter_grid(all_results)
 
 
 if __name__ == "__main__":
