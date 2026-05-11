@@ -41,7 +41,8 @@ def process_videos(
     square_size=0.023,
     marker_size=0.017,
     aruco_dict_name="DICT_5X5_100",
-    min_corners=15,
+    min_corners=1,
+    exclusive=False,
 ):
     """
     Extract ChArUco points from videos with 3 vertically stacked cameras.
@@ -53,6 +54,11 @@ def process_videos(
     Photos saved under:
       - photos_folder/single/   (frames with any detection, per-camera)
       - photos_folder/multi/    (frames where >=2 cameras detected, combined)
+
+    If `exclusive` is True, a frame's detections are routed to either the
+    intrinsic or the extrinsic set but never both: multi-cam frames (>=2
+    detections) go only to extrinsic, single-cam frames go only to intrinsic.
+    If False (default), multi-cam frames contribute to both sets.
     """
     video_dir = Path(video_folder)
     video_files = sorted(
@@ -110,13 +116,17 @@ def process_videos(
                 if obj is not None:
                     detections[cam] = (obj, img, ci)
 
-            for cam, (obj, img, ci) in detections.items():
-                intrinsic[cam]["obj"].append(obj)
-                intrinsic[cam]["img"].append(img)
-                _draw_corners(subs[ci], img)
-                cv2.imwrite(str(single_photo_dir / f"{global_idx}_{cam}.jpg"), subs[ci])
+            is_multi = len(detections) >= 2
+            add_to_intrinsic = not (exclusive and is_multi)
 
-            if len(detections) >= 2:
+            if add_to_intrinsic:
+                for cam, (obj, img, ci) in detections.items():
+                    intrinsic[cam]["obj"].append(obj)
+                    intrinsic[cam]["img"].append(img)
+                    _draw_corners(subs[ci], img)
+                    cv2.imwrite(str(single_photo_dir / f"{global_idx}_{cam}.jpg"), subs[ci])
+
+            if is_multi:
                 for cam in CAMERA_NAMES:
                     if cam in detections:
                         obj, img, _ = detections[cam]
@@ -154,6 +164,41 @@ def process_videos(
         np.savez(str(points_dir / "extrinsic.npz"), **ext_save)
 
 
+def save_density_heatmaps(points_folder, bin_size=20, blur_sigma=1.5):
+    """Render per-camera point-density heatmaps from saved intrinsic npz files.
+
+    Bins all observed image points on a grid of `bin_size`-pixel cells, applies
+    a Gaussian blur, and writes a JET-colormapped PNG per camera into
+    `points_folder`. Useful to spot regions of the sensor with little/no
+    calibration coverage.
+    """
+    points_dir = Path(points_folder)
+    for npz in sorted(points_dir.glob("cam*.npz")):
+        data = np.load(str(npz), allow_pickle=True)
+        img_w, img_h = (int(x) for x in data["img_size"])
+        pts = np.concatenate(
+            [np.asarray(p, np.float32).reshape(-1, 2) for p in data["img_points"]],
+            axis=0)
+
+        nx = max(1, img_w // bin_size)
+        ny = max(1, img_h // bin_size)
+        hist, _, _ = np.histogram2d(
+            pts[:, 1], pts[:, 0], bins=[ny, nx],
+            range=[[0, img_h], [0, img_w]])
+        hist = cv2.GaussianBlur(hist, (0, 0), blur_sigma)
+        density = cv2.resize(hist, (img_w, img_h), interpolation=cv2.INTER_LINEAR)
+        norm = (density / density.max() * 255).astype(np.uint8) if density.max() > 0 else density.astype(np.uint8)
+        heatmap = cv2.applyColorMap(norm, cv2.COLORMAP_JET)
+
+        cv2.putText(heatmap, f"{npz.stem}  N={len(pts)}",
+                    (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        out_path = points_dir / f"{npz.stem}_density.png"
+        cv2.imwrite(str(out_path), heatmap)
+        print(f"  wrote {out_path} ({len(pts)} points)")
+
+
 if __name__ == "__main__":
-    process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air")
-    process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water")
+    # process_videos(video_folder="../video/charuco_air", points_folder="../points/air", photos_folder="../photos/air", exclusive=False)
+    # save_density_heatmaps("../points/air")
+    process_videos(video_folder="../video/charuco_water", points_folder="../points/water", photos_folder="../photos/water", exclusive=True)
+    save_density_heatmaps("../points/water")

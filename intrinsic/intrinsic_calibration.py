@@ -1,438 +1,361 @@
-"""Pinhole OpenCV calibration + PyTorch distortion fit; full OpenCV calib as reference."""
+"""OpenCV pinhole calibration + cross-medium refractive bundle adjustment.
+
+Standalone module: OpenCV calibration, on-disk I/O, and a PyTorch bundle
+adjustment for the Singh & Alexis 2024 refractive camera model.
+"""
+
+from pathlib import Path
 
 import numpy as np
 import cv2
 import torch
-import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 
-def opencv_full_calib(objpoints, imgpoints, image_size):
-    # The filtered lists are used for the calibration
-    objp_list, imgp_list = [], []
-    for o, i in zip(objpoints, imgpoints):
-        if len(i) >= 6:
-            objp_list.append(np.asarray(o, np.float32))
-            imgp_list.append(np.asarray(i, np.float32))
 
-    # flags = cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 | cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6
-    flags = 0
-    rms_opencv, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
-        objp_list, imgp_list, image_size, None, None, flags=flags
-    )
-    sse = n = 0
-    for obj_pts, img_pts, rv, tv in zip(objp_list, imgp_list, rvecs, tvecs):
-        proj, _ = cv2.projectPoints(obj_pts, rv, tv, mtx, dist)
-        d = proj.reshape(-1, 2).astype(np.float64) - np.asarray(img_pts, np.float64).reshape(-1, 2)
-        sse += float((d * d).sum())
-        n += d.size // 2
-    rmse = float(np.sqrt(sse / n))
+# Pick the best available device. CUDA preferred;
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+    DTYPE = torch.float64
+else:
+    DEVICE = torch.device("cpu")
+    DTYPE = torch.float64
+
+
+# ---- OpenCV calibration -------------------------------------------------------
+
+def opencv_full_calib(obj_points, img_points, image_size):
+    """Run `cv2.calibrateCamera` after dropping degenerate views."""
+    filt_obj, filt_img, kept = [], [], []
+    for idx, (o, i) in enumerate(zip(obj_points, img_points)):
+        if len(i) < 4:
+            continue
+        xy = np.asarray(o, np.float64)[:, :2]
+        s = np.linalg.svd(xy - xy.mean(0), compute_uv=False)
+        if s[1] < 1e-6 * s[0]:  # colinear
+            continue
+        filt_obj.append(np.asarray(o, np.float32))
+        filt_img.append(np.asarray(i, np.float32))
+        kept.append(idx)
+
+    rmse, K, dist, rvecs, tvecs = cv2.calibrateCamera(
+        filt_obj, filt_img, image_size, None, None)
     return {
-        "K": mtx,
+        "K": K,
         "dist": dist.reshape(-1).astype(np.float64),
-        "rvecs": rvecs,
-        "tvecs": tvecs,
-        "rmse_px": rmse,
-        "filtered_obj": objp_list,
-        "filtered_img": imgp_list,
-        "rms_opencv": float(rms_opencv),
+        "rvecs": rvecs, "tvecs": tvecs,
+        "filtered_obj": filt_obj, "filtered_img": filt_img,
+        "kept_indices": kept,
+        "rmse_px": float(rmse),
     }
 
 
-class pytorch_distortion_fit():
-    def __init__(self, objpoints, imgpoints, image_size, device='cpu', epochs=10000, val_ratio=0.2):
-        self.image_size = image_size
-        self.objp_list, self.imgp_list = [], []
-        for o, i in zip(objpoints, imgpoints):
-            if len(i) >= 6:
-                self.objp_list.append(np.asarray(o, np.float32))
-                self.imgp_list.append(np.asarray(i, np.float32))
-
-        self.epochs = epochs
-        self.device = device
-        self.val_ratio = val_ratio
-        self.loss_history = []
-        self.val_loss_history = []
-
-    def __str__(self):
-        return f"K:\n{self.mtx}\nDistortion: {self.model}"
-
-    def _calibrate_K(self, imgp_list):
-        """Calibrate K with zero distortion assumption."""
-        flags = (cv2.CALIB_ZERO_TANGENT_DIST | cv2.CALIB_FIX_K1 | cv2.CALIB_FIX_K2 |
-                 cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5 | cv2.CALIB_FIX_K6)
-        _, self.mtx, self.dist, self.rvecs, self.tvecs = cv2.calibrateCamera(
-            self.objp_list, imgp_list, self.image_size, None, None, flags=flags)
-
-    def _reproject(self):
-        """Reproject object points using K — these are the undistorted ground truth."""
-        self.reprojected_imgp = []
-        for objp, rvec, tvec in zip(self.objp_list, self.rvecs, self.tvecs):
-            proj, _ = cv2.projectPoints(objp, rvec, tvec, self.mtx, self.dist)
-            self.reprojected_imgp.append(proj.reshape(-1, 2))
-
-    def _normalize(self, imgp_list):
-        """Apply K_inv to pixel points → normalized coords."""
-        cat = np.concatenate([p.reshape(-1, 1, 2) for p in imgp_list], axis=0).astype(np.float32)
-        return cv2.undistortPoints(cat, self.mtx, self.dist).reshape(-1, 2)
-
-    def _fit_distortion(self):
-        """Train distortion model: distorted_normalized → reprojected_normalized.
-
-        Uses 80/20 train/val split on points. Keeps best model by val loss.
-        """
-        # Input: distorted normalized (K_inv on original observed points)
-        distorted_n = self._normalize(self.imgp_list)
-        # Target: reprojected normalized (K_inv on reprojected points = ground truth)
-        target_n = self._normalize(self.reprojected_imgp)
-
-        # Train/val split
-        n = len(distorted_n)
-        perm = np.random.permutation(n)
-        n_train = int(n * (1 - self.val_ratio))
-        train_idx, val_idx = perm[:n_train], perm[n_train:]
-
-        x_train = torch.tensor(distorted_n[train_idx, 0], dtype=torch.float32, device=self.device)
-        y_train = torch.tensor(distorted_n[train_idx, 1], dtype=torch.float32, device=self.device)
-        tx_train = torch.tensor(target_n[train_idx, 0], dtype=torch.float32, device=self.device)
-        ty_train = torch.tensor(target_n[train_idx, 1], dtype=torch.float32, device=self.device)
-
-        x_val = torch.tensor(distorted_n[val_idx, 0], dtype=torch.float32, device=self.device)
-        y_val = torch.tensor(distorted_n[val_idx, 1], dtype=torch.float32, device=self.device)
-        tx_val = torch.tensor(target_n[val_idx, 0], dtype=torch.float32, device=self.device)
-        ty_val = torch.tensor(target_n[val_idx, 1], dtype=torch.float32, device=self.device)
-
-        optimizer = optim.Adam(self.model.parameters(), lr=0.01)
-        criterion = nn.MSELoss()
-        best_val_loss = float('inf')
-        best_state = None
-
-        for epoch in range(self.epochs):
-            # Train
-            self.model.train()
-            optimizer.zero_grad()
-            px, py = self.model(x_train, y_train)
-            loss = criterion(px, tx_train) + criterion(py, ty_train)
-            loss.backward()
-            optimizer.step()
-            self.loss_history.append(loss.item())
-
-            # Validate
-            self.model.eval()
-            with torch.no_grad():
-                vx, vy = self.model(x_val, y_val)
-                val_loss = criterion(vx, tx_val) + criterion(vy, ty_val)
-            self.val_loss_history.append(val_loss.item())
-
-            if val_loss.item() < best_val_loss:
-                best_val_loss = val_loss.item()
-                best_state = {k: v.clone() for k, v in self.model.state_dict().items()}
-
-            if epoch % 2000 == 0:
-                print(f"  epoch {epoch}: train={loss.item()} val={val_loss.item()}")
-
-        # Restore best model
-        self.model.load_state_dict(best_state)
-        self.model.eval()
-        print(f"  best val loss: {best_val_loss:.6f}")
-
-    def undistort_points(self, imgp_list=None):
-        """Undistort image points via forward pass: distorted_normalized → undistorted_normalized → pixels."""
-        if imgp_list is None:
-            imgp_list = self.imgp_list
-
-        self.model.eval()
-        fx, fy = self.mtx[0, 0], self.mtx[1, 1]
-        cx, cy = self.mtx[0, 2], self.mtx[1, 2]
-
-        lengths = [len(p.reshape(-1, 2)) for p in imgp_list]
-        distorted = self._normalize(imgp_list)
-
-        with torch.no_grad():
-            x_t = torch.tensor(distorted[:, 0], dtype=torch.float32, device=self.device)
-            y_t = torch.tensor(distorted[:, 1], dtype=torch.float32, device=self.device)
-            x_u, y_u = self.model(x_t, y_t)
-
-        u = x_u.cpu().numpy() * fx + cx
-        v = y_u.cpu().numpy() * fy + cy
-        all_undist = np.stack([u, v], axis=1).astype(np.float32)
-
-        result = []
-        offset = 0
-        for n in lengths:
-            result.append(all_undist[offset:offset + n])
-            offset += n
-        return result
-
-    def reprojection_error(self):
-        undist = self.undistort_points()
-        sse = n = 0
-        for ud, reproj in zip(undist, self.reprojected_imgp):
-            d = reproj.astype(np.float64) - ud.reshape(-1, 2).astype(np.float64)
-            sse += float((d * d).sum())
-            n += d.size // 2
-        return float(np.sqrt(sse / n))
-
-    def fit(self):
-        """Pipeline: OpenCV calibrate K → train distortion model."""
-        # Step 1: Calibrate K using OpenCV full calibration
-        print("Step 1: Calibrate K (OpenCV)")
-        self._calibrate_K(self.imgp_list)
-        self._reproject()
-
-        # Step 2: Train distortion model (distorted → reprojected)
-        print("Step 2: Train distortion model")
-        self._fit_distortion()
-
-        # Step 3: Recalibrate K using undistorted points
-        print("Step 3: Recalibrate K (undistorted)")
-        undist_imgp = self.undistort_points()
-        self._calibrate_K(undist_imgp)
-        self._reproject()
-
-        print(f"Final RMSE: {self.reprojection_error()}")
-        return self.mtx, self.dist, self.rvecs, self.tvecs
-
-    def plot_loss(self, save_path="loss_plot.png", opencv_rmse=None):
-        import matplotlib.pyplot as plt
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-
-        ax1.plot(self.loss_history, label="PyTorch distortion fit")
-        ax1.set_xlabel("Global Step")
-        ax1.set_ylabel("Loss")
-        ax1.set_title("Training Loss")
-        ax1.grid(True)
-
-        ax2.plot(self.loss_history, label="PyTorch distortion fit")
-        ax2.set_yscale("log")
-        ax2.set_xlabel("Global Step")
-        ax2.set_ylabel("Loss (log scale)")
-        ax2.set_title("Training Loss (log scale)")
-        ax2.grid(True)
-
-        epochs_per = self.epoch_per_iteration
-        for ax in (ax1, ax2):
-            for i in range(1, self.iteration_of_training):
-                ax.axvline(x=i * epochs_per, color="red", linestyle="--", alpha=0.5)
-            if opencv_rmse is not None:
-                ax.axhline(y=opencv_rmse, color="green", linestyle="-", linewidth=2,
-                           label=f"OpenCV RMSE ({opencv_rmse:.4f})")
-            ax.legend()
-
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=150)
-        plt.close(fig)
-        # print(f"Loss plot saved to {save_path}")
-
-    def plot_distortion_field(self, save_path="distortion_field.png", grid_n=20):
-        import matplotlib.pyplot as plt
-        w, h = self.image_size
-        fx, fy = self.mtx[0, 0], self.mtx[1, 1]
-        cx, cy = self.mtx[0, 2], self.mtx[1, 2]
-
-        u = np.linspace(0, w, grid_n)
-        v = np.linspace(0, h, grid_n)
-        uu, vv = np.meshgrid(u, v)
-        uu_flat = uu.flatten()
-        vv_flat = vv.flatten()
-
-        x_n = (uu_flat - cx) / fx
-        y_n = (vv_flat - cy) / fy
-
-        self.model.eval()
-        with torch.no_grad():
-            x_t = torch.tensor(x_n, dtype=torch.float32, device=self.device)
-            y_t = torch.tensor(y_n, dtype=torch.float32, device=self.device)
-            dx, dy = self.model(x_t, y_t)
-            dx = dx.cpu().numpy()
-            dy = dy.cpu().numpy()
-
-        u_dist = dx * fx + cx
-        v_dist = dy * fy + cy
-        du = u_dist - uu_flat
-        dv = v_dist - vv_flat
-
-        arrow_scale = 50.0
-        fig, ax = plt.subplots(figsize=(10, 8))
-        for i in range(len(uu_flat)):
-            ax.annotate("",
-                        xy=(uu_flat[i] + du[i] * arrow_scale,
-                            vv_flat[i] + dv[i] * arrow_scale),
-                        xytext=(uu_flat[i], vv_flat[i]),
-                        arrowprops=dict(arrowstyle="->", color="black", lw=1.2))
-        ax.set_xlim(0, w)
-        ax.set_ylim(h, 0)
-        ax.set_aspect("equal")
-        ax.set_xlabel("u (px)")
-        ax.set_ylabel("v (px)")
-        ax.set_title(f"Distortion Vector Field ({self.model.__class__.__name__}, arrows scaled {arrow_scale:.0f}x)")
-        ax.grid(True, alpha=0.3)
-
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=150)
-        plt.close(fig)
-        # print(f"Distortion field saved to {save_path}")
-
-    def plot_reprojection_error_distribution(self, save_path="reprojection_error_distribution.png"):
-        import matplotlib.pyplot as plt
-        from scipy.stats import gaussian_kde
-
-        all_sq_dists = []
-        for imgp, reproj in zip(self.undistort_imgp_list, self.reprojected_imgp):
-            d = reproj.astype(np.float64) - imgp.reshape(-1, 2).astype(np.float64)
-            sq_dist = np.sum(d ** 2, axis=1)
-            all_sq_dists.append(sq_dist)
-        all_sq_dists = np.concatenate(all_sq_dists)
-
-        p95 = np.percentile(all_sq_dists, 95)
-        clipped = all_sq_dists[all_sq_dists <= p95]
-        n_outliers = len(all_sq_dists) - len(clipped)
-
-        kde = gaussian_kde(clipped)
-        x = np.linspace(0, p95, 500)
-        density = kde(x)
-
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.fill_between(x, density, alpha=0.3, color="steelblue")
-        ax.plot(x, density, color="steelblue", linewidth=2)
-        ax.axvline(np.mean(all_sq_dists), color="red", linestyle="--", linewidth=1.5,
-                   label=f"Mean = {np.mean(all_sq_dists):.4f} px²")
-        ax.axvline(np.median(all_sq_dists), color="orange", linestyle="--", linewidth=1.5,
-                   label=f"Median = {np.median(all_sq_dists):.4f} px²")
-        ax.set_xlim(0, p95 * 1.05)
-        ax.set_xlabel("Squared Reprojection Distance (px²)")
-        ax.set_ylabel("Probability Density")
-        ax.set_title(f"PDF of Per-Point Squared Reprojection Error "
-                     f"(95th percentile, {n_outliers} outliers clipped)")
-        ax.legend()
-        ax.grid(True, alpha=0.3, axis="y")
-
-        plt.tight_layout()
-        plt.savefig(save_path, dpi=150)
-        plt.close(fig)
-        # print(f"Reprojection error distribution saved to {save_path}")
-        # print(f"  Total points: {len(all_sq_dists)}, "
-        #       f"Mean: {np.mean(all_sq_dists):.4f} px², "
-        #       f"Median: {np.median(all_sq_dists):.4f} px², "
-        #       f"95th pct: {p95:.4f} px², "
-        #       f"Max: {np.max(all_sq_dists):.4f} px²")
-
-    def ordinary_polynomial_distortion(self):
-        class OrdinaryPolynomialDistortion(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.k1 = nn.Parameter(torch.tensor(0.0))
-                self.k2 = nn.Parameter(torch.tensor(0.0))
-                self.k3 = nn.Parameter(torch.tensor(0.0))
-                self.p1 = nn.Parameter(torch.tensor(0.0))
-                self.p2 = nn.Parameter(torch.tensor(0.0))
-
-            def forward(self, x, y):
-                r2 = x**2 + y**2
-                radial = 1 + self.k1 * r2 + self.k2 * r2**2 + self.k3 * r2**3
-                x_out = x * radial + 2 * self.p1 * x * y + self.p2 * (r2 + 2 * x**2)
-                y_out = y * radial + self.p1 * (r2 + 2 * y**2) + 2 * self.p2 * x * y
-                return x_out, y_out
-
-            def __str__(self):
-                return f"{self.__class__.__name__}(k1={self.k1.item():.4f}, k2={self.k2.item():.4f}, k3={self.k3.item():.4f}, p1={self.p1.item():.4f}, p2={self.p2.item():.4f})"
-
-        self.model = OrdinaryPolynomialDistortion().to(self.device)
-
-    def mlp_distortion(self):
-        class MLPDistortion(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.mlp = nn.Sequential(
-                    nn.Linear(2, 100),
-                    nn.Tanh(),
-                    nn.Linear(100, 100),
-                    nn.Tanh(),
-                    nn.Linear(100, 25),
-                    nn.Tanh(),
-                    nn.Linear(25, 2),
-                )
-            def forward(self, x, y):
-                out = self.mlp(torch.stack([x, y], dim=1))
-                return out[:, 0], out[:, 1]
-            def __str__(self):
-                return f"{self.__class__.__name__}(mlp={self.mlp})"
-
-        self.model = MLPDistortion().to(self.device)
-
-    def save(self, path):
-        """Save K matrix and distortion model state_dict."""
-        torch.save({
-            "mtx": self.mtx,
-            "dist": self.dist,
-            "image_size": self.image_size,
-            "model_name": self.model.__class__.__name__,
-            "model_state": self.model.state_dict(),
-            "rmse": self.reprojection_error(),
-        }, path)
-
-    @classmethod
-    def load(cls, path, device='cpu'):
-        """Load a saved calibration result for inference (undistortion / PnP)."""
-        data = torch.load(path, map_location=device, weights_only=False)
-        obj = cls.__new__(cls)
-        obj.mtx = data["mtx"]
-        obj.dist = data["dist"]
-        obj.image_size = data["image_size"]
-        obj.device = device
-        # Reconstruct model
-        if data["model_name"] == "OrdinaryPolynomialDistortion":
-            obj.ordinary_polynomial_distortion()
-        elif data["model_name"] == "MLPDistortion":
-            obj.mlp_distortion()
-        obj.model.load_state_dict(data["model_state"])
-        obj.model.eval()
-        return obj
+def _split_points(obj_lists, img_lists, val_ratio=0.2, seed=0):
+    """Per-view 80/20 point split. Returns (tr_obj, tr_img, vl_obj, vl_img)."""
+    rng = np.random.default_rng(seed)
+    tr_o, tr_i, vl_o, vl_i = [], [], [], []
+    for obj, img in zip(obj_lists, img_lists):
+        obj = np.asarray(obj, np.float32).reshape(-1, 3)
+        img = np.asarray(img, np.float32).reshape(-1, 2)
+        perm = rng.permutation(len(img))
+        n_tr = max(1, int(len(img) * (1 - val_ratio)))
+        tr_o.append(obj[perm[:n_tr]]); tr_i.append(img[perm[:n_tr]])
+        vl_o.append(obj[perm[n_tr:]]); vl_i.append(img[perm[n_tr:]])
+    return tr_o, tr_i, vl_o, vl_i
 
 
-def calibrate_camera(points_file, output_dir):
-    """Run all calibration methods on one camera's point file and save results."""
-    from pathlib import Path
+def _reprojection_rmse(obj_lists, img_lists, K, dist, rvecs, tvecs):
+    """RMSE of cv2.projectPoints vs. observed pixels across aligned views."""
+    sse = n = 0
+    for obj, img, r, t in zip(obj_lists, img_lists, rvecs, tvecs):
+        if len(img) == 0:
+            continue
+        proj = cv2.projectPoints(obj.reshape(-1, 1, 3), r, t, K, dist)[0].reshape(-1, 2)
+        d = proj.astype(np.float64) - img.astype(np.float64)
+        sse += float((d * d).sum()); n += d.shape[0]
+    return float(np.sqrt(sse / n)) if n else float("nan")
+
+
+def opencv_calibrate_and_save(points_file, output_dir):
+    """Calibrate and persist K, D, poses, and the filtered point lists."""
     data = np.load(points_file, allow_pickle=True)
-    obj_points = [arr.astype(np.float32) for arr in data["obj_points"]]
-    img_points = [arr.astype(np.float32) for arr in data["img_points"]]
+    obj_points = [a.astype(np.float32) for a in data["obj_points"]]
+    img_points = [a.astype(np.float32) for a in data["img_points"]]
     img_size = tuple(int(x) for x in data["img_size"])
-    cam_name = Path(points_file).stem
+    cam = Path(points_file).stem
 
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
+    out = Path(output_dir); out.mkdir(parents=True, exist_ok=True)
+    res = opencv_full_calib(obj_points, img_points, img_size)
+    path = out / f"{cam}_opencv.npz"
+    np.savez(str(path),
+             K=res["K"], dist=res["dist"],
+             rvecs=np.array(res["rvecs"], dtype=object),
+             tvecs=np.array(res["tvecs"], dtype=object),
+             filtered_obj=np.array(res["filtered_obj"], dtype=object),
+             filtered_img=np.array(res["filtered_img"], dtype=object),
+             img_size=np.array(img_size), rmse=res["rmse_px"])
+    print(f"OpenCV calibration saved to {path}")
+    print(f"  K =\n{res['K']}")
+    print(f"  dist = {res['dist']}")
+    print(f"  RMSE = {res['rmse_px']:.6f} px")
+    return res, path
 
-    # OpenCV full calibration
-    opencv_result = opencv_full_calib(obj_points, img_points, img_size)
-    np.savez(str(out / f"{cam_name}_opencv.npz"),
-             K=opencv_result["K"], dist=opencv_result["dist"],
-             img_size=np.array(img_size), rmse=opencv_result["rmse_px"])
 
-    # Ordinary polynomial distortion
-    poly_fit = pytorch_distortion_fit(obj_points, img_points, img_size)
-    poly_fit.ordinary_polynomial_distortion()
-    poly_fit.fit()
-    poly_fit.save(str(out / f"{cam_name}_poly.pt"))
+def load_opencv_result(path):
+    """Inverse of `opencv_calibrate_and_save`."""
+    data = np.load(path, allow_pickle=True)
+    out = {
+        "K": np.asarray(data["K"], dtype=np.float64),
+        "dist": np.asarray(data["dist"], dtype=np.float64).reshape(-1),
+        "rvecs": [np.asarray(r, dtype=np.float64) for r in data["rvecs"]],
+        "tvecs": [np.asarray(t, dtype=np.float64) for t in data["tvecs"]],
+        "rmse_px": float(data["rmse"]),
+    }
+    if "filtered_obj" in data.files:
+        out["filtered_obj"] = [np.asarray(a, np.float32) for a in data["filtered_obj"]]
+        out["filtered_img"] = [np.asarray(a, np.float32) for a in data["filtered_img"]]
+    return out
 
-    # MLP distortion
-    mlp_fit = pytorch_distortion_fit(obj_points, img_points, img_size)
-    mlp_fit.mlp_distortion()
-    mlp_fit.fit()
-    mlp_fit.save(str(out / f"{cam_name}_mlp.pt"))
 
-    print(f"\n{cam_name} results:")
-    print(f"  OpenCV RMSE: {opencv_result['rmse_px']:.6f}")
-    print(f"  Poly   RMSE: {poly_fit.reprojection_error():.6f}")
-    print(f"  MLP    RMSE: {mlp_fit.reprojection_error():.6f}")
+def _direct_reprojection_rmse(obj_points, img_points, K, dist):
+    """Per-view PnP with given K/D; return RMSE + aligned obj/img/pose lists."""
+    rvecs, tvecs, filt_obj, filt_img = [], [], [], []
+    sse = n = 0
+    for o, i in zip(obj_points, img_points):
+        img = np.asarray(i, np.float32).reshape(-1, 2)
+        obj = np.asarray(o, np.float32).reshape(-1, 3)
+        if len(img) < 4:
+            continue
+        ok, r, t = cv2.solvePnP(obj.reshape(-1, 1, 3), img.reshape(-1, 1, 2),
+                                K, dist, flags=cv2.SOLVEPNP_IPPE)
+        if not ok:
+            continue
+        proj = cv2.projectPoints(obj, r, t, K, dist)[0].reshape(-1, 2)
+        if not np.all(np.isfinite(proj)):
+            continue
+        d = proj.astype(np.float64) - img.astype(np.float64)
+        sse += float((d * d).sum()); n += d.shape[0]
+        rvecs.append(r); tvecs.append(t); filt_obj.append(obj); filt_img.append(img)
+    rmse = float(np.sqrt(sse / n)) if n else float("nan")
+    return rmse, rvecs, tvecs, filt_obj, filt_img
 
-    return opencv_result, poly_fit, mlp_fit
+
+# ---- refractive bundle adjustment --------------------------------------------
+
+def _rodrigues(rvec):
+    """Differentiable axis-angle → rotation matrix."""
+    theta = torch.linalg.norm(rvec) + 1e-12
+    k = rvec / theta
+    Kx = torch.zeros(3, 3, dtype=rvec.dtype, device=rvec.device)
+    Kx[0, 1] = -k[2]; Kx[0, 2] = k[1]
+    Kx[1, 0] = k[2];  Kx[1, 2] = -k[0]
+    Kx[2, 0] = -k[1]; Kx[2, 1] = k[0]
+    I = torch.eye(3, dtype=rvec.dtype, device=rvec.device)
+    return I + torch.sin(theta) * Kx + (1 - torch.cos(theta)) * (Kx @ Kx)
+
+
+def _project_refractive(obj, rvec, tvec, n, K, D):
+    """Full physical water model: project obj → pixel through refraction + lens."""
+    R = _rodrigues(rvec)
+    X = obj @ R.T + tvec
+    x = X[:, 0] / X[:, 2]
+    y = X[:, 1] / X[:, 2]
+    r2 = x * x + y * y
+    # Snell-derived forward refraction (Eq. 8):  m = n / sqrt(1 + r² − n²r²)
+    m = n / torch.sqrt(torch.clamp(1 + r2 - n * n * r2, min=1e-8))
+    xr, yr = m * x, m * y
+    # Brown–Conrady forward lens distortion with the fixed air D.
+    k1, k2, p1, p2, k3 = D
+    rr2 = xr * xr + yr * yr
+    radial = 1 + k1 * rr2 + k2 * rr2 ** 2 + k3 * rr2 ** 3
+    xd = xr * radial + 2 * p1 * xr * yr + p2 * (rr2 + 2 * xr * xr)
+    yd = yr * radial + p1 * (rr2 + 2 * yr * yr) + 2 * p2 * xr * yr
+    u = K[0, 0] * xd + K[0, 2]
+    v = K[1, 1] * yd + K[1, 2]
+    return torch.stack([u, v], dim=1)
+
+
+def refractive_bundle_adjustment(obj_lists, img_lists, air_K, air_D,
+                                 rvec_init, tvec_init, n_init=1.33,
+                                 epochs=5000, lr=1e-3, val_ratio=0.2, seed=0):
+    """Jointly fit (n, {rvec, tvec}) under the Singh & Alexis 2024 model.
+
+    Pixel-space bundle adjustment with `air_K`, `air_D` fixed (they're
+    medium-independent). Per-view points are split 80/20 into train and
+    validation subsets; only the train subset drives the loss, and both
+    train and val RMSE are recorded per epoch.
+    """
+    rng = np.random.default_rng(seed)
+
+    K = torch.as_tensor(np.asarray(air_K), dtype=DTYPE, device=DEVICE)
+    D_arr = np.zeros(5, dtype=np.float64)
+    D_in = np.asarray(air_D).reshape(-1)
+    D_arr[: min(5, len(D_in))] = D_in[: min(5, len(D_in))]
+    D = torch.as_tensor(D_arr, dtype=DTYPE, device=DEVICE)
+
+    raw_n0 = float(np.log(np.expm1(max(n_init - 1.0, 1e-6))))
+    raw_n = torch.tensor(raw_n0, dtype=DTYPE, device=DEVICE, requires_grad=True)
+    rvec_params = [torch.tensor(np.asarray(r).reshape(3), dtype=DTYPE,
+                                device=DEVICE, requires_grad=True) for r in rvec_init]
+    tvec_params = [torch.tensor(np.asarray(t).reshape(3), dtype=DTYPE,
+                                device=DEVICE, requires_grad=True) for t in tvec_init]
+
+    # Tensorize points + build per-view train/val index masks.
+    obj_t, img_t, tr_idx, vl_idx = [], [], [], []
+    for obj, img in zip(obj_lists, img_lists):
+        obj = np.asarray(obj).reshape(-1, 3)
+        img = np.asarray(img).reshape(-1, 2)
+        m = len(img)
+        perm = rng.permutation(m)
+        n_tr = max(1, int(m * (1 - val_ratio)))
+        obj_t.append(torch.as_tensor(obj, dtype=DTYPE, device=DEVICE))
+        img_t.append(torch.as_tensor(img, dtype=DTYPE, device=DEVICE))
+        tr_idx.append(torch.as_tensor(perm[:n_tr], device=DEVICE))
+        vl_idx.append(torch.as_tensor(perm[n_tr:], device=DEVICE))
+
+    opt = optim.Adam([raw_n] + rvec_params + tvec_params, lr=lr)
+    train_rmse, val_rmse = [], []
+    n_train = sum(int(i.numel()) for i in tr_idx)
+    n_val = sum(int(i.numel()) for i in vl_idx)
+
+    for epoch in range(epochs):
+        opt.zero_grad()
+        n = 1.0 + F.softplus(raw_n)
+
+        sse_tr = torch.zeros((), dtype=DTYPE, device=DEVICE)
+        sse_vl = torch.zeros((), dtype=DTYPE, device=DEVICE)
+        for obj, img, r, t, ti, vi in zip(obj_t, img_t, rvec_params, tvec_params, tr_idx, vl_idx):
+            proj = _project_refractive(obj, r, t, n, K, D)
+            sse_tr = sse_tr + ((proj[ti] - img[ti]) ** 2).sum()
+            if vi.numel() > 0:
+                with torch.no_grad():
+                    sse_vl = sse_vl + ((proj[vi].detach() - img[vi]) ** 2).sum()
+
+        loss = sse_tr / (2 * n_train)  # /2 because each point contributes u²+v²
+        loss.backward()
+        opt.step()
+
+        train_rmse.append(float(torch.sqrt(sse_tr.detach() / n_train).item()))
+        val_rmse.append(float(torch.sqrt(sse_vl / max(n_val, 1)).item()) if n_val else float("nan"))
+        if epoch % 500 == 0:
+            print(f"  BA epoch {epoch}: train_rmse={train_rmse[-1]:.4f}px "
+                  f"val_rmse={val_rmse[-1]:.4f}px n={float(n):.4f}")
+
+    n_final = float(1.0 + F.softplus(raw_n.detach()).cpu())
+    rvecs_out = [r.detach().cpu().numpy().reshape(3, 1) for r in rvec_params]
+    tvecs_out = [t.detach().cpu().numpy().reshape(3, 1) for t in tvec_params]
+    print(f"  final: n = {n_final:.6f}  train_rmse = {train_rmse[-1]:.4f}px  "
+          f"val_rmse = {val_rmse[-1]:.4f}px")
+    return {
+        "n": n_final,
+        "rvecs": rvecs_out, "tvecs": tvecs_out,
+        "train_rmse": train_rmse, "val_rmse": val_rmse,
+    }
+
+
+# ---- pipelines ---------------------------------------------------------------
+
+def _plot_ba_loss(ba, m1_rmse, m2_rmse, n, save_path, title):
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(ba["train_rmse"], label="train", color="steelblue")
+    ax.plot(ba["val_rmse"], label="val", color="darkorange")
+    ax.axhline(m1_rmse, color="red", linestyle="--", label=f"air_direct ({m1_rmse:.2f})")
+    ax.axhline(m2_rmse, color="green", linestyle="--", label=f"water_opencv ({m2_rmse:.2f})")
+    ax.set_xlabel("BA epoch"); ax.set_ylabel("RMSE (px)")
+    ax.set_yscale("log"); ax.grid(True, alpha=0.3); ax.legend()
+    ax.set_title(f"{title}  (n = {n:.4f})")
+    plt.tight_layout(); plt.savefig(save_path, dpi=150); plt.close(fig)
+
+
+def calibrate_water_from_air(water_points_file, air_opencv_path, output_dir):
+    """Compare three methods on water points given an air calibration:
+      1. Direct use of air intrinsics (PnP + reproject).
+      2. Full OpenCV recalibration on water points.
+      3. Refractive bundle adjustment (Singh & Alexis 2024) with air K/D fixed.
+    """
+    data = np.load(water_points_file, allow_pickle=True)
+    obj_points = [a.astype(np.float32) for a in data["obj_points"]]
+    img_points = [a.astype(np.float32) for a in data["img_points"]]
+    img_size = tuple(int(x) for x in data["img_size"])
+    cam = Path(water_points_file).stem
+
+    out = Path(output_dir); out.mkdir(parents=True, exist_ok=True)
+
+    air = load_opencv_result(air_opencv_path)
+    air_K, air_D = air["K"], air["dist"]
+
+    # Method 1: air intrinsics, PnP on water.
+    m1_rmse, m1_rvecs, m1_tvecs, _, _ = _direct_reprojection_rmse(
+        obj_points, img_points, air_K, air_D)
+    np.savez(str(out / f"{cam}_air_direct.npz"),
+             K=air_K, dist=air_D,
+             rvecs=np.array(m1_rvecs, dtype=object),
+             tvecs=np.array(m1_tvecs, dtype=object),
+             img_size=np.array(img_size), rmse=m1_rmse)
+
+    # Method 2: recalibrate K/D on water points with a per-view 80/20 split.
+    # The calibration sees only the training points; the val RMSE reports how
+    # well the fitted (K, D, poses) generalize to the held-out 20%.
+    tr_obj, tr_img, vl_obj, vl_img = _split_points(obj_points, img_points)
+    m2 = opencv_full_calib(tr_obj, tr_img, img_size)
+    # opencv_full_calib may drop degenerate views from the TRAIN subset; align
+    # val lists to the same kept views.
+    vl_obj_kept = [vl_obj[i] for i in m2["kept_indices"]]
+    vl_img_kept = [vl_img[i] for i in m2["kept_indices"]]
+    m2_train_rmse = m2["rmse_px"]
+    m2_val_rmse = _reprojection_rmse(
+        vl_obj_kept, vl_img_kept, m2["K"], m2["dist"], m2["rvecs"], m2["tvecs"])
+    np.savez(str(out / f"{cam}_water_opencv.npz"),
+             K=m2["K"], dist=m2["dist"],
+             rvecs=np.array(m2["rvecs"], dtype=object),
+             tvecs=np.array(m2["tvecs"], dtype=object),
+             filtered_obj=np.array(m2["filtered_obj"], dtype=object),
+             filtered_img=np.array(m2["filtered_img"], dtype=object),
+             img_size=np.array(img_size),
+             train_rmse=m2_train_rmse, val_rmse=m2_val_rmse)
+
+    # Method 3: refractive bundle adjustment.
+    ba = refractive_bundle_adjustment(
+        m2["filtered_obj"], m2["filtered_img"], air_K, air_D,
+        rvec_init=m2["rvecs"], tvec_init=m2["tvecs"])
+    np.savez(str(out / f"{cam}_refractive.npz"),
+             K=air_K, dist=air_D, n=ba["n"],
+             rvecs=np.array(ba["rvecs"], dtype=object),
+             tvecs=np.array(ba["tvecs"], dtype=object),
+             img_size=np.array(img_size),
+             train_rmse=np.array(ba["train_rmse"]),
+             val_rmse=np.array(ba["val_rmse"]))
+    _plot_ba_loss(ba, m1_rmse, m2_train_rmse, ba["n"],
+                  out / f"{cam}_refractive_loss.png",
+                  f"{cam} refractive BA")
+
+    summary = {
+        "air_direct": m1_rmse,
+        "water_opencv_train": m2_train_rmse,
+        "water_opencv_val": m2_val_rmse,
+        "refractive_train": ba["train_rmse"][-1],
+        "refractive_val": ba["val_rmse"][-1],
+    }
+    print(f"\n{cam} cross-medium comparison:")
+    for k, v in summary.items():
+        print(f"  {k:20s} RMSE = {v:.6f} px")
+    print(f"  learned refractive index n = {ba['n']:.6f} (water ≈ 1.33)")
+    summary["learned_n"] = ba["n"]
+    return summary
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    import sys
+    air_output_dir = Path("../calibration/air")
+    water_points_dir = Path("../points/water")
+    water_output_dir = Path("../calibration/water")
 
-    points_dir = Path("../points/water")
-    output_dir = Path("../calibration/water")
+    print(f"Using device: {DEVICE}  dtype: {DTYPE}")
 
-    for npz in sorted(points_dir.glob("cam*.npz")):
-        calibrate_camera(str(npz), str(output_dir))
+    for npz in sorted(water_points_dir.glob("cam*.npz")):
+        cam = npz.stem
+        air_path = air_output_dir / f"{cam}_opencv.npz"
+        if not air_path.exists():
+            print(f"Skipping {cam}: no air calibration at {air_path}")
+            continue
+        calibrate_water_from_air(str(npz), str(air_path), str(water_output_dir))
